@@ -7,6 +7,9 @@ exports.handle = function(app)
 {
     app.get('/', onMain);
     app.get('/index.html', onMain);
+    
+    app.get('/login', onLogin);
+    app.get('/support', onSupport);
 };
 
 function CommonRender(req, res, page)
@@ -24,4 +27,14 @@ function CommonRender(req, res, page)
 function onMain(req, res)
 {
     CommonRender(req, res, 'pages/index');
+}
+
+function onLogin(req, res)
+{
+    CommonRender(req, res, 'pages/login');
+}
+
+function onSupport(req, res)
+{
+    CommonRender(req, res, 'pages/support');
 }
