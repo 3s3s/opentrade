@@ -2,6 +2,7 @@
 
 const url = require('url');
 const utils = require("./utils");
+const login = require("./modules/login");
 
 exports.handle = function(app)
 {
@@ -9,6 +10,9 @@ exports.handle = function(app)
     app.get('/index.html', onMain);
     
     app.get('/login', onLogin);
+    app.post('/login', onLoginPost);
+    app.get('/signup', onSignup);
+    app.get('/password_reset', onPasswordReset);
     app.get('/support', onSupport);
 };
 
@@ -32,6 +36,20 @@ function onMain(req, res)
 function onLogin(req, res)
 {
     CommonRender(req, res, 'pages/login');
+}
+function onLoginPost(req, res)
+{
+    login.onSubmit(req, res);
+}
+
+function onSignup(req, res)
+{
+    CommonRender(req, res, 'pages/signup');
+}
+
+function onPasswordReset(req, res)
+{
+    CommonRender(req, res, 'pages/password_reset');
 }
 
 function onSupport(req, res)

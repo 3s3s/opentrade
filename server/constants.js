@@ -1,5 +1,8 @@
 'use strict';
 
+exports.recaptcha_pub_key = "6LessjsUAAAAAKx2nOalcIXbcesEtxvj-jxjVbvk";
+exports.recaptcha_priv_key = require("./modules/private_constants").recaptcha_priv_key;
+
 exports.my_port = 40080;
 exports.my_portSSL = 40443;
 

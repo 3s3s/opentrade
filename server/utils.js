@@ -1,5 +1,10 @@
 'use strict';
+
 const dictionary = require("./dictionary.js");
+const g_constants = require("./constants.js");
+const http = require('http');
+const https = require('https');
+const url = require('url');
 
 exports.ForEachSync = function(array, func, cbEndAll, cbEndOne)
 {
@@ -65,5 +70,98 @@ exports.render = function(responce, page, info)
     
     render_info['__'] = render_info['dict'].l;
     
+    render_info['recaptcha'] = g_constants.recaptcha_pub_key;
+
     responce.render(page, render_info);
 }
+
+exports.getJSON = function(query, callback)
+{
+    const parsed = url.parse(query, true);
+    const options = {
+        host: parsed.host,
+        port: parsed.port || parsed.protocol=='https:' ? 443 : 80,
+        path: parsed.path,
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    };
+    exports.getHTTP(options, callback);
+};
+exports.postJSON = function(query, body, callback)
+{
+    const parsed = url.parse(query, true);
+    const options = {
+        host: parsed.host,
+        port: parsed.port || parsed.protocol=='https:' ? 443 : 80,
+        path: parsed.path,
+        method: 'POST',
+        body: body,
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    };
+    exports.getHTTP(options, callback);
+};
+
+exports.postHTTP = function(query, headers, callback)
+{
+    const parsed = url.parse(query, true);
+    const options = {
+        host: parsed.host,
+        port: parsed.port || parsed.protocol=='https:' ? 443 : 80,
+        path: parsed.path,
+        method: 'POST',
+        headers: headers
+    };
+    exports.getHTTP(options, callback);
+}
+
+exports.getHTTP = function(options, onResult)
+{
+    console.log("rest::getJSON");
+
+    const port = options.port || 80;
+    const prot = port == 443 ? https : http;
+    
+    if (!options.method)
+        options.method = 'GET';
+    if (!options.headers)
+        options.headers = {'Content-Type': 'application/json'};
+        
+    var req = prot.request(options, function(res)
+    {
+        var output = '';
+        console.log(options.host + ':' + res.statusCode);
+        res.setEncoding('utf8');
+
+        res.on('data', function (chunk) {
+            output += chunk;
+        });
+
+        res.on('end', function() {
+            if (options.headers['Content-Type'] == 'application/json')
+            {
+                try {
+                    var obj = JSON.parse(output);
+                    onResult(res.statusCode, obj);
+
+                }catch(e) {
+                    console.log(e.message);
+                    onResult(res.statusCode, e);
+                }
+                
+                return;
+            }
+            onResult(res.statusCode, output);
+        });
+    });
+
+    req.on('error', function(err) {
+        console.log(err.message)
+        onResult('0', 'unknown error');
+    });
+
+    req.end();
+};
