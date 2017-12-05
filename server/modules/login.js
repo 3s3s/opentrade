@@ -6,41 +6,28 @@ const g_constants = require("../constants.js");
 exports.onSubmit = function(req, res)
 {
     const responce = res;
-    validateRecaptcha(req, (ret) => {
+    const request = req;
+    utils.validateRecaptcha(req, ret => {
         if (ret.error)
         {
-            LoginError(responce, ret.message);
+            LoginError(request, responce, ret.message);
             return;
         }
+        Login(req, res);
     });
 }
 
-function validateRecaptcha(request, callback)
+function Login(req, res)
 {
-    console.log(JSON.stringify(request));
-    if (!request['g-recaptcha-response'])
-    {
-        callback({error: true, message: 'Bad Request'});
-        return;
-    }
-    
-    utils.postHTTP(
-        "https://www.google.com/recaptcha/api/siteverify", 
-        {secret: g_constants.recaptcha_priv_key, response: request['g-recaptcha-response']}, 
-        (code, data) => {
-            var ret = data || {};
-            if (!ret.success)
-                ret['success'] = false;
-                
-            ret.error = ret.success;
-            ret.message = ret.error ? 'Recaptcha failed' : '';
-            
-            callback(ret);
-        }
-    );
+    LoginSuccess(req, res, {});
 }
 
-function LoginError(responce, message)
+function LoginSuccess(request, responce, message)
 {
-    utils.render(responce, 'pages/login', {result: false, message: message});
+    utils.renderJSON(request, responce, {result: true, message: message});
+}
+
+function LoginError(request, responce, message)
+{
+    utils.renderJSON(responce, {result: false, message: message});
 }

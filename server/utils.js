@@ -71,6 +71,7 @@ exports.render = function(responce, page, info)
     render_info['__'] = render_info['dict'].l;
     
     render_info['recaptcha'] = g_constants.recaptcha_pub_key;
+    render_info['debug'] = g_constants.DEBUG_MODE;
 
     responce.render(page, render_info);
 }
@@ -165,3 +166,34 @@ exports.getHTTP = function(options, onResult)
 
     req.end();
 };
+
+exports.renderJSON = function(req, res, params)
+{
+    res.writeHead(200, {"Content-Type": "application/json"});
+    res.end(JSON.stringify(params));
+};
+
+
+exports.validateRecaptcha = function(request, callback)
+{
+    if (!request.body || !request.body['g-recaptcha-response'])
+    {
+        callback({error: true, message: 'Bad Request'});
+        return;
+    }
+    
+    exports.postHTTP(
+        "https://www.google.com/recaptcha/api/siteverify?secret="+g_constants.recaptcha_priv_key+"&response="+request.body['g-recaptcha-response'], 
+        {}, 
+        (code, data) => {
+            var ret = data ? JSON.parse(data) : {};
+            if (!data)
+                ret['success'] = false;
+                
+            ret['error'] = !ret.success;
+            ret.message = ret.error ? 'Recaptcha failed' : '';
+            
+            callback(ret);
+        }
+    );
+}

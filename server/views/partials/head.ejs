@@ -1,6 +1,7 @@
   <head>
     <script>
-      if (window.location.protocol != "https:" && window.location.protocol != "file:")
+      var debug = <%-debug%>;
+      if (!debug && window.location.protocol != "https:" && window.location.protocol != "file:")
           window.location.href = "https:" + window.location.href.substring(window.location.protocol.length);
     </script>
 
