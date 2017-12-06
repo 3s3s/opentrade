@@ -8,12 +8,52 @@
 
 
     <div class="container">
-      <h1>Signup</h1>
-
+      <div class="row">
+        <div class="offset2 col-md-6">
+          <div id="register-body">
+            <h2 id="register_header">Register a new account</h2>
+            <form id="signup-form" class="paper-form" action="/signup" method="post">
+              <div id='recaptcha' class="g-recaptcha"
+                      data-sitekey="<%-recaptcha%>"
+                      data-callback="onSubmit"
+                      data-size="invisible"></div>
+              <div id="signup_username" class="form-group">
+                <label for="id_username" class="control-label  requiredField">Username<span class="asteriskField">*</span> </label>
+                <div class="controls "> 
+                  <input class="textinput textInput form-control" id="id_username" maxlength="30" name="username" type="text">
+                </div>
+              </div>
+              <div id="signup_email" class="form-group">
+                <label for="id_email" class="control-label  requiredField">Email<span class="asteriskField">*</span> </label>
+                <div class="controls ">
+                  <input class="emailinput form-control" id="id_email" name="email" type="email" title="Please enter an email address">
+                </div>
+              </div>
+              <div id="signup_password1" class="form-group">
+                <label for="id_password1" class="control-label  requiredField">Password<span class="asteriskField">*</span> </label>
+                <div class="controls ">
+                  <input class="textinput textInput form-control" id="id_password1" name="password1" type="password"><span class="pwstr"></span>
+                </div>
+              </div>
+              <div id="signup_password2" class="form-group">
+                <label for="id_password2" class="control-label  requiredField">Password (again)<span class="asteriskField">*</span> </label>
+                <div class="controls "> 
+                  <input class="textinput textInput form-control" id="id_password2" name="password2" type="password"> 
+                </div>
+              </div>
+              <p>
+                <button class="btn btn-success" id="register-page-confirm-button">Register</button>
+              </p>
+            </form>
+          </div>
+          <p>Already have an account? <a href="/login">Login</a></p>
+          <p>Forgot password? <a href="/password_reset">Reset your password</a></p>
+        </div>
+      </div>
     </div> <!-- /container -->
 
 
     <% include ../partials/footer %>
-    <script src='/js/support.js'></script>
+    <script src='/js/signup.js'></script>
   </body>
 </html>

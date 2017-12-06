@@ -13,11 +13,11 @@
               <h2 class="login-heading bold-text">Login</h2>
               <form class="login-form" method="post" action="/login"> 
                 <% var redirect=''; try{redirect=path||'/'}catch(e){}%>
+                <input name='login_redirect' type='hidden' value='<%= redirect%>'>
                 <div id='recaptcha' class="g-recaptcha"
                       data-sitekey="<%-recaptcha%>"
                       data-callback="onSubmit"
                       data-size="invisible"></div>
-                <input name='login_redirect' type='hidden' value='<%= redirect%>'>
                 <fieldset> 
                   <div id="login_username" class="form-group">
                     <div class="controls ">

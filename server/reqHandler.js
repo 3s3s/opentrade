@@ -3,6 +3,8 @@
 const url = require('url');
 const utils = require("./utils");
 const login = require("./modules/login");
+const signup = require("./modules/signup");
+const password = require("./modules/password");
 
 exports.handle = function(app)
 {
@@ -12,7 +14,9 @@ exports.handle = function(app)
     app.get('/login', onLogin);
     app.post('/login', onLoginPost);
     app.get('/signup', onSignup);
+    app.post('/signup', onSignupPost);
     app.get('/password_reset', onPasswordReset);
+    app.post('/password_reset', onPasswordResetPost);
     app.get('/support', onSupport);
 };
 
@@ -47,9 +51,18 @@ function onSignup(req, res)
     CommonRender(req, res, 'pages/signup');
 }
 
+function onSignupPost(req, res)
+{
+    signup.onSubmit(req, res);
+}
+
 function onPasswordReset(req, res)
 {
     CommonRender(req, res, 'pages/password_reset');
+}
+function onPasswordResetPost(req, res)
+{
+    password.onPassworReset(req, res);
 }
 
 function onSupport(req, res)
