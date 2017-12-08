@@ -2,9 +2,15 @@
 
 const dictionary = require("./dictionary.js");
 const g_constants = require("./constants.js");
+const g_crypto = require('crypto');
 const http = require('http');
 const https = require('https');
 const url = require('url');
+
+exports.Hash = function(str)
+{
+    return g_crypto.createHash("sha256").update(str).digest('base64');
+};
 
 exports.ForEachSync = function(array, func, cbEndAll, cbEndOne)
 {
@@ -173,6 +179,14 @@ exports.renderJSON = function(req, res, params)
     res.end(JSON.stringify(params));
 };
 
+exports.ValidateEmail = function(text)
+{
+    if (!text || !text.length)
+        return false;
+            
+    const mailformat = /^[-a-z0-9!#$%&'*+/=?^_`{|}~]+(?:\.[-a-z0-9!#$%&'*+/=?^_`{|}~]+)*@(?:[a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?\.)*(?:aero|arpa|asia|biz|cat|com|coop|edu|gov|info|int|jobs|mil|mobi|museum|name|net|org|pro|tel|travel|[a-z][a-z])$/;
+    return text.match(mailformat);
+}
 
 exports.validateRecaptcha = function(request, callback)
 {

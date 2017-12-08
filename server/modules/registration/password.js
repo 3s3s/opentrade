@@ -1,7 +1,7 @@
 'use strict';
 
-const utils = require("../utils.js");
-const g_constants = require("../constants.js");
+const utils = require("../../utils.js");
+const g_constants = require("../../constants.js");
 
 exports.onPassworReset = function(req, res)
 {
@@ -13,9 +13,27 @@ exports.onPassworReset = function(req, res)
             PasswordResetError(request, responce, ret.message);
             return;
         }
-        PasswordReset(req, res);
+        validateForm(req, ret => {
+            if (ret.error)
+            {
+                PasswordResetError(request, responce, ret.message);
+                return;
+            }
+            PasswordReset(req, res);
+        });
     });
 }
+
+function validateForm(request, callback)
+{
+    if (!request.body || request.body['email'])
+    {
+        callback({error: true, message: 'Bad Request'});
+        return;
+    }
+    callback({error: false, message: ''});
+}
+
 
 function PasswordReset(req, res)
 {

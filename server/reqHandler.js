@@ -2,9 +2,9 @@
 
 const url = require('url');
 const utils = require("./utils");
-const login = require("./modules/login");
-const signup = require("./modules/signup");
-const password = require("./modules/password");
+const login = require("./modules/registration/login");
+const signup = require("./modules/registration/signup");
+const password = require("./modules/registration/password");
 
 exports.handle = function(app)
 {

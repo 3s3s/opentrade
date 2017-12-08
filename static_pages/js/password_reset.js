@@ -1,16 +1,24 @@
 'use strict';
 
-$(() => {
-    $('#submit-id-submit').click(event => {
+function onload()
+{
+    $('#button_reset').click(event => {
         event.preventDefault();
         if (!validate())
             return;
         grecaptcha.execute();
     });
-});
+}
 
 function validate()
 {
+    $('#id_email').removeClass("is-invalid");
+
+    if (!utils.ValidateEmail($("#id_email")[0].value))
+    {
+        $('#id_email').addClass("is-invalid");
+        return false;
+    }
     return true;
 }
 

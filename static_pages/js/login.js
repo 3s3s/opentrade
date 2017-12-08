@@ -1,17 +1,13 @@
 'use strict';
 
-$(() => {
+function onload()
+{
     $('#submit-id-submit').click(event => {
         event.preventDefault();
         if (!validate())
             return;
         grecaptcha.execute();
     });
-});
-
-function validate()
-{
-    return true;
 }
 
 function onSubmit(token)
@@ -26,4 +22,12 @@ function onSubmit(token)
     }, "json" );
     
     
+}
+
+function validate()
+{
+    if ($("#id_username")[0].value == "" || $("#id_password")[0].value.length == 0)
+        return false;
+
+    return true;
 }

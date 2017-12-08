@@ -1,7 +1,7 @@
 'use strict';
 
-const utils = require("../utils.js");
-const g_constants = require("../constants.js");
+const utils = require("../../utils.js");
+const g_constants = require("../../constants.js");
 
 exports.onSubmit = function(req, res)
 {
@@ -13,9 +13,27 @@ exports.onSubmit = function(req, res)
             LoginError(request, responce, ret.message);
             return;
         }
-        Login(req, res);
+        validateForm(req, ret => {
+            if (ret.error)
+            {
+                LoginError(request, responce, ret.message);
+                return;
+            }
+            Login(req, res);
+        });
     });
 }
+
+function validateForm(request, callback)
+{
+    if (!request.body || !request.body['username'] || !request.body['password'])
+    {
+        callback({error: true, message: 'Bad Request'});
+        return;
+    }
+    callback({error: false, message: ''});
+}
+
 
 function Login(req, res)
 {

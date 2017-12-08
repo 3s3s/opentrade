@@ -21,12 +21,12 @@
                 <fieldset> 
                   <div id="login_username" class="form-group">
                     <div class="controls ">
-                      <input class="textinput textInput form-control" id="id_username" maxlength="100" name="username" placeholder="Username or email" type="text">
+                      <input class="textinput textInput form-control" id="id_username" maxlength="100" name="username" placeholder="Username or email" type="text" required>
                     </div> 
                   </div> 
                   <div id="login_password" class="form-group">
                     <div class="controls "> 
-                      <input class="textinput textInput form-control" id="id_password" name="password" placeholder="Password" type="password"> 
+                      <input class="textinput textInput form-control" id="id_password" name="password" placeholder="Password" type="password" required> 
                     </div> 
                   </div> 
                 </fieldset>
@@ -50,5 +50,6 @@
 
     <% include ../partials/footer %>
     <script src='/js/login.js'></script>
+    <script>onload();</script>
   </body>
 </html>
