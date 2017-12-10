@@ -1,7 +1,6 @@
 'use strict';
 
 exports.recaptcha_pub_key = "6LessjsUAAAAAKx2nOalcIXbcesEtxvj-jxjVbvk";
-exports.recaptcha_priv_key = require("./modules/private_constants").recaptcha_priv_key;
 
 exports.NOREPLY_EMAIL = 'no-reply@multicoins.org';
 
@@ -34,6 +33,9 @@ exports.dbTables = [
 ];
 
 exports.DEBUG_MODE = process.env.PORT ? true : false;
+
+exports.password_private_suffix = require("./modules/private_constants").password_private_suffix;
+exports.recaptcha_priv_key = require("./modules/private_constants").recaptcha_priv_key;
 
 exports.SSL_options = {
     key: require("fs").readFileSync(SSL_key),

@@ -2,6 +2,7 @@
 
 function onload()
 {
+    grecaptcha.reset();
     $('#submit-id-submit').click(event => {
         event.preventDefault();
         if (!validate())

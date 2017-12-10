@@ -2,6 +2,8 @@
 
 function onload()
 {
+    $('#second-step').hide();
+    grecaptcha.reset();
     $('#register-page-confirm-button').click(event => {
         event.preventDefault();
         if (!validate())
@@ -31,33 +33,25 @@ function validate()
     }
     
     return true;
-    
-   /* function GotRequiredField(field)
-    {
-        $('#signup_'+field).removeClass("has-danger");
-        $('#id_'+field).removeClass("is-invalid");
-        $('#error_'+field).remove();
-        
-        if ($("#id_"+field)[0].value != "")
-            return true;
-
-        $('#signup_'+field).addClass("has-danger");
-        $('#id_'+field).addClass("is-invalid");
-        $('<div id="error_'+field+'" class="invalid-feedback">This field is required.</div>').insertAfter('#id_'+field);
-        //$('<p id="error_'+field+'" class="form-text text-muted"><strong>This field is required.</strong></p>').insertAfter('#id_'+field)
-        return false;
-    }*/
 }
 
 function onSubmit(token)
 {
+    $('#first-step').hide();
+    $('#loader').show();
     $.post( "/signup", $( '#signup-form' ).serialize(), function( data ) {
         grecaptcha.reset();
+        $('#loader').hide();
+        $('#second-step').show();
+        
+        $('#fail').hide();
+        $('#success').hide();
         if (data.result != true)
         {
+            $('#fail').show();
             return;
         }
-        window.location.pathname = data.redirect || '/login';
+        $('#success').show();
     }, "json" );
     
     

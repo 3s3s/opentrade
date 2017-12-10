@@ -40,9 +40,9 @@ process.on('uncaughtException', function (err) {
   console.log("Node NOT Exiting...");
 });
 
-app.use(function (err, req, res, next) {
+/*app.use(function (err, req, res, next) {
     res.send(500, 'Something broke!');
-});
+});*/
 
 //console.log(JSON.stringify(process.versions));
 require("./database").Init();

@@ -3,10 +3,22 @@
 const utils = require("../../utils.js");
 const g_constants = require("../../constants.js");
 
+const mailer = require("./mailer.js");
+
+let emailChecker = {};
+
 exports.onPassworReset = function(req, res)
 {
     const responce = res;
     const request = req;
+
+    if (request.body && request.body['check'] && request.body['checked-email'] &&
+        emailChecker[request.body['check']] == request.body['checked-email'])
+    {
+        PasswordReset(req, res);
+        return;
+    }
+    
     utils.validateRecaptcha(req, ret => {
         if (ret.error)
         {
@@ -19,14 +31,48 @@ exports.onPassworReset = function(req, res)
                 PasswordResetError(request, responce, ret.message);
                 return;
             }
-            PasswordReset(req, res);
+            ConfirmPasswordReset(req, res);
         });
+    });
+}
+
+exports.onConfirmReset = function(req, res)
+{
+    const strCheck = req.url.substr(req.url.indexOf('/', 1)+1);
+    
+    console.log(strCheck);
+    console.log(JSON.stringify(emailChecker));
+    
+    if (!emailChecker[strCheck])
+    {
+        utils.render(res, 'pages/registration/new_password', {error: true, message: 'Invalid confirmation link.', strCheck: strCheck, email: ''});
+        return;
+    }
+    utils.render(res, 'pages/registration/new_password', {error: false, message: 'Almost ready. Type new password', strCheck: strCheck, email: emailChecker[strCheck]});
+    
+}
+
+function ConfirmPasswordReset(req, res)
+{
+    const strCheck = escape(utils.Hash(req.body['email']+Date.now()+Math.random()));
+    emailChecker[strCheck] = {email: req.body['email'], time: Date.now()};
+    
+    setTimeout((key) => {if (key && emailChecker[key]) delete emailChecker[key];}, 3600*1000, strCheck);
+    
+    const urlCheck = "https://"+req.headers.host+"/confirmpasswordreset/"+strCheck;
+    mailer.SendPasswordResetConfirmation(req.body['email'], "https://"+req.headers.host, urlCheck, ret => {
+        if (ret.error)
+        {
+            PasswordResetError(req, res, ret.message);
+            return;
+        }
+        utils.renderJSON(req, res, {result: true, message: {}});
     });
 }
 
 function validateForm(request, callback)
 {
-    if (!request.body || request.body['email'])
+    if (!request.body || !request.body['email'])
     {
         callback({error: true, message: 'Bad Request'});
         return;
@@ -47,5 +93,5 @@ function PasswordResetSuccess(request, responce, message)
 
 function PasswordResetError(request, responce, message)
 {
-    utils.renderJSON(responce, {result: false, message: message});
+    utils.renderJSON(request, responce, {result: false, message: message});
 }

@@ -4,6 +4,11 @@ function onload()
 {
     $('#button_reset').click(event => {
         event.preventDefault();
+        if ($('#new_password').length)
+        {
+            onSubmit();
+            return;
+        }
         if (!validate())
             return;
         grecaptcha.execute();
@@ -24,13 +29,18 @@ function validate()
 
 function onSubmit(token)
 {
+    $('#first-step').hide();
+    $('#loader').show();
     $.post( "/password_reset", $( '#password_reset_form' ).serialize(), function( data ) {
-        grecaptcha.reset();
+        if (token) 
+            grecaptcha.reset();
+        $('#loader').hide();
         if (data.result != true)
         {
+            $('#second-step-error').show();
             return;
         }
-        window.location.pathname = data.redirect || '/login';
+        $('#second-step-success').show();
     }, "json" );
     
     

@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
     
-    <% include ../partials/head %>
+    <% include ../../partials/head %>
   <body>
 
-    <% include ../partials/header %>
-
+    <% include ../../partials/header %>
+    <div id="loader" style="display:none;"></div>
 
     <div class="container">
-      <div class="row">
+      <div id='first-step' class="row">
         <div class="offset2 col-md-6">
           <div id="register-body">
             <h2 id="register_header">Register a new account</h2>
@@ -46,10 +46,21 @@
           <p>Forgot password? <a href="/password_reset">Reset your password</a></p>
         </div>
       </div>
+      <div id='second-step' class="row" style="display:none;">
+        <div class="offset2 col-md-6">
+          <div id='success' style="display:none;">
+            <h2>Almost done!</h2>
+            <p>Please check your E-mail for further instructions
+          </div>
+          <div id='fail' style="display:none;">
+            <h2>Something wrong ((</h2>
+            <p>Please try again.
+          </div>
+        </div>
+      </div>
     </div> <!-- /container -->
 
-
-    <% include ../partials/footer %>
+    <% include ../../partials/footer %>
     <script src='/js/signup.js'></script>
     <script>onload();</script>
   </body>

@@ -18,6 +18,9 @@ exports.handle = function(app)
     app.get('/password_reset', onPasswordReset);
     app.post('/password_reset', onPasswordResetPost);
     app.get('/support', onSupport);
+    
+    app.get('/checkmail/*', onCheckEmailForSignup);
+    app.get('/confirmpasswordreset/*', onConfirmPasswordReset);
 };
 
 function CommonRender(req, res, page)
@@ -39,7 +42,7 @@ function onMain(req, res)
 
 function onLogin(req, res)
 {
-    CommonRender(req, res, 'pages/login');
+    CommonRender(req, res, 'pages/registration/login');
 }
 function onLoginPost(req, res)
 {
@@ -48,7 +51,7 @@ function onLoginPost(req, res)
 
 function onSignup(req, res)
 {
-    CommonRender(req, res, 'pages/signup');
+    CommonRender(req, res, 'pages/registration/signup');
 }
 
 function onSignupPost(req, res)
@@ -58,7 +61,7 @@ function onSignupPost(req, res)
 
 function onPasswordReset(req, res)
 {
-    CommonRender(req, res, 'pages/password_reset');
+    CommonRender(req, res, 'pages/registration/password_reset');
 }
 function onPasswordResetPost(req, res)
 {
@@ -68,4 +71,14 @@ function onPasswordResetPost(req, res)
 function onSupport(req, res)
 {
     CommonRender(req, res, 'pages/support');
+}
+
+function onCheckEmailForSignup(req, res)
+{
+    signup.onCheckEmail(req, res);
+}
+
+function onConfirmPasswordReset(req, res)
+{
+    password.onConfirmReset(req, res);
 }
