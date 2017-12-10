@@ -3,11 +3,11 @@
 function onload()
 {
     $('#second-step').hide();
-    grecaptcha.reset();
     $('#register-page-confirm-button').click(event => {
         event.preventDefault();
         if (!validate())
             return;
+        grecaptcha.reset();
         grecaptcha.execute();
     });
 }

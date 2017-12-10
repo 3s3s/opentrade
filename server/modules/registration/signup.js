@@ -20,7 +20,7 @@ exports.onSubmit = function(req, res)
             SignupError(request, responce, ret.message);
             return;
         }
-        validateForm(ret => {
+        validateForm(request, ret => {
             if (ret.error)
             {
                 SignupError(request, responce, ret.message);
@@ -178,5 +178,5 @@ function SignupSuccess(request, responce, message)
 
 function SignupError(request, responce, message)
 {
-    utils.renderJSON(responce, {result: false, message: message});
+    utils.renderJSON(responce, responce, {result: false, message: message});
 }
