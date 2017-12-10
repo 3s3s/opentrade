@@ -8,15 +8,14 @@
     <div id="loader" style="display:none;"></div>
 
     <div class="container">
+      <div class='row'>
+        <div id='alert-fail' class="alert alert-danger col-md-12" role="alert" style="display:none;"></div>
+      </div>
       <div id='first-step' class="row">
         <div class="offset2 col-md-6">
           <div id="register-body">
             <h2 id="register_header">Register a new account</h2>
             <form id="signup-form" class="paper-form" action="/signup" method="post">
-              <div id='recaptcha' class="g-recaptcha"
-                      data-sitekey="<%-recaptcha%>"
-                      data-callback="onSubmit"
-                      data-size="invisible"></div>
               <div id="signup_username" class="form-group">
                 <label for="id_username" class="control-label  requiredField">Username<span class="asteriskField">*</span> </label>
                 <input class="textinput textInput form-control" id="id_username" maxlength="30" name="username" type="text" required>
@@ -37,6 +36,7 @@
                 <input class="textinput textInput form-control" id="id_password2" name="password2" type="password" required> 
                 <div class="invalid-feedback">The two password fields didn\'t match.</div>
               </div>
+              <div class="g-recaptcha" data-sitekey="6LeX5SQUAAAAAKTieM68Sz4MECO6kJXsSR7_sGP1"></div>
               <p>
                 <button class="btn btn-success" id="register-page-confirm-button">Register</button>
               </p>
@@ -54,7 +54,7 @@
           </div>
           <div id='fail' style="display:none;">
             <h2>Something wrong ((</h2>
-            <p>Please try again.
+            <p><a href='/signup'>Please try again.</a>
           </div>
         </div>
       </div>
@@ -62,6 +62,5 @@
 
     <% include ../../partials/footer %>
     <script src='/js/signup.js'></script>
-    <script>onload();</script>
   </body>
 </html>

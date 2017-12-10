@@ -1,17 +1,15 @@
 'use strict';
 
-function onload()
-{
-    grecaptcha.reset();
+$(() => {
     $('#submit-id-submit').click(event => {
         event.preventDefault();
         if (!validate())
             return;
-        grecaptcha.execute();
+        onSubmit();
     });
-}
+});
 
-function onSubmit(token)
+function onSubmit()
 {
     $.post( "/login", $( '.login-form' ).serialize(), function( data ) {
         grecaptcha.reset();

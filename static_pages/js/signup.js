@@ -1,16 +1,14 @@
 'use strict';
 
-function onload()
-{
+$(() => {
     $('#second-step').hide();
     $('#register-page-confirm-button').click(event => {
         event.preventDefault();
         if (!validate())
             return;
-        grecaptcha.reset();
-        grecaptcha.execute();
+        onSubmit();
     });
-}
+});
 
 function validate()
 {
@@ -35,12 +33,11 @@ function validate()
     return true;
 }
 
-function onSubmit(token)
+function onSubmit()
 {
     $('#first-step').hide();
     $('#loader').show();
     $.post( "/signup", $( '#signup-form' ).serialize(), function( data ) {
-        grecaptcha.reset();
         $('#loader').hide();
         $('#second-step').show();
         
@@ -48,11 +45,11 @@ function onSubmit(token)
         $('#success').hide();
         if (data.result != true)
         {
+            $('#alert-fail').text(data.message);
+            $('#alert-fail').show();
             $('#fail').show();
             return;
         }
         $('#success').show();
     }, "json" );
-    
-    
 }

@@ -1,7 +1,6 @@
 'use strict';
 
-function onload()
-{
+$(() => {
     $('#button_reset').click(event => {
         event.preventDefault();
         if ($('#new_password').length)
@@ -11,9 +10,9 @@ function onload()
         }
         if (!validate())
             return;
-        grecaptcha.execute();
+        onSubmit();
     });
-}
+});
 
 function validate()
 {
@@ -27,13 +26,11 @@ function validate()
     return true;
 }
 
-function onSubmit(token)
+function onSubmit()
 {
     $('#first-step').hide();
     $('#loader').show();
     $.post( "/password_reset", $( '#password_reset_form' ).serialize(), function( data ) {
-        if (token) 
-            grecaptcha.reset();
         $('#loader').hide();
         if (data.result != true)
         {
@@ -42,6 +39,4 @@ function onSubmit(token)
         }
         $('#second-step-success').show();
     }, "json" );
-    
-    
 }

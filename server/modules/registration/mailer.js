@@ -35,7 +35,7 @@ exports.SendSignupConfirmation = function(email, url, urlCheck, callback)
             isSent = true;
             if (err)
             {
-                callback({error: true, message: 'sendmail error'});
+                callback({error: true, message: 'Error with your mail server: '+err.message});
                 return;
             }
             callback({error: false, message: ''});

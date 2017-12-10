@@ -1,6 +1,6 @@
 'use strict';
 
-exports.recaptcha_pub_key = "6LessjsUAAAAAKx2nOalcIXbcesEtxvj-jxjVbvk";
+exports.recaptcha_pub_key = "6LeX5SQUAAAAAKTieM68Sz4MECO6kJXsSR7_sGP1";
 
 exports.NOREPLY_EMAIL = 'no-reply@multicoins.org';
 

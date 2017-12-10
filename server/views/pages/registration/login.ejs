@@ -14,10 +14,6 @@
               <form class="login-form" method="post" action="/login"> 
                 <% var redirect=''; try{redirect=path||'/'}catch(e){}%>
                 <input name='login_redirect' type='hidden' value='<%= redirect%>'>
-                <div id='recaptcha' class="g-recaptcha"
-                      data-sitekey="<%-recaptcha%>"
-                      data-callback="onSubmit"
-                      data-size="invisible"></div>
                 <fieldset> 
                   <div id="login_username" class="form-group">
                     <div class="controls ">
@@ -31,6 +27,7 @@
                   </div> 
                 </fieldset>
                 <div>
+                    <div class="g-recaptcha" data-sitekey="6LeX5SQUAAAAAKTieM68Sz4MECO6kJXsSR7_sGP1"></div>
                     <div class="form-group"> 
                         <div class="controls "> 
                           <input name="submit" value="Login" class="btn btn-primary" id="submit-id-submit" type="submit"> 
@@ -50,6 +47,5 @@
 
     <% include ../../partials/footer %>
     <script src='/js/login.js'></script>
-    <script>onload();</script>
   </body>
 </html>

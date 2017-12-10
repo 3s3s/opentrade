@@ -59,14 +59,14 @@ exports.onSubmit = function(req, res)
         IsUserExist(user, function(exist) {
             if (exist)
             {
-                SignupError(req, res, {error: true, message: 'Sorry. This user already registered'});
+                SignupError(req, res, 'Sorry. This user already registered');
                 return;
             }
                 
             IsEmailExist(email, function(exist){
                 if (exist)
                 {
-                    SignupError(req, res, {error: true, message: 'Sorry. This user already registered'});;
+                    SignupError(req, res, 'Sorry. This user already registered');
                     return;
                 }
                 SendConfirmEmail(req, res);
@@ -119,14 +119,14 @@ function Signup(req, res)
     IsUserExist(user, function(exist) {
         if (exist)
         {
-            SignupError(req, res, {error: true, message: 'Sorry. This user already registered'});
+            SignupError(req, res, 'Sorry. This user already registered');
             return;
         }
         
         IsEmailExist(email, function(exist){
             if (exist)
             {
-                SignupError(req, res, {error: true, message: 'Sorry. This user already registered'});;
+                SignupError(req, res, 'Sorry. This user already registered');
                 return;
             }
             InsertNewUser(user, email, password, res);
