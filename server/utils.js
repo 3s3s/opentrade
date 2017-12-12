@@ -11,6 +11,88 @@ exports.Hash = function(str)
 {
     return g_crypto.createHash("sha256").update(str).digest('base64');
 };
+exports.HashPassword = function(strPassword)
+{
+    return exports.Hash(strPassword + g_constants.password_private_suffix);
+};
+
+exports.UpdateSession = function(userid, token, callback)
+{
+    if (!userid) 
+    {
+        g_constants.dbTables['sessions'].delete("token='"+escape(token)+"'");
+        callback();
+        return;
+    }
+        
+    g_constants.dbTables['sessions'].insert(token, Date.now(), userid, err => {
+        if (!err) 
+        {
+            g_constants.dbTables['sessions'].delete('time < '+Date.now()+' - '+g_constants.SESSION_TIME);
+            callback();
+            return;
+        }
+        g_constants.dbTables['sessions'].update("time='"+Date.now()+"'", "token='"+escape(token)+"'", err => { 
+            callback(); 
+        });
+    });
+}
+
+exports.CheckUserExist = function(user, email, callback)
+{
+    IsUserExist(user, function(exist) {
+        if (exist.result == true)
+        {
+            callback({result: true, message: 'Sorry. This user already registered', info: exist.row});
+            return;
+        }
+                
+        IsEmailExist(email, function(exist){
+            if (exist.result == true)
+            {
+                callback({result: true, message: 'Sorry. This email already registered', info: exist.row});
+                return;
+            }
+            callback({result: false, message: ''});
+        });
+    });
+
+    function IsUserExist(user, callback)
+    {
+        if (!user.length)
+        {
+            callback({result: false});
+            return;
+        }
+        
+        g_constants.dbTables['users'].selectAll("ROWID AS id, *", "login='"+escape(user)+"'", "", function(error, rows) {
+            if (rows && rows.length)
+            {
+                callback({result: true, row: rows[0]});
+                return;
+            }
+            callback({result: false});
+        });
+    }
+    
+    function IsEmailExist(email, callback)
+    {
+        if (!email.length)
+        {
+            callback({result: false});
+            return;
+        }
+
+        g_constants.dbTables['users'].selectAll("ROWID AS id, *", "email='"+escape(email)+"'", "", function(error, rows) {
+            if (rows && rows.length)
+            {
+                callback({result: true, row: rows[0]});
+                return;
+            }
+            callback({result: false});
+        });
+    }
+}
 
 exports.ForEachSync = function(array, func, cbEndAll, cbEndOne)
 {
@@ -59,10 +141,56 @@ exports.ForEachSync = function(array, func, cbEndAll, cbEndOne)
     }
 };
 
-exports.GetSessionStatus = function(req, callback, key)
+exports.GetSessionStatus = function(req, callback)
 {
-    callback('');
+    req['token'] = exports.parseCookies(req)['token'] || '';
+    if (!req.token || !req.token.length)
+    {
+        callback({active: 'false'});
+        return;
+    }
+    
+    g_constants.dbTables['sessions'].selectAll('*', 'token="'+escape(req.token)+'"', '', (err, rows) => {
+        if (err || !rows || !rows.length)
+        {
+            callback({active: 'false'});
+            return;
+        }
+        if (Date.now() - rows[0].time > g_constants.SESSION_TIME)
+        {
+            g_constants.dbTables['sessions'].delete('time < '+Date.now()+' - '+g_constants.SESSION_TIME);
+            callback({active: 'false'});
+            return;
+        }
+        
+        const session = rows[0];
+        exports.UpdateSession(rows[0].userid, rows[0].token, () => {
+            g_constants.dbTables['users'].selectAll("ROWID AS id, *", "ROWID='"+rows[0].userid+"'", "", (error, rows) => {
+                if (err || !rows || !rows.length)
+                {
+                    callback({active: 'false'});
+                    return;
+                }
+                callback({active: 'true', token: session.token, user: rows[0].login, email: rows[0].email, id: rows[0].id, info: rows[0].info});
+            });
+        });
+    });
 }
+
+exports.parseCookies = function(request) {
+    if (!request || !request.headers)
+        return {};
+        
+    var list = {},
+        rc = request.headers.cookie;
+
+    rc && rc.split(';').forEach(function( cookie ) {
+        var parts = cookie.split('=');
+        list[parts.shift().trim()] = decodeURI(parts.join('='));
+    });
+
+    return list;
+};
 
 exports.render = function(responce, page, info)
 {

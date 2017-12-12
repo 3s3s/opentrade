@@ -15,9 +15,11 @@ function onSubmit()
         grecaptcha.reset();
         if (data.result != true)
         {
+            $('#alert-fail').html(data.message);
+            $('#alert-fail').show();
             return;
         }
-        window.location.pathname = data.redirect || '/';
+        window.location.href = "https://"+window.location.hostname+"/?token="+data.message.token;
     }, "json" );
     
     

@@ -7,6 +7,7 @@ const https = require('https');
 const util = require('util');
 const express = require('express');
 const bodyParser = require('body-parser');
+//var cookieParser = require('cookie-parser');
 
 const log_file = require("fs").createWriteStream(__dirname + '/debug.log', {flags : 'w'});
 const log_stdout = process.stdout;
@@ -21,6 +22,8 @@ app.use( bodyParser.json() );       // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
   extended: true
 })); 
+
+//app.use(cookieParser());
 
 var httpServer = http.createServer(app);
 var httpsServer = https.createServer(g_constants.SSL_options, app);

@@ -25,7 +25,7 @@ exports.SendSignupConfirmation = function(email, url, urlCheck, callback)
         let isSent = false;
         sendmail({
             from: g_constants.NOREPLY_EMAIL,
-            to: email,
+            to: unescape(email),
             subject: subject,
             html: body,
         }, 
@@ -50,7 +50,7 @@ exports.SendSignupConfirmation = function(email, url, urlCheck, callback)
 
 };
 
-exports.SendPasswordResetConfirmation = function(email, url, urlCheck, callback)
+exports.SendPasswordResetConfirmation = function(email, user, url, urlCheck, callback)
 {
     const subject = 'OpenTrade password reset confirmation';
 
@@ -58,7 +58,7 @@ exports.SendPasswordResetConfirmation = function(email, url, urlCheck, callback)
     const confirmHREF = "<a href='"+urlCheck+"'>Click here to reset your password</a>";
 
     const body = 
-        "<h3>Hello</h3>" +
+        "<h3>Hello "+unescape(user)+"</h3>" +
         "<p>Someone requested that the password for your OpenTrade account be reset</p>" +
         "<p>"+confirmHREF+"</p>" +
         "<p>If you didn't request this, you can ignore this e-mail or let us know. Your password won't change until you create a new password</p>" +
@@ -70,7 +70,7 @@ exports.SendPasswordResetConfirmation = function(email, url, urlCheck, callback)
         let isSent = false;
         sendmail({
             from: g_constants.NOREPLY_EMAIL,
-            to: email,
+            to: unescape(email),
             subject: subject,
             html: body,
         }, 

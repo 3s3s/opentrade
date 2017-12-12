@@ -26,7 +26,14 @@ exports.onSubmit = function(req, res)
                 SignupError(request, responce, ret.message);
                 return;
             }
-            CheckUserExist(request, responce);
+            utils.CheckUserExist(request.body['username'], request.body['email'], ret => {
+                if (ret.result == true)
+                {
+                    SignupError(request, responce, ret.message);
+                    return;
+                }
+                SendConfirmEmail(request, responce);
+            });
         });
     });
     
@@ -52,28 +59,6 @@ exports.onSubmit = function(req, res)
         callback({error: false, message: ''});
     }
     
-    function CheckUserExist(req, res)
-    {
-        const user = req.body['username'];
-        const email = req.body['email'];
-        IsUserExist(user, function(exist) {
-            if (exist)
-            {
-                SignupError(req, res, 'Sorry. This user already registered');
-                return;
-            }
-                
-            IsEmailExist(email, function(exist){
-                if (exist)
-                {
-                    SignupError(req, res, 'Sorry. This user already registered');
-                    return;
-                }
-                SendConfirmEmail(req, res);
-            });
-        });
-    }
-
     function SendConfirmEmail(req, res)
     {
         const strCheck = escape(utils.Hash(req.body['email']+Date.now()+Math.random()));
@@ -114,47 +99,15 @@ function Signup(req, res)
 {
     const user = req.body['username'];
     const email = req.body['email'];
-    const password = utils.Hash(req.body['password1'] + g_constants.password_private_suffix);
+    const password = utils.HashPassword(req.body['password1']);
     
-    IsUserExist(user, function(exist) {
-        if (exist)
+    utils.CheckUserExist(user, email, ret => {
+        if (ret.result == true)
         {
-            SignupError(req, res, 'Sorry. This user already registered');
+            SignupError(req, res, ret.message);
             return;
         }
-        
-        IsEmailExist(email, function(exist){
-            if (exist)
-            {
-                SignupError(req, res, 'Sorry. This user already registered');
-                return;
-            }
-            InsertNewUser(user, email, password, res);
-        });
-    });
-}
-
-function IsUserExist(user, callback)
-{
-    g_constants.dbTables['users'].selectAll("login", "login='"+escape(user)+"'", "", function(error, rows) {
-        if (rows && rows.length)
-        {
-            callback(true);
-            return;
-        }
-        callback(false);
-    });
-}
-
-function IsEmailExist(email, callback)
-{
-    g_constants.dbTables['users'].selectAll("login", "email='"+escape(email)+"'", "", function(error, rows) {
-        if (rows && rows.length)
-        {
-            callback(true);
-            return;
-        }
-        callback(false);
+        InsertNewUser(user, email, password, res);
     });
 }
 

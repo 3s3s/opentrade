@@ -3,6 +3,15 @@
 const utils = require("../../utils.js");
 const g_constants = require("../../constants.js");
 
+exports.onExit = function(req, res)
+{
+    const token = utils.parseCookies(req)['token'] || '';
+    
+    console.log('exit token='+token);
+    g_constants.dbTables['sessions'].delete('token="'+escape(token)+'"');
+    utils.render(res, 'pages/registration/logout', {status:{active: false}, redirect: '/login'});
+}
+
 exports.onSubmit = function(req, res)
 {
     const responce = res;
@@ -19,7 +28,19 @@ exports.onSubmit = function(req, res)
                 LoginError(request, responce, ret.message);
                 return;
             }
-            Login(req, res);
+            utils.CheckUserExist(request.body['username'], request.body['username'], ret => {
+                if (ret.result == false)
+                {
+                    LoginError(request, responce, 'Error: user not found');
+                    return;
+                }
+                if (utils.HashPassword(request.body['password']) != ret.info.password)
+                {
+                    LoginError(request, responce, 'Error: bad password');
+                    return;
+                }
+                Login(request, responce, ret.info);
+            });
         });
     });
 }
@@ -35,17 +56,22 @@ function validateForm(request, callback)
 }
 
 
-function Login(req, res)
+function Login(req, res, info)
 {
-    LoginSuccess(req, res, {});
+    const strToken = utils.Hash(Date.now() + Math.random() + info.password);
+    res.append('Set-Cookie', 'token='+strToken);
+    utils.UpdateSession(info.id, strToken, err => {
+        LoginSuccess(req, res, {token: strToken});
+    });
 }
 
 function LoginSuccess(request, responce, message)
 {
+    //responce.cookie('token' , message.token)
     utils.renderJSON(request, responce, {result: true, message: message});
 }
 
 function LoginError(request, responce, message)
 {
-    utils.renderJSON(responce, {result: false, message: message});
+    utils.renderJSON(request, responce, {result: false, message: message});
 }
