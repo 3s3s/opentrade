@@ -11,12 +11,9 @@
             </li>
         </ul>
         <ul class="navbar-nav ml-auto">
-            <li class="nav-item">
-              <a class="nav-link" href="/support"><%-__('Support')%></a>
-            </li>
-            <li class="navbar-item">
-              <a class="nav-link" href="/login"><%-__('Login')%></a>
-            </li>
+            <% var key = ''; try{if (status.active) key = status.token || '';}catch(e){}%>
+            <% if (!key.length) {%><% include ../partials/nav_not_logged %><% }%>
+            <% if (key.length) {%><%  include ../partials/nav_logged %><% }%>
         </ul>
     </div>
 </nav>

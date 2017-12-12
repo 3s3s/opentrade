@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+    
+    <% include ../../partials/head %>
+  <body>
+
+    <% include ../../partials/header %>
+
+
+    <div class="container">
+        <div class='row'>
+          <div id='alert-fail' class="alert alert-danger col-md-12" role="alert" style="display:none;"></div>
+        </div>
+        <div class="row">
+            <div class="offset2 col-md-6">
+              <h2 class="login-heading bold-text">Login</h2>
+              <form class="login-form" method="post" action="/login"> 
+                <% var redirect=''; try{redirect=path||'/'}catch(e){}%>
+                <input name='login_redirect' type='hidden' value='<%= redirect%>'>
+                <fieldset> 
+                  <div id="login_username" class="form-group">
+                    <div class="controls ">
+                      <input class="textinput textInput form-control" id="id_username" maxlength="100" name="username" placeholder="Username or email" type="text" required>
+                    </div> 
+                  </div> 
+                  <div id="login_password" class="form-group">
+                    <div class="controls "> 
+                      <input class="textinput textInput form-control" id="id_password" name="password" placeholder="Password" type="password" required> 
+                    </div> 
+                  </div> 
+                </fieldset>
+                <div>
+                    <div class="g-recaptcha" data-sitekey="6LeX5SQUAAAAAKTieM68Sz4MECO6kJXsSR7_sGP1"></div>
+                    <div class="form-group"> 
+                        <div class="controls "> 
+                          <input name="submit" value="Login" class="btn btn-primary" id="submit-id-submit" type="submit"> 
+                        </div>
+                    </div>
+                    <a class="login-form-a" href="/password_reset">Forgot your password?</a><br>
+                    <div class="login-link">
+                        New to OpenTrade?&nbsp;<a href="/signup">Sign up now!</a>
+                    </div>
+                </div> 
+              </form>
+            </div>
+        </div>
+
+    </div> <!-- /container -->
+
+
+    <% include ../../partials/footer %>
+    <script src='/js/login.js'></script>
+  </body>
+</html>

@@ -1,6 +1,7 @@
   <head>
     <script>
-      if (window.location.protocol != "https:" && window.location.protocol != "file:")
+      var debug = <%-debug%>;
+      if (!debug && window.location.protocol != "https:" && window.location.protocol != "file:")
           window.location.href = "https:" + window.location.href.substring(window.location.protocol.length);
     </script>
 
@@ -18,6 +19,7 @@
 
     <!-- Custom styles for this template -->
     <link href="/css/styles.css" rel="stylesheet">
-    <script src='https://www.google.com/recaptcha/api.js'></script>
+    
+    <script src='/js/utils.js'></script>
 
   </head>
