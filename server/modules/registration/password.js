@@ -3,7 +3,7 @@
 const utils = require("../../utils.js");
 const g_constants = require("../../constants.js");
 
-const mailer = require("./mailer.js");
+const mailer = require("../mailer.js");
 
 let emailChecker = {};
 
@@ -90,7 +90,7 @@ function validateForm(request, callback)
 
 function PasswordReset(req, res)
 {
-    const newPassword = utils.HashPassword(req.body['password1']);
+    const newPassword = escape(utils.HashPassword(req.body['password1']));
     const email = escape(req.body['checked-email']);
     
     g_constants.dbTables['users'].update("password='"+newPassword+"'", "email='"+email+"'", (err)=>{

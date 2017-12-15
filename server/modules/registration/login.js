@@ -34,7 +34,7 @@ exports.onSubmit = function(req, res)
                     LoginError(request, responce, 'Error: user not found');
                     return;
                 }
-                if (utils.HashPassword(request.body['password']) != ret.info.password)
+                if (utils.HashPassword(request.body['password']) != unescape(ret.info.password))
                 {
                     LoginError(request, responce, 'Error: bad password');
                     return;

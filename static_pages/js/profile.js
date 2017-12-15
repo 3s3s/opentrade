@@ -1,7 +1,8 @@
 'use strict';
 
 $(() => {
-    $('#submit-button').click(event => {
+    $('#second-step').hide();
+    $('#profile-page-confirm-button').click(event => {
         event.preventDefault();
         if (!validate())
             return;
@@ -11,7 +12,13 @@ $(() => {
 
 function validate()
 {
+    $('#id_password').removeClass("is-invalid");
+    $('#id_password1').removeClass("is-invalid");
+    $('#id_password2').removeClass("is-invalid");
     $('#id_email').removeClass("is-invalid");
+
+    if ($("#id_username")[0].value == "" || $("#id_password")[0].value.length == 0)
+        return false;
 
     if (!utils.ValidateEmail($("#id_email")[0].value))
     {
@@ -19,24 +26,27 @@ function validate()
         return false;
     }
 
+    if ($("#id_password1")[0].value != $("#id_password2")[0].value)
+    {
+        $('#id_password2').addClass("is-invalid");
+        return false;
+    }
+    
     return true;
 }
 
 function onSubmit()
 {
     $('#loader').show();
-    $.post( "/support", $( '#support-form' ).serialize(), function( data ) {
+    $.post( "/profile", $( '#profile-form' ).serialize(), function( data ) {
         $('#loader').hide();
-
-        grecaptcha.reset();
         if (data.result != true)
         {
             $('#alert-fail').text(data.message);
             $('#alert-fail').show();
             return;
         }
-        $('#alert-success').text('Success! Your message has been sent to support');
+        $('#alert-success').text(data.message);
         $('#alert-success').show();
-        $('id_firststep').hide();
     }, "json" );
 }

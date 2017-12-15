@@ -7,7 +7,7 @@ const https = require('https');
 const util = require('util');
 const express = require('express');
 const bodyParser = require('body-parser');
-//var cookieParser = require('cookie-parser');
+const WebSocketServer = require('ws').Server;
 
 const log_file = require("fs").createWriteStream(__dirname + '/debug.log', {flags : 'w'});
 const log_stdout = process.stdout;
@@ -33,10 +33,12 @@ httpsServer.listen(g_constants.my_portSSL, function(){
     console.log("SSL Proxy listening on port "+g_constants.my_portSSL);
 });
 
+g_constants.WEB_SOCKETS = new WebSocketServer({ server: httpsServer, clientTracking: true });
+ 
 app.use(express.static('../static_pages'));
 app.set('view engine', 'ejs');
 
-require('./reqHandler.js').handle(app);
+require('./reqHandler.js').handle(app, g_constants.WEB_SOCKETS);
 
 process.on('uncaughtException', function (err) {
   console.error(err.stack);
@@ -49,3 +51,4 @@ process.on('uncaughtException', function (err) {
 
 //console.log(JSON.stringify(process.versions));
 require("./database").Init();
+

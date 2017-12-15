@@ -2,6 +2,17 @@ body {
   min-height: 2000px;
   padding-top: 70px;
 }
+.container {
+    max-width: 100%;
+}
+.d-flex-chat {
+  overflow-y:scroll;
+}
+
+.bd-highlight {
+    background-color: rgba(86,61,124,.15);
+    border: 1px solid rgba(86,61,124,.15);
+}
 
 /* Center the loader */
 #loader {

@@ -1,6 +1,6 @@
 'use strict';
 
-const g_constants = require("../../constants.js");
+const g_constants = require("../constants.js");
 const sendmail = require('sendmail')();
 
 
@@ -87,6 +87,35 @@ exports.SendPasswordResetConfirmation = function(email, user, url, urlCheck, cal
             /*console.log(JSON.stringify(err));
             console.log(err && err.stack);
             console.dir(reply);*/
+        });        
+    }   
+    catch(err) {
+        callback({error: true, message: err.message})
+    }
+}
+
+exports.SendTicket = function(ticket, callback)
+{
+    try
+    {
+        let isSent = false;
+        sendmail({
+            from: g_constants.NOREPLY_EMAIL,
+            to: g_constants.SUPPORT_EMAIL,
+            replyTo: unescape(ticket.email),
+            subject: 'Ticket from OpenTrades #'+ticket.id+": "+unescape(ticket.subject),
+            html: unescape(ticket.message),
+        }, 
+        (err, reply) => {
+            if (isSent)
+                return;
+            isSent = true;
+            if (err)
+            {
+                callback({error: true, message: 'sendmail error'});
+                return;
+            }
+            callback({error: false, message: ''});
         });        
     }   
     catch(err) {

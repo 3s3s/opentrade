@@ -3,11 +3,14 @@
 const url = require('url');
 const utils = require("./utils");
 const index = require("./modules/index");
+const support = require("./modules/support");
 const login = require("./modules/registration/login");
 const signup = require("./modules/registration/signup");
 const password = require("./modules/registration/password");
+const profile = require("./modules/registration/profile");
+const wsocket = require("./modules/websocket");
 
-exports.handle = function(app)
+exports.handle = function(app, wss)
 {
     app.get('/', onMain);
     app.get('/index.html', onMain);
@@ -20,11 +23,16 @@ exports.handle = function(app)
     app.get('/password_reset', onPasswordReset);
     app.post('/password_reset', onPasswordResetPost);
     app.get('/support', onSupport);
+    app.post('/support', onSupportPost);
     app.get('/profile', onProfile);
+    app.post('/profile', onProfilePost);
     app.get('/wallet', onWallet);
+    
     
     app.get('/checkmail/*', onCheckEmailForSignup);
     app.get('/confirmpasswordreset/*', onConfirmPasswordReset);
+
+    wss.on('connection', onWebSocketConnection);
 };
 
 function CommonRender(req, res, page)
@@ -82,9 +90,18 @@ function onSupport(req, res)
     CommonRender(req, res, 'pages/support');
 }
 
+function onSupportPost(req, res)
+{
+    support.onSubmit(req, res);
+}
+
 function onProfile(req, res)
 {
     CommonRender(req, res, 'pages/user/profile');
+}
+function onProfilePost(req, res)
+{
+    profile.onProfileChange(req, res);
 }
 
 function onWallet(req, res)
@@ -100,4 +117,9 @@ function onCheckEmailForSignup(req, res)
 function onConfirmPasswordReset(req, res)
 {
     password.onConfirmReset(req, res);
+}
+
+function onWebSocketConnection(ws, req)
+{
+    wsocket.onConnect(ws, req);
 }

@@ -143,23 +143,25 @@ exports.ForEachSync = function(array, func, cbEndAll, cbEndOne)
 
 exports.GetSessionStatus = function(req, callback)
 {
+    const errMessage = 'Error: invalid session token (please login again)';
+    
     req['token'] = exports.parseCookies(req)['token'] || '';
     if (!req.token || !req.token.length)
     {
-        callback({active: 'false'});
+        callback({active: false, message: errMessage});
         return;
     }
     
     g_constants.dbTables['sessions'].selectAll('*', 'token="'+escape(req.token)+'"', '', (err, rows) => {
         if (err || !rows || !rows.length)
         {
-            callback({active: 'false'});
+            callback({active: false, message: errMessage});
             return;
         }
         if (Date.now() - rows[0].time > g_constants.SESSION_TIME)
         {
             g_constants.dbTables['sessions'].delete('time < '+Date.now()+' - '+g_constants.SESSION_TIME);
-            callback({active: 'false'});
+            callback({active: false, message: errMessage});
             return;
         }
         
@@ -168,10 +170,10 @@ exports.GetSessionStatus = function(req, callback)
             g_constants.dbTables['users'].selectAll("ROWID AS id, *", "ROWID='"+rows[0].userid+"'", "", (error, rows) => {
                 if (err || !rows || !rows.length)
                 {
-                    callback({active: 'false'});
+                    callback({active: false, message: errMessage});
                     return;
                 }
-                callback({active: 'true', token: session.token, user: rows[0].login, email: rows[0].email, id: rows[0].id, info: rows[0].info});
+                callback({active: true, token: session.token, user: rows[0].login, password: unescape(rows[0].password), email: rows[0].email, id: rows[0].id, info: rows[0].info});
             });
         });
     });
