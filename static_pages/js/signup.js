@@ -45,8 +45,9 @@ function onSubmit()
         $('#success').hide();
         if (data.result != true)
         {
-            $('#alert-fail').text(data.message);
-            $('#alert-fail').show();
+            //$('#alert-fail').text(data.message);
+           // $('#alert-fail').show(data.message);
+            utils.alert_fail(data.message);
             $('#fail').show();
             return;
         }

@@ -2,6 +2,7 @@
 
 const utils = require("../../utils.js");
 const g_constants = require("../../constants.js");
+var url = require('url');
 
 exports.onExit = function(req, res)
 {
@@ -34,7 +35,7 @@ exports.onSubmit = function(req, res)
                     LoginError(request, responce, 'Error: user not found');
                     return;
                 }
-                if (utils.HashPassword(request.body['password']) != ret.info.password)
+                if (utils.HashPassword(request.body['password']) != unescape(ret.info.password))
                 {
                     LoginError(request, responce, 'Error: bad password');
                     return;
@@ -68,7 +69,7 @@ function Login(req, res, info)
 function LoginSuccess(request, responce, message)
 {
     //responce.cookie('token' , message.token)
-    utils.renderJSON(request, responce, {result: true, message: message});
+    utils.renderJSON(request, responce, {result: true, message: message, redirect: request.body['redirect'] || "/"});
 }
 
 function LoginError(request, responce, message)

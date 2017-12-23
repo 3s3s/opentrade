@@ -2,6 +2,25 @@ body {
   min-height: 2000px;
   padding-top: 70px;
 }
+.container {
+    max-width: 100%;
+}
+.d-flex-chat {
+  overflow-y:scroll;
+}
+.d-flex-market {
+  overflow-x:scroll;
+}
+
+.my-info {
+  overflow-y:scroll;
+  overflow-x:scroll;
+}
+
+.bd-highlight {
+    background-color: rgba(230,230,230,.15);
+    border: 1px solid rgba(86,61,124,.15);
+}
 
 /* Center the loader */
 #loader {

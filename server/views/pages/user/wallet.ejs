@@ -6,9 +6,44 @@
 
     <% include ../../partials/header %>
 
+    <% var messageSuccess = ""; var messageFail = "";%>
+    <% try{ %>
+    <%  if (error) messageFail = message; %>
+    <%  if (!error) messageSuccess = message; %>
+    <% }catch(e){console.log(e.message)}%>
+    
+    <input id='id_server_message_success' type='hidden' value="<%= escape(messageSuccess) %>">
+    <input id='id_server_message_fail' type='hidden' value="<%= escape(messageFail) %>">
 
     <div class="container">
+        <% include ../../partials/alerts %>
         <h2>Wallet</h2>
+        <div class='container'>
+            <div class='row'>
+                <div class="offset2 col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            Balance
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-striped table-bordered">
+                              <thead>
+                                <tr>
+                                  <th scope="col">Currency</th>
+                                  <th scope="col">Balance</th>
+                                  <th scope="col">Awaiting deposit</th>
+                                  <th scope="col">Reserved in orders</th>
+                                  <th scope="col">Wallet Management</th>
+                                </tr>
+                              </thead>
+                              <tbody id='id_wallet_body'>
+                              </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div> <!-- /container -->
 
 

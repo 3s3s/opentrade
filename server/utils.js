@@ -6,6 +6,7 @@ const g_crypto = require('crypto');
 const http = require('http');
 const https = require('https');
 const url = require('url');
+var fs = require('fs');
 
 exports.Hash = function(str)
 {
@@ -15,6 +16,38 @@ exports.HashPassword = function(strPassword)
 {
     return exports.Hash(strPassword + g_constants.password_private_suffix);
 };
+
+exports.Encrypt = function(str)
+{
+    const algorithm = 'aes256';
+    const inputEncoding = 'utf8';
+    const outputEncoding = 'hex';
+
+    const key = g_constants.password_private_suffix;
+    
+    const cipher = g_crypto.createCipher(algorithm, key);
+    
+    let ciphered = cipher.update(escape(str), inputEncoding, outputEncoding);
+    ciphered += cipher.final(outputEncoding);
+
+    return ciphered;
+}
+
+exports.Decrypt = function(str)
+{
+    const algorithm = 'aes256';
+    const inputEncoding = 'utf8';
+    const outputEncoding = 'hex';
+
+    const key = g_constants.password_private_suffix;
+    
+    const decipher = g_crypto.createDecipher(algorithm, key);
+    
+    let deciphered = decipher.update(str, outputEncoding, inputEncoding);
+    deciphered += decipher.final(inputEncoding);
+
+    return unescape(deciphered);
+}
 
 exports.UpdateSession = function(userid, token, callback)
 {
@@ -143,23 +176,25 @@ exports.ForEachSync = function(array, func, cbEndAll, cbEndOne)
 
 exports.GetSessionStatus = function(req, callback)
 {
+    const errMessage = 'Error: invalid session token (please login again)';
+    
     req['token'] = exports.parseCookies(req)['token'] || '';
     if (!req.token || !req.token.length)
     {
-        callback({active: 'false'});
+        callback({active: false, message: errMessage});
         return;
     }
     
     g_constants.dbTables['sessions'].selectAll('*', 'token="'+escape(req.token)+'"', '', (err, rows) => {
         if (err || !rows || !rows.length)
         {
-            callback({active: 'false'});
+            callback({active: false, message: errMessage});
             return;
         }
         if (Date.now() - rows[0].time > g_constants.SESSION_TIME)
         {
             g_constants.dbTables['sessions'].delete('time < '+Date.now()+' - '+g_constants.SESSION_TIME);
-            callback({active: 'false'});
+            callback({active: false, message: errMessage});
             return;
         }
         
@@ -168,10 +203,10 @@ exports.GetSessionStatus = function(req, callback)
             g_constants.dbTables['users'].selectAll("ROWID AS id, *", "ROWID='"+rows[0].userid+"'", "", (error, rows) => {
                 if (err || !rows || !rows.length)
                 {
-                    callback({active: 'false'});
+                    callback({active: false, message: errMessage});
                     return;
                 }
-                callback({active: 'true', token: session.token, user: rows[0].login, email: rows[0].email, id: rows[0].id, info: rows[0].info});
+                callback({active: true, token: session.token, user: rows[0].login, password: unescape(rows[0].password), email: rows[0].email, id: rows[0].id, info: rows[0].info});
             });
         });
     });
@@ -191,6 +226,11 @@ exports.parseCookies = function(request) {
 
     return list;
 };
+
+exports.RedirectToLogin = function(req, res, returnPath)
+{
+    res.render("pages/redirect", {path: "/login?redirect="+escape(returnPath)});
+}
 
 exports.render = function(responce, page, info)
 {
@@ -238,6 +278,42 @@ exports.postJSON = function(query, body, callback)
         }
     };
     exports.getHTTP(options, callback);
+};
+
+exports.postString = function(host, port, path, headers, strBody, callback) 
+{
+    const options = { 
+        hostname: host, 
+        port: port.nPort, 
+        path: path, 
+        method: 'POST', 
+        headers: headers
+    }; 
+    
+    var proto = (port.nPort == 443 || port.name.indexOf('https')==0) ? https : http;
+        
+    var req = proto.request(options, function(res) { 
+        console.log('Status: ' + res.statusCode); 
+        console.log('Headers: ' + JSON.stringify(res.headers)); 
+        
+        res.setEncoding('utf8'); 
+        
+		var res_data = '';
+		res.on('data', function (chunk) {
+			res_data += chunk;
+		});
+		res.on('end', function() {
+			callback({'success': 'success', 'data': res_data});
+		});	
+    }); 
+    
+    req.on('error', function(e) { 
+        console.log('problem with request: ' + e.message); 
+        callback({'success': false, message: 'problem with request: ' + e.message});
+    }); 
+    
+    // write data to request body 
+    req.end(strBody);    
 };
 
 exports.postHTTP = function(query, headers, callback)
@@ -312,7 +388,7 @@ exports.ValidateEmail = function(text)
     if (!text || !text.length)
         return false;
             
-    const mailformat = /^[-a-z0-9!#$%&'*+/=?^_`{|}~]+(?:\.[-a-z0-9!#$%&'*+/=?^_`{|}~]+)*@(?:[a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?\.)*(?:aero|arpa|asia|biz|cat|com|coop|edu|gov|info|int|jobs|mil|mobi|museum|name|net|org|pro|tel|travel|[a-z][a-z])$/;
+    const mailformat = /^[-a-z0-9!#$%&'*+/=?^_`{|}~]+(?:\.[-a-z0-9!#$%&'*+/=?^_`{|}~]+)*@(?:[a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?\.)*(?:aero|arpa|asia|biz|cat|com|coop|club|edu|gov|info|int|jobs|mil|mobi|museum|name|net|org|pro|tel|travel|[a-z][a-z])$/;
     return text.match(mailformat);
 }
 
@@ -338,4 +414,42 @@ exports.validateRecaptcha = function(request, callback)
             callback(ret);
         }
     );
+}
+
+// Where fileName is name of the file and response is Node.js Reponse. 
+const responseFile = (path, response, type) => {
+  // Check if file specified by the filePath exists 
+  fs.exists(path, function(exists){
+      if (exists) {     
+        // Content-type is very interesting part that guarantee that
+        // Web browser will handle response in an appropriate manner.
+        response.writeHead(200, {
+          "Content-Type": type || "application/javascript"
+        });
+        fs.createReadStream(path).pipe(response);
+      } else {
+        response.writeHead(400, {"Content-Type": "text/plain"});
+        response.end("ERROR File does not exist");
+      }
+    });
+  }
+
+
+exports.LoadPrivateJS = function(req, res, path)
+{
+    try {
+        exports.GetSessionStatus(req, status => {
+            if (status.id != 1)
+            {
+                responseFile('./views/pages/private_js/empty.js'+path, res);
+                //exports.render(res, 'pages/private_js/empty.js', {path : url.parse(req.url, true).path, status : status});
+                return;
+            }
+            responseFile('./views/pages'+path, res);
+            //exports.render(res, 'pages'+path, {path : url.parse(req.url, true).path, status : status});
+        });
+    } 
+    catch(e) {
+        console.log(e.message);
+    }
 }

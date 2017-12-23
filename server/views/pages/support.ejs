@@ -8,7 +8,34 @@
 
 
     <div class="container">
-      <h1>Support</h1>
+      <% include ../partials/alerts %>
+      <div id='id_firststep' class='row'>
+        <div class="offset2 col-md-6">
+          <h1>Support</h1>
+          <form id="support-form" class="paper-form" action="/support" method="post">
+            <h3>Have questions? Contact us:</h3>
+              <div class="form-group">
+                <label for="id_email" class="control-label  requiredField">Email<span class="asteriskField">*</span> </label>
+                <input class="textinput textInput form-control" id="id_email" maxlength="30" name="email" type="email" required>
+                <div class="invalid-feedback">This field is required.</div>
+              </div>
+              <div class="form-group">
+                <label for="id_subject" class="control-label  requiredField">Subject<span class="asteriskField">*</span> </label>
+                <input class="textinput textInput form-control" id="id_subject" maxlength="30" name="subject" type="text" required>
+                <div class="invalid-feedback">This field is required.</div>
+              </div>
+              <div class="form-group">
+                <label for="id_message" class="control-label  requiredField">Message<span class="asteriskField">*</span> </label>
+                <textarea class="form-control" id="id_mesage" name='message' rows="10" required></textarea>
+                <div class="invalid-feedback">This field is required.</div>
+              </div>
+              <div class="g-recaptcha" data-sitekey="6LeX5SQUAAAAAKTieM68Sz4MECO6kJXsSR7_sGP1"></div>
+              <p>
+                <button class="btn btn-success" id="submit-button">Submit</button>
+              </p>
+          </form>
+        </div>
+      </div>
 
     </div> <!-- /container -->
 

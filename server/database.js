@@ -21,6 +21,8 @@ exports.Init = function(callback)
     RunDBTransaction();
     setInterval(RunDBTransaction, 5000);
     
+    //g_db.run('DROP TABLE balance');
+    
     function CreateIndex(indexObject)
     {
         g_db.run("CREATE INDEX IF NOT EXISTS "+indexObject.name+" ON "+indexObject.table+" ("+indexObject.fields+")", function(err){

@@ -8,8 +8,56 @@
 
 
     <div class="container">
+      <% include ../partials/alerts %>
       <input id='id_token' type='hidden' <% var value = ''; try{if (status.token) value = "value='"+status.token+"'"}catch(e){} %> <%- value %>>
-      <h1>Trade</h1>
+      <div class='row'>
+        <div class="col-md-3">
+          <div class="card">
+            <div class="card-header">
+              Market
+            </div>
+            <div class="card-body p-0">
+              <div id='market-flex' class="d-flex d-flex-market align-items-start bd-highlight mb-0" style="height: 150px;">
+                <div id='market-container' class='container'>
+                  <table class="table table-striped">
+                    <thead>
+                      <tr>
+                        <th scope="col">Coin</th>
+                        <th scope="col">Price</th>
+                        <th scope="col">Vol</th>
+                        <th scope="col">Ch</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+        </div>
+        <div class="col-md-3">
+          <div class="card">
+            <div class="card-header">
+              Chat
+            </div>
+            <div class="card-body p-0">
+              <div id='chat-flex' class="d-flex d-flex-chat align-items-start bd-highlight mb-0" style="height: 300px">
+                <div id='chat-container' class='container'>
+                </div>
+              </div>
+              <div class="input-group">
+                <input id='chat_message' type="text" class="form-control" >
+                <span class="input-group-btn">
+                  <button id='button_chat' class="btn btn-secondary" type="button">Submit</button>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
     </div> <!-- /container -->
 

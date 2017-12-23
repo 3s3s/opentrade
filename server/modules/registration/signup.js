@@ -1,11 +1,9 @@
 'use strict';
 
-const url = require('url');
-
 const utils = require("../../utils.js");
 const g_constants = require("../../constants.js");
 
-const mailer = require("./mailer.js");
+const mailer = require("../mailer.js");
 
 let emailChecker = {};
 
@@ -131,5 +129,5 @@ function SignupSuccess(request, responce, message)
 
 function SignupError(request, responce, message)
 {
-    utils.renderJSON(responce, responce, {result: false, message: message});
+    utils.renderJSON(request, responce, {result: false, message: message});
 }

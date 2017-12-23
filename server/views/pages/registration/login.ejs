@@ -6,17 +6,14 @@
 
     <% include ../../partials/header %>
 
-
     <div class="container">
-        <div class='row'>
-          <div id='alert-fail' class="alert alert-danger col-md-12" role="alert" style="display:none;"></div>
-        </div>
+        <% include ../../partials/alerts %>
         <div class="row">
             <div class="offset2 col-md-6">
               <h2 class="login-heading bold-text">Login</h2>
               <form class="login-form" method="post" action="/login"> 
-                <% var redirect=''; try{redirect=path||'/'}catch(e){}%>
-                <input name='login_redirect' type='hidden' value='<%= redirect%>'>
+                <% var redirect='/'; try{redirect=path_redirect}catch(e){}%>
+                <input id='id_redirect' name='login_redirect' type='hidden' value='<%= redirect%>'>
                 <fieldset> 
                   <div id="login_username" class="form-group">
                     <div class="controls ">
