@@ -57,6 +57,7 @@ exports.onConfirmReset = function(req, res)
         return;
     }
     utils.render(res, 'pages/registration/new_password', {error: false, message: 'Almost ready. Type new password', strCheck: strCheck, email: emailChecker[strCheck].email});
+    delete emailChecker[strCheck];
 }
 
 function ConfirmPasswordReset(req, res, user)

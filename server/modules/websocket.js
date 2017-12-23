@@ -2,7 +2,9 @@
 
 const utils = require("../utils.js");
 const g_constants = require("../constants.js");
-const chat = require("./users/chat")
+const chat = require("./users/chat");
+const wallet = require("./users/wallet");
+const coins = require("./admin/coins");
 
 exports.onConnect = function(ws, req)
 {
@@ -34,6 +36,7 @@ exports.onConnect = function(ws, req)
 
 function SendResponce(ws, req, client)
 {
+    ws['client_request'] = client.request;
     if (client.request == 'getchat')
     {
         chat.onRequestMessages(ws);
@@ -42,6 +45,26 @@ function SendResponce(ws, req, client)
     if (client.request == 'postchat')
     {
         chat.onNewMessage(ws, req, client.message);
+        return;
+    }
+    if (client.request == 'admincoins')
+    {
+        coins.onGetCoins(ws, req);
+        return;
+    }
+    if (client.request == 'newcoin')
+    {
+        coins.onNewCoin(ws, req, client.message);
+        return;
+    }
+    if (client.request == "rpc_test")
+    {
+        coins.onTestRPC(ws, req, client.message);
+        return;
+    }
+    if (client.request == "getwallet")
+    {
+        wallet.onGetWallet(ws, req);
         return;
     }
     SendError(ws, 'Error: invalid request');

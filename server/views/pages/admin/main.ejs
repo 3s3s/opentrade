@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+    
+    <% include ../../partials/head %>
+  <body>
+
+    <% include ../../partials/header %>
+
+    <% include ../../partials/alerts %>
+    
+    <ul class="nav nav-tabs" id="adminTabs" role="tablist">
+      <li class="nav-item">
+        <a class="nav-link active" id="users-tab" data-toggle="tab" href="#users" role="tab" aria-controls="users" aria-selected="true">Users</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="support-tab" data-toggle="tab" href="#support" role="tab" aria-controls="support" aria-selected="false">Support</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="coins-tab" data-toggle="tab" href="#coins" role="tab" aria-controls="coins" aria-selected="false">Coins</a>
+      </li>
+    </ul>
+    <div class="tab-content" id="adminTabsContent">
+      <div class="tab-pane fade show active" id="users" role="tabpanel" aria-labelledby="users-tab">Users</div>
+      <div class="tab-pane fade" id="support" role="tabpanel" aria-labelledby="support-tab">
+      </div>
+      <div class="tab-pane fade" id="coins" role="tabpanel" aria-labelledby="coins-tab">
+        <div class='container'>
+          <div class='row'>
+            <div class='col-md-6'>
+
+                <form id='form-add-coin'>
+                  <div class="form-group row p-3">
+                      <label class="col-auto col-form-label" for="coins-select">Coins</label>
+                      <div class="form-group col-md-3">
+                          <select class="form-control" id="coins-select">
+                          </select>
+                      </div>
+                      <div class="col-auto">
+                        <button type="submit" class="btn btn-primary">Add coin</button>
+                      </div>
+                  </div>
+              </form>
+      
+              <form id='form-edit-coin' style="display:none;">
+                  <div class="form-group">
+                      <label class="col-form-label" for="coin-ticker">Ticker</label>
+                      <input class="textinput textInput form-control" id="coin-ticker" maxlength="4" name="ticker" type="text" required>
+                  </div>
+                  <div class="form-group">
+                      <label class="col-form-label" for="coin-icon">Icon URL</label>
+                      <input class="textinput textInput form-control" id="coin-icon" maxlength="1000" name="icon" type="text" required>
+                  </div>
+                  <div class="form-group">
+                      <label class="col-form-label" for="coin-rpc_address">RPC address</label>
+                      <input class="textinput textInput form-control" id="coin-rpc_address" maxlength="1000" name="rpc_address" type="text" placeholder='http://127.0.0.1:33332' required>
+                  </div>
+                  <div class="form-group">
+                      <label class="col-form-label" for="coin-rpc_user">RPC user</label>
+                      <input class="textinput textInput form-control" id="coin-rpc_user" maxlength="100" name="rpc_user" type="text" required>
+                  </div>
+                  <div class="form-group">
+                      <label class="col-form-label" for="coin-rpc_password">RPC password</label>
+                      <input class="textinput textInput form-control" id="coin-rpc_password" maxlength="1000" name="rpc_password" type="password" required>
+                  </div>
+                  <div class="form-group">
+                      <label class="col-form-label" for="coin-info">JSON info</label>
+                      <input class="textinput textInput form-control" id="coin-info" maxlength="10000" name="info" type="text" required>
+                  </div>
+                  <button type="submit" class="btn btn-primary">Save</button>
+              </form>
+
+            </div>
+            <div id='rpc-test' class='col-md-6'>
+              <h2>RPC test</h2>
+              <form id='form-rpc_test'>
+                  <div class="form-group">
+                      <label class="col-form-label" for="coin-rpc_command">Command</label>
+                      <input class="textinput textInput form-control" id="coin-rpc_command" maxlength="50" name="rpc_command" type="text" placeholder='getbalance' value='getbalance' required>
+                  </div>
+                  <div class="form-group">
+                      <label class="col-form-label" for="coin-rpc_params">Parameters</label>
+                      <input class="textinput textInput form-control" id="coin-rpc_params" maxlength="3000" name="rpc_command" type="text" placeholder='getbalance' value='[]' required>
+                  </div>
+                  <button type="submit" class="btn btn-primary">Send</button>
+              </form>
+              
+              <div id='rpc_responce' class="jumbotron my-info">
+              </div>              
+               
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+
+    <% include ../../partials/footer %>
+    <script src='/private_js/admin.js'></script>
+  </body>
+</html>

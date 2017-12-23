@@ -48,6 +48,8 @@ function AddChatMessage(message)
 {
   const user = $('<a href="#"></a>').text(message.user+":");
   const text = $('<span class="p-2"></span>').text(message.message.text);
-  $('#chat-container').append($('<div class="row"></div>').append($('<div class="col-md-12"></div>').append(user).append(text)))
+  $('#chat-container').append($('<div class="row chat_row"></div>').append($('<div class="col-md-12"></div>').append(user).append(text)));
+  
+  $('#chat-flex').animate({scrollTop: $('#chat-container').height()}, 10);
 }
 

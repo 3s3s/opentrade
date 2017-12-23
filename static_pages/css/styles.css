@@ -8,9 +8,17 @@ body {
 .d-flex-chat {
   overflow-y:scroll;
 }
+.d-flex-market {
+  overflow-x:scroll;
+}
+
+.my-info {
+  overflow-y:scroll;
+  overflow-x:scroll;
+}
 
 .bd-highlight {
-    background-color: rgba(86,61,124,.15);
+    background-color: rgba(230,230,230,.15);
     border: 1px solid rgba(86,61,124,.15);
 }
 

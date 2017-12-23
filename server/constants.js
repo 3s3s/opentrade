@@ -49,10 +49,43 @@ exports.dbTables = [
           ['state', 'TEXT']
         ]
    },
+   {
+      'name' : 'coins',
+      'cols' : [
+          ['name', 'TEXT UNIQUE PRIMARY KEY'],
+          ['ticker', 'TEXT UNIQUE'],
+          ['icon', 'TEXT'],
+          ['address', 'TEXT'],
+          ['rpc_user', 'TEXT'],
+          ['rpc_password', 'TEXT'],
+          ['info', 'TEXT']
+        ]
+   },
+   {
+      'name' : 'balance',
+      'cols' : [
+          ['userID', 'TEXT UNIQUE PRIMARY KEY'],
+          ['coin', 'TEXT'],
+          ['balance', 'TEXT'],
+          ['history', 'TEXT'],
+          ['info', 'TEXT']
+        ],
+        'commands' : 'FOREIGN KEY(coin) REFERENCES coins(name)'
+   }
 ];
+
+exports.dbIndexes = [
+  {
+    'name' : 'uid',
+    'table' : 'balance',
+    'fields' : 'userID'
+  }
+];
+
 
 exports.DEBUG_MODE = process.env.PORT ? true : false;
 exports.WEB_SOCKETS = null;
+exports.ExchangeBalanceAccountID = 0;
 
 ////////////////////////////////////////////////////////////////////////////////////
 // Private constants

@@ -31,12 +31,14 @@ function onSubmit()
         grecaptcha.reset();
         if (data.result != true)
         {
-            $('#alert-fail').text(data.message);
-            $('#alert-fail').show();
+            //$('#alert-fail').text(data.message);
+            //$('#alert-fail').show();
+            utils.alert_fail(data.message);
             return;
         }
-        $('#alert-success').text('Success! Your message has been sent to support');
-        $('#alert-success').show();
+        //$('#alert-success').text('Success! Your message has been sent to support');
+        //$('#alert-success').show();
+        utils.alert_success('Success! Your message has been sent to support');
         $('id_firststep').hide();
     }, "json" );
 }

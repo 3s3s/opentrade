@@ -42,11 +42,13 @@ function onSubmit()
         $('#loader').hide();
         if (data.result != true)
         {
-            $('#alert-fail').text(data.message);
-            $('#alert-fail').show();
+            //$('#alert-fail').text(data.message);
+            //$('#alert-fail').show();
+            utils.alert_fail(data.message);
             return;
         }
-        $('#alert-success').text(data.message);
-        $('#alert-success').show();
+        //$('#alert-success').text(data.message);
+        //$('#alert-success').show();
+        utils.alert_success(data.message);
     }, "json" );
 }

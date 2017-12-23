@@ -54,7 +54,6 @@ exports.SendPasswordResetConfirmation = function(email, user, url, urlCheck, cal
 {
     const subject = 'OpenTrade password reset confirmation';
 
-    const urlHREF = "<a href='"+url+"'>"+url+"</a>";
     const confirmHREF = "<a href='"+urlCheck+"'>Click here to reset your password</a>";
 
     const body = 
@@ -105,6 +104,47 @@ exports.SendTicket = function(ticket, callback)
             replyTo: unescape(ticket.email),
             subject: 'Ticket from OpenTrades #'+ticket.id+": "+unescape(ticket.subject),
             html: unescape(ticket.message),
+        }, 
+        (err, reply) => {
+            if (isSent)
+                return;
+            isSent = true;
+            if (err)
+            {
+                callback({error: true, message: 'sendmail error'});
+                return;
+            }
+            callback({error: false, message: ''});
+        });        
+    }   
+    catch(err) {
+        callback({error: true, message: err.message})
+    }
+    
+}
+
+exports.SendWithdrawConfirmation = function(email, user, url, urlCheck, callback)
+{
+    const subject = 'OpenTrade withdraw confirmation';
+
+    const confirmHREF = "<a href='"+urlCheck+"'>Click here to confirm withdraw</a>";
+
+    const body = 
+        "<h3>Hello "+unescape(user)+"</h3>" +
+        "<p>Someone requested withdraw from your OpenTrade balance</p>" +
+        "<p>"+confirmHREF+"</p>" +
+        "<p>If you didn't request this, you can ignore this e-mail or let us know.</p>" +
+        "<p>This is an automated message. Please, do not reply to it.</p>" +
+        "</br></br>Best Regards,<br>OpenTrade Team";
+    
+    try
+    {
+        let isSent = false;
+        sendmail({
+            from: g_constants.NOREPLY_EMAIL,
+            to: unescape(email),
+            subject: subject,
+            html: body,
         }, 
         (err, reply) => {
             if (isSent)
