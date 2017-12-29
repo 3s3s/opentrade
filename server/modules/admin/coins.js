@@ -94,3 +94,4 @@ function SendRPC(coin, command, params, callback)
         RPC.send(rows[0], command, params, callback);
     });
 }
+

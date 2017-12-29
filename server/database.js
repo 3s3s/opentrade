@@ -21,7 +21,47 @@ exports.Init = function(callback)
     RunDBTransaction();
     setInterval(RunDBTransaction, 5000);
     
-    //g_db.run('DROP TABLE balance');
+/*    g_db.run(
+'PRAGMA foreign_keys = 0;'+
+
+'CREATE TABLE sqlitestudio_temp_table AS SELECT * FROM balance;'+
+
+'DROP TABLE balance;'+
+
+'CREATE TABLE balance ('+
+'    userID  TEXT PRIMARY KEY,'+
+'    coin    TEXT,'+
+'    balance TEXT,'+
+'    history TEXT,'+
+'    info    TEXT,'+
+'    FOREIGN KEY ('+
+'        coin'+
+'    )'+
+'    REFERENCES coins (name)'+
+');'+
+
+'INSERT INTO balance ('+
+'                        userID,'+
+'                        coin,'+
+'                        balance,'+
+'                        history,'+
+'                        info'+
+'                    )'+
+'                    SELECT userID,'+
+'                           coin,'+
+'                           balance,'+
+'                           history,'+
+'                           info'+
+'                      FROM sqlitestudio_temp_table;'+
+
+'DROP TABLE sqlitestudio_temp_table;'+
+
+'CREATE INDEX uid ON balance ('+
+'    userID'+
+');'+
+
+'PRAGMA foreign_keys = 1;'
+        );*/
     
     function CreateIndex(indexObject)
     {
@@ -262,7 +302,7 @@ exports.RunTransactions = function()
 exports.BeginTransaction = function (callback)
 {
     g_db.run('BEGIN TRANSACTION', function(err){
-        if (err) throw ("BeginTransaction error: " + err.message);
+        //if (err) throw ("BeginTransaction error: " + err.message);
         if (callback) callback(err);
     });
 };
@@ -270,7 +310,7 @@ exports.BeginTransaction = function (callback)
 exports.EndTransaction = function(callback)
 {
     g_db.run('END TRANSACTION', function(err){
-        if (err) throw ("EndTransaction error: " + err.message);
+        //if (err) throw ("EndTransaction error: " + err.message);
         if (callback) callback(err);
      });
 };

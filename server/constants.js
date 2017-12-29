@@ -64,14 +64,23 @@ exports.dbTables = [
    {
       'name' : 'balance',
       'cols' : [
-          ['userID', 'TEXT UNIQUE PRIMARY KEY'],
+          ['userID', 'TEXT PRIMARY KEY'],
           ['coin', 'TEXT'],
           ['balance', 'TEXT'],
           ['history', 'TEXT'],
           ['info', 'TEXT']
         ],
         'commands' : 'FOREIGN KEY(coin) REFERENCES coins(name)'
-   }
+   }/*,
+   {
+       'name' : 'tx_journal',
+       'cols' : [
+           ['from_to', 'TEXT UNIQUE PRIMARY KEY'],
+           ['amount', 'TEXT'],
+           ['status', 'TEXT'],
+           ['comment', 'TEXT']
+        ]
+   }*/
 ];
 
 exports.dbIndexes = [
@@ -91,6 +100,7 @@ exports.ExchangeBalanceAccountID = 0;
 // Private constants
 const PRIVATE = require("./modules/private_constants");
 exports.password_private_suffix = PRIVATE.password_private_suffix;
+exports.walletpassphrase = PRIVATE.walletpassphrase;
 exports.recaptcha_priv_key = PRIVATE.recaptcha_priv_key;
 
 exports.SSL_options = {

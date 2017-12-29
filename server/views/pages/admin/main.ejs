@@ -19,8 +19,44 @@
         <a class="nav-link" id="coins-tab" data-toggle="tab" href="#coins" role="tab" aria-controls="coins" aria-selected="false">Coins</a>
       </li>
     </ul>
-    <div class="tab-content" id="adminTabsContent">
-      <div class="tab-pane fade show active" id="users" role="tabpanel" aria-labelledby="users-tab">Users</div>
+    <div class="tab-content p-4" id="adminTabsContent">
+      <div class="tab-pane fade show active" id="users" role="tabpanel" aria-labelledby="users-tab">
+        <form id="id_finduser" class="form-inline">
+          <div class="form-group row">
+            <label for="inputUser" class="col-sm-2 col-form-label">User</label>
+            <div class="col-sm-10">
+              <input type="text" name='user' class="form-control" id="inputUser" placeholder="*">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">Find</button>
+        </form>  
+        <table class="table m-2">
+          <thead>
+            <tr>
+              <th>
+                #
+              </th>
+              <th>
+                account
+              </th>
+              <th>
+                Name
+              </th>
+              <th>
+                email
+              </th>
+              <th>
+                role
+              </th>
+              <th>
+                info
+              </th>
+            </tr>
+          </thead>
+          <tbody id='table_users'>
+          </tbody>
+        </table>
+      </div>
       <div class="tab-pane fade" id="support" role="tabpanel" aria-labelledby="support-tab">
       </div>
       <div class="tab-pane fade" id="coins" role="tabpanel" aria-labelledby="coins-tab">
@@ -61,6 +97,20 @@
                   <div class="form-group">
                       <label class="col-form-label" for="coin-rpc_password">RPC password</label>
                       <input class="textinput textInput form-control" id="coin-rpc_password" maxlength="1000" name="rpc_password" type="password" required>
+                  </div>
+                  <div class="form-group">
+                      <label class="col-form-label" for="coin-minconf">Minimal confirmations count</label>
+                      <input class="textinput textInput form-control" id="coin-minconf" maxlength="10" name="minconf" type="text" placeholder="3" required>
+                  </div>
+                  <div class="form-group">
+                      <label class="col-form-label" for="coin-hold">Minimal balance</label>
+                      <input class="textinput textInput form-control" id="coin-hold" maxlength="10" name="hold" type="text" placeholder="0.002" required>
+                  </div>
+                  <div class="form-group form-check">
+                      <label class="form-check-label">
+                        <input id="coin-visible" type="checkbox" class="form-check-input">
+                        Coin visible
+                      </label>
                   </div>
                   <div class="form-group">
                       <label class="col-form-label" for="coin-info">JSON info</label>

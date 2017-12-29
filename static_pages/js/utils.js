@@ -1,9 +1,12 @@
 'use strict';
 
-var socket = '';//new WebSocket("wss://"+window.location.host+ ":40443");
+var socket = '';
 
 const utils = 
 {
+    MAIN_COIN: 'Marycoin',
+    DEFAULT_PAIR: 'Litecoin',
+    COMISSION: 0.01,
     ValidateEmail: function(text)
     {
         if (!text || !text.length)
@@ -32,6 +35,18 @@ const utils =
           //alert("Ошибка " + error.message);
           //setTimeout(utils.CreateSocket, 10000);
         };
+    },
+    timeConverter : function (UNIX_timestamp){
+      var a = new Date(UNIX_timestamp);
+      var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      var year = a.getFullYear();
+      var month = months[a.getMonth()];
+      var date = a.getDate();
+      var hour = a.getHours();
+      var min = a.getMinutes();
+      var sec = a.getSeconds();
+      var time = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec ;
+      return time;
     },
     alert_fail: function(message) {
         $('#fail-message').html(message);
@@ -108,11 +123,13 @@ const storage = {
         }
     },
     setItem : function(key, value) {
-        //console.log('setItem key='+key+'; value='+JSON.stringify(value));
         var oldValue = this.getItem(key);
         
-        oldValue.status = 'success';
-        oldValue.value = value;
+        if (oldValue == null)
+            oldValue = {};
+       
+        oldValue['status'] = 'success';
+        oldValue['value'] = value;
         
         var stor;
         if (window.content != undefined)

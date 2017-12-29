@@ -20,6 +20,8 @@ exports.handle = function(app, wss)
     app.get('/admin', onAdminMain);
     app.get('/private_js/admin.js', onAdminJS);
     
+    app.post('/admin/finduser', onAdminFindUser);
+    
     app.get('/logout', onLogout);
     app.get('/login', onLogin);
     app.post('/login', onLoginPost);
@@ -39,6 +41,9 @@ exports.handle = function(app, wss)
     app.get('/checkmail/*', onCheckEmailForSignup);
     app.get('/confirmpasswordreset/*', onConfirmPasswordReset);
     app.get('/confirmwithdraw/*', onConfirmWithdraw);
+    
+    app.get('/history', onGetHistory);
+
 
     wss.on('connection', onWebSocketConnection);
 };
@@ -158,4 +163,14 @@ function onWithdraw(req, res)
 function onConfirmWithdraw(req, res)
 {
     wallet.onConfirmWithdraw(req, res);
+}
+
+function onGetHistory(req, res)
+{
+    wallet.GetHistory(req, res);
+}
+
+function onAdminFindUser(req, res)
+{
+    admin.onFindUser(req, res);
 }

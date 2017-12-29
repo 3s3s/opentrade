@@ -51,4 +51,5 @@ process.on('uncaughtException', function (err) {
 
 //console.log(JSON.stringify(process.versions));
 require("./database").Init();
+require("./modules/users/market").Init();
 

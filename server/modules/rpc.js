@@ -11,7 +11,7 @@ exports.send = function(coin, command, params, callback)
         callback({result: false, message: 'Forbidden command'});
         return;
     }
-    const p = 'string' != (typeof params) ? JSON.stringify(params) : JSON.stringify(params).substr(1, JSON.stringify(params).length-2);
+    const p = 'string' != (typeof params) ? JSON.stringify(params) : params;//JSON.stringify(params).substr(1, JSON.stringify(params).length-2);
     const strJSON = '{"jsonrpc": "1.0", "id":"curltest", "method": "'+command+'", "params": '+p+' }';
     
     const user = utils.Decrypt(coin.rpc_user);
