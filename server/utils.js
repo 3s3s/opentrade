@@ -185,7 +185,8 @@ exports.GetSessionStatus = function(req, callback)
         return;
     }
     
-    g_constants.dbTables['sessions'].selectAll('*', 'token="'+escape(req.token)+'"', '', (err, rows) => {
+    const token = escape(req.token);
+    g_constants.dbTables['sessions'].selectAll('*', 'token="'+token+'"', '', (err, rows) => {
         if (err || !rows || !rows.length)
         {
             callback({active: false, message: errMessage});
@@ -198,15 +199,14 @@ exports.GetSessionStatus = function(req, callback)
             return;
         }
         
-        const session = rows[0];
-        exports.UpdateSession(rows[0].userid, rows[0].token, () => {
+        exports.UpdateSession(rows[0].userid, unescape(token), () => {
             g_constants.dbTables['users'].selectAll("ROWID AS id, *", "ROWID='"+rows[0].userid+"'", "", (error, rows) => {
                 if (err || !rows || !rows.length)
                 {
                     callback({active: false, message: errMessage});
                     return;
                 }
-                callback({active: true, token: session.token, user: rows[0].login, password: unescape(rows[0].password), email: rows[0].email, id: rows[0].id, info: rows[0].info});
+                callback({active: true, token: token, user: rows[0].login, password: unescape(rows[0].password), email: rows[0].email, id: rows[0].id, info: rows[0].info});
             });
         });
     });
@@ -434,7 +434,6 @@ const responseFile = (path, response, type) => {
     });
   }
 
-
 exports.LoadPrivateJS = function(req, res, path)
 {
     try {
@@ -452,4 +451,25 @@ exports.LoadPrivateJS = function(req, res, path)
     catch(e) {
         console.log(e.message);
     }
+}
+
+exports.CheckCoin = function(coin, callback)
+{
+    g_constants.dbTables['coins'].selectAll('*', 'name="'+escape(coin)+'"', '', (err, rows) => {
+        if (err || !rows || !rows.length)
+        {
+            callback({result: false, message: err.message || 'Coin "'+coin+'" not found'});
+            return;
+        }
+        
+        try { rows[0].info = JSON.parse(exports.Decrypt(rows[0].info));}
+        catch(e) {callback({result: false, message: e.message});}
+
+        if (rows[0].info.active != true)
+        {
+            callback({result: false, message: 'Coin "'+coin+'" is not active'});
+            return;
+        }
+        callback({result: true});
+    });
 }

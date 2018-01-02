@@ -14,8 +14,8 @@ exports.onNewMessage = function(ws, req, messageObject)
         
         if (messageObject.text.length == 0)
             return;
-        if (messageObject.text.length >100)
-            messageObject.text = messageObject.text.substr(0, 100);
+        if (messageObject.text.length >150)
+            messageObject.text = messageObject.text.substr(0, 150);
             
         const msg = {user: status.user, userID: status.id, message: messageObject};    
         
@@ -33,6 +33,8 @@ exports.onNewMessage = function(ws, req, messageObject)
 
 exports.onRequestMessages = function(ws)
 {
+    require("./market").UpdateMarket();
+    
     GetLastMessages(messages => {
         ws.send(JSON.stringify({request: 'chat-messages', message: messages}));
     });

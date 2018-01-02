@@ -21,8 +21,6 @@ exports.Init = function(callback)
     RunDBTransaction();
     setInterval(RunDBTransaction, 5000);
     
-    //g_db.run('DROP TABLE balance');
-    
     function CreateIndex(indexObject)
     {
         g_db.run("CREATE INDEX IF NOT EXISTS "+indexObject.name+" ON "+indexObject.table+" ("+indexObject.fields+")", function(err){
@@ -56,11 +54,12 @@ exports.Init = function(callback)
          });
     }
     
-    function Delete(table, where)
+    function Delete(table, where, callback)
     {
         try
         {
             g_db.run('DELETE FROM ' + table + ' WHERE ' + where, function(err) {
+                if (callback) callback(err)
                 if (!err) 
                     return;
                 console.log('DELETE error: ' + err.message);
@@ -69,6 +68,7 @@ exports.Init = function(callback)
         }
         catch(e)
         {
+            if (callback) callback(e);
             console.log(e.message);
         }
     }
@@ -220,8 +220,8 @@ exports.Init = function(callback)
             g_constants.dbTables[i]['update'] = function(SET, WHERE, callback) {
                 Update(this.name, SET, WHERE, callback);};
             
-            g_constants.dbTables[i]['delete'] = function(WHERE) {
-                Delete(this.name, WHERE);};
+            g_constants.dbTables[i]['delete'] = function(WHERE, callback) {
+                Delete(this.name, WHERE, callback);};
             
             g_constants.dbTables[i]['selectAll'] = function(cols, where, other, callback, param) {
                 SelectAll(cols, this.name, where, other, callback, param);};
@@ -262,7 +262,7 @@ exports.RunTransactions = function()
 exports.BeginTransaction = function (callback)
 {
     g_db.run('BEGIN TRANSACTION', function(err){
-        if (err) throw ("BeginTransaction error: " + err.message);
+        //if (err) throw ("BeginTransaction error: " + err.message);
         if (callback) callback(err);
     });
 };
@@ -270,7 +270,15 @@ exports.BeginTransaction = function (callback)
 exports.EndTransaction = function(callback)
 {
     g_db.run('END TRANSACTION', function(err){
-        if (err) throw ("EndTransaction error: " + err.message);
+        //if (err) throw ("EndTransaction error: " + err.message);
+        if (callback) callback(err);
+     });
+};
+
+exports.RollbackTransaction = function(callback)
+{
+    g_db.run('ROLLBACK', function(err){
+        //if (err) throw ("EndTransaction error: " + err.message);
         if (callback) callback(err);
      });
 };

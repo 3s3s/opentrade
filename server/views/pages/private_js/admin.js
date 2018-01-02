@@ -4,6 +4,45 @@ $(() => {
     utils.CreateSocket(onSocketMessage, onOpenSocket);
 });
 
+
+
+$('#coin-visible').click(function() {
+    var info = {};
+    try {info = JSON.parse($('#coin-info').val())}catch(e){}
+    if(this.checked)
+        info['active'] = true;
+    else
+        info['active'] = false;
+        
+    $('#coin-info').val(JSON.stringify(info));
+});
+
+$('#coin-hold').change(function(){ 
+    var info = {};
+    try {info = JSON.parse($('#coin-info').val())}catch(e){}
+    
+    info['hold'] = 0.002;
+    try {info['hold'] = 1*$('#coin-hold').val();}catch(e){}
+    
+    $('#coin-info').val(JSON.stringify(info));
+});
+
+$('#coin-minconf').change(function(){ 
+    if (!isInt($('#coin-minconf').val()))
+        return;
+
+    var info = {};
+    try {info = JSON.parse($('#coin-info').val())}catch(e){}
+    
+    info['minconf'] = 1*$('#coin-minconf').val();
+    
+    $('#coin-info').val(JSON.stringify(info));
+});
+
+function isInt(value) {
+  return !isNaN(value) && (function(x) { return (x | 0) === x; })(parseFloat(value))
+}
+
 $('#coins-select').change(function(){ 
     socket.send(JSON.stringify({request: 'admincoins'}));
 });
@@ -37,6 +76,40 @@ $('#form-edit-coin').submit(e => {
         }
     }));
     
+});
+
+$('#id_finduser').submit(e => {
+    e.preventDefault();
+    
+    $('#table_users').empty();
+    $('#loader').show();
+    $.post( "/admin/finduser", $( '#id_finduser' ).serialize(), function( data ) {
+        $('#loader').hide();
+
+        if (data.result != true)
+        {
+            utils.alert_fail(data.message);
+            return;
+        }
+        const users = data.data.users;
+        
+        for (var i=0; i<users.length; i++)
+        {
+            const tr = $('<tr></tr>')
+                .append($('<td>'+users[i].id+'</td>'))
+                .append($('<td>'+users[i].account+'</td>'))
+                .append($('<td>'+users[i].login+'</td>'))
+                .append($('<td>'+users[i].email+'</td>'))
+                .append($('<td></td>').append(GetRole(users[i].info)))
+                .append($('<td></td>').text(unescape(users[i].info)))
+            $('#table_users').append(tr);
+        }
+    });
+
+    function GetRole(info)
+    {
+        return $('<span></span>').text(JSON.stringify({}));
+    }
 });
 
 $('#form-add-coin').submit(e => {
@@ -138,8 +211,15 @@ function UpdateAdminCoins(data, client_request)
         $('#coin-rpc_user').val(unescape(data[i].rpc_user));  
         $('#coin-rpc_password').val(unescape(data[i].rpc_password));  
         $('#coin-info').val(unescape(data[i].info));  
+
+        var info = {};
+        try {info = JSON.parse($('#coin-info').val())}catch(e){}
+        
+        if (info['active']) $('#coin-visible').prop( "checked", true );
+        $('#coin-minconf').val(info['minconf'] || "");
+        $('#coin-hold').val(info['hold'] || "");
     }
-    
+
     $("#coins-select option[value='"+currentCoin+"']").prop('selected', true);
     $('#form-edit-coin').show();
     

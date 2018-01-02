@@ -11,6 +11,7 @@ const profile = require("./modules/registration/profile");
 const wsocket = require("./modules/websocket");
 const admin = require("./modules/admin/utils");
 const wallet = require("./modules/users/wallet");
+const orders = require("./modules/users/orders");
 
 exports.handle = function(app, wss)
 {
@@ -19,6 +20,10 @@ exports.handle = function(app, wss)
     
     app.get('/admin', onAdminMain);
     app.get('/private_js/admin.js', onAdminJS);
+    
+    app.post('/admin/finduser', onAdminFindUser);
+    app.post('/submitorder', onSubmitOrder);
+    app.post('/closeorder', onCloseOrder);
     
     app.get('/logout', onLogout);
     app.get('/login', onLogin);
@@ -39,6 +44,9 @@ exports.handle = function(app, wss)
     app.get('/checkmail/*', onCheckEmailForSignup);
     app.get('/confirmpasswordreset/*', onConfirmPasswordReset);
     app.get('/confirmwithdraw/*', onConfirmWithdraw);
+    
+    app.get('/history', onGetHistory);
+
 
     wss.on('connection', onWebSocketConnection);
 };
@@ -158,4 +166,23 @@ function onWithdraw(req, res)
 function onConfirmWithdraw(req, res)
 {
     wallet.onConfirmWithdraw(req, res);
+}
+
+function onGetHistory(req, res)
+{
+    wallet.GetHistory(req, res);
+}
+
+function onAdminFindUser(req, res)
+{
+    admin.onFindUser(req, res);
+}
+
+function onSubmitOrder(req, res)
+{
+    orders.SubmitOrder(req, res);
+}
+function onCloseOrder(req, res)
+{
+    orders.CloseOrder(req, res);
 }

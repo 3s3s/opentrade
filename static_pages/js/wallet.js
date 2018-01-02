@@ -2,6 +2,8 @@
 
 $(() => {
   utils.CreateSocket(onSocketMessage, onOpenSocket);
+  
+  setInterval(()=>{ socket.send(JSON.stringify({request: 'getwallet'})); }, 120000);
 
   const messageSuccess = $('#id_server_message_success').val()
   const messageFail = $('#id_server_message_fail').val()
@@ -48,9 +50,9 @@ function UpdateWallet(data)
     }
     
     const tdCoin = $('<td scope="col" class="align-middle">'+data.coin.name+'</td>');
-    const tdBalance = $('<td id="'+id_balance+'" scope="col" class="align-middle">'+data.balance+" "+data.coin.ticker+'</td>');
-    const tdAwaiting = $('<td id="'+id_awaiting+'" scope="col" class="align-middle">'+data.awaiting+" "+data.coin.ticker+'</td>');
-    const tdHold = $('<td id="'+id_onhold+'" scope="col" class="align-middle">'+data.hold+" "+data.coin.ticker+'</td>');
+    const tdBalance = $('<td id="'+id_balance+'" scope="col" class="align-middle">'+(data.balance*1).toFixed(7)+" "+data.coin.ticker+'</td>');
+    const tdAwaiting = $('<td id="'+id_awaiting+'" scope="col" class="align-middle">'+(data.awaiting*1).toFixed(7)+" "+data.coin.ticker+'</td>');
+    const tdHold = $('<td id="'+id_onhold+'" scope="col" class="align-middle">'+(data.hold*1).toFixed(7)+" "+data.coin.ticker+'</td>');
     
     const tdDeposit = CreateDepositArea(data);//$('<td>'+data.deposit[data.deposit.length-1]+'</td>');
     
@@ -66,7 +68,8 @@ function CreateDepositArea(data)
     .on('click', e => { ShowDepositAddress(coin) });
   const btnWithdraw = $('<button class="btn btn-secondary m-1 align-middle" type="button">Withdraw</button>')
     .on('click', e => { ShowWithdrawDialog(coin, data.coin.id) });
-  const btnHistory = $('<button class="btn btn-secondary m-1 align-middle" type="button">History</button>');
+  const btnHistory = $('<button class="btn btn-secondary m-1 align-middle" type="button">History</button>')
+    .on('click', e => { ShowHistoryDialog(coin, data.coin.id) });
 
   return $('<td scope="col"></td>').append(btnDeposit).append(btnWithdraw).append(btnHistory);
 }
@@ -94,8 +97,8 @@ function ShowWithdrawDialog(coin, coinID)
   modals.OKCancel(
       'Withdraw your '+coin, 
       '<div>'+
-        '<form id="withdraw-form" class="paper-form" action="/withdraw" method="post">'+
-          '<input type="hidden" name="coin", value="'+coinID+'">'+
+        '<form id="withdraw-form" class="paper-form" action="/withdraw" method="post" >'+
+          '<input type="hidden" name="coin", value="'+coin+'">'+
           '<div class="form-group">'+
             '<label for="id_address" class="control-label  requiredField">Your address<span class="asteriskField">*</span> </label>'+
             '<input class="textinput textInput form-control" id="id_address" maxlength="100" name="address" type="text" required>'+
@@ -103,7 +106,7 @@ function ShowWithdrawDialog(coin, coinID)
           '</div>'+
           '<div class="form-group">'+
             '<label for="id_amount" class="control-label  requiredField">Amount<span class="asteriskField">*</span> </label>'+
-            '<input class="textinput textInput form-control" id="id_amount" maxlength="15" name="amount" type="text" required>'+
+            '<input class="textinput textInput form-control" id="id_amount" maxlength="15" name="amount" type="number" step="0.0001" min="0.0001" required>'+
             '<div class="invalid-feedback">This field is required.</div>'+
           '</div>'+
           '<div class="form-group">'+
@@ -123,16 +126,51 @@ function ShowWithdrawDialog(coin, coinID)
           $('#loader').hide();
           if (data.result != true)
           {
-            //$('#alert-fail').html(data.message);
-            //$('#alert-fail').show();
             utils.alert_fail(data.message);
             return;
           }
-          //$('#alert-success').html("<b>Withdraw almost done!</b> Check your email for the further instructions.");
-          //$('#alert-success').show();
           utils.alert_success("<b>Withdraw almost done!</b> Check your email for the further instructions.");
           //modals.OKCancel('Warning', "<div><h3>Almost done!</h3> Check your email for the further instructions.</div>", () => {$('#loader').hide();});
         }, "json" );
       });
+}
+
+function ShowHistoryDialog(coin, coinID)
+{
+  $('#alert-fail').hide();
+  $('#alert-success').hide();
+
+  $('#loader').show();
+  $.getJSON( "/history", {coinID: coinID}, ret => {
+    $('#loader').hide();
+    if (ret.result != true)
+    {
+      utils.alert_fail(ret.message);
+      return;
+    }
+    ShowHistory(coin, ret.data);
+  });
   
+  function ShowHistory(coin, data)
+  {
+    data.sort((a,b)=>{return a - b;});
+    
+    let tbody = $('<tbody></tbody>');
+    
+    for (var i=0; i<data.length; i++)
+    {
+      if (data[i].category == 'move')
+        continue;
+      
+      const amount = (data[i].category == 'receive') ? "+"+data[i].amount : data[i].amount;
+      tbody.append($('<tr></tr>').append($('<td>'+amount+'</td>').append($('<td>'+utils.timeConverter(data[i].time*1000)+'</td>'))))
+    }
+    
+    let table = $('<table class="table table-striped table-bordered"><thead><tr><th>amount</th><th>time</th></tr></thead></table>').append(tbody);
+    modals.OKCancel(
+        'Recent transactions '+coin, 
+        table[0].outerHTML
+    );
+      
+  }
 }

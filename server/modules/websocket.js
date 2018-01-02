@@ -5,6 +5,7 @@ const g_constants = require("../constants.js");
 const chat = require("./users/chat");
 const wallet = require("./users/wallet");
 const coins = require("./admin/coins");
+const trade = require("./users/trade");
 
 exports.onConnect = function(ws, req)
 {
@@ -65,6 +66,16 @@ function SendResponce(ws, req, client)
     if (client.request == "getwallet")
     {
         wallet.onGetWallet(ws, req);
+        return;
+    }
+    if (client.request == "getpair")
+    {
+        trade.onGetPair(ws, req, client.message);
+        return;
+    }
+    if (client.request == "getpairbalance")
+    {
+        trade.onGetBalance(ws, req, client.message);
         return;
     }
     SendError(ws, 'Error: invalid request');

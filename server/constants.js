@@ -1,5 +1,8 @@
 'use strict';
 
+exports.TRADE_MAIN_COIN = "Marycoin";
+exports.TRADE_COMISSION = 0.001;
+
 exports.recaptcha_pub_key = "6LeX5SQUAAAAAKTieM68Sz4MECO6kJXsSR7_sGP1";
 
 exports.NOREPLY_EMAIL = 'no-reply@multicoins.org';
@@ -64,14 +67,38 @@ exports.dbTables = [
    {
       'name' : 'balance',
       'cols' : [
-          ['userID', 'TEXT UNIQUE PRIMARY KEY'],
+          ['userID', 'TEXT'],
           ['coin', 'TEXT'],
           ['balance', 'TEXT'],
           ['history', 'TEXT'],
           ['info', 'TEXT']
         ],
         'commands' : 'FOREIGN KEY(coin) REFERENCES coins(name)'
-   }
+   },
+   {
+      'name' : 'orders',
+      'cols' : [
+          ['userID', 'TEXT'],
+          ['coin', 'TEXT'],
+          ['buysell', 'TEXT'],
+          ['amount', 'TEXT'],
+          ['price', 'TEXT'],
+          ['price_pair', 'TEXT'],
+          ['time', 'TEXT'],
+          ['info', 'TEXT']
+        ],
+        'commands' : 'FOREIGN KEY(coin) REFERENCES coins(name)'
+   },
+   
+/*   {
+       'name' : 'tx_journal',
+       'cols' : [
+           ['from_to', 'TEXT UNIQUE PRIMARY KEY'],
+           ['amount', 'TEXT'],
+           ['status', 'TEXT'],
+           ['comment', 'TEXT']
+        ]
+   }*/
 ];
 
 exports.dbIndexes = [
@@ -79,7 +106,12 @@ exports.dbIndexes = [
     'name' : 'uid',
     'table' : 'balance',
     'fields' : 'userID'
-  }
+  },
+  {
+    'name' : 'uid_orders',
+    'table' : 'orders',
+    'fields' : 'userID, coin, buysell, amount, price'
+  },
 ];
 
 
@@ -91,6 +123,7 @@ exports.ExchangeBalanceAccountID = 0;
 // Private constants
 const PRIVATE = require("./modules/private_constants");
 exports.password_private_suffix = PRIVATE.password_private_suffix;
+exports.walletpassphrase = PRIVATE.walletpassphrase;
 exports.recaptcha_priv_key = PRIVATE.recaptcha_priv_key;
 
 exports.SSL_options = {
