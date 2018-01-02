@@ -4,12 +4,13 @@ const utils = require("../../utils.js");
 const g_constants = require("../../constants.js");
 const WebSocket = require('ws');
 const wallet = require("./wallet");
+const orders = require("./orders");
 
 exports.onGetPair = function(ws, req, data)
 {
     utils.GetSessionStatus(req, status => {
         GetBalance(ws, status, data);
-        GetAllOrders(status, data, ret => {
+        GetAllOrders(data, ret => {
             const orders = ret.data || {};
             GetUserOrders(status, data, ret => {
                 const userOrders = ret.data || [];
@@ -27,30 +28,16 @@ exports.onGetPair = function(ws, req, data)
 
 exports.onGetBalance= function(ws, req, data)
 {
-    /*utils.GetSessionStatus(req, status => {
-        GetBalance(status, data, ret => {
-            const balance = ret.data;
-            
-            ws.send(JSON.stringify(
-                {request: 'pairbalance', message: {result: true, data: balance}}));
-        });
-    });*/
 }
 
-function GetBalance(socket, status, data)
+function GetCoins(coin1, coin2, callback)
 {
-    if (!status.active || !data || !data.length || data.length != 2)
-    {
-        socket.send(JSON.stringify({request: 'wallet', message: {result: false, message: 'Bad Request'} }));
-        return;
-    }
-    
-    const WHERE = "name='"+escape(data[0])+"' OR name='"+escape(data[1])+"'";
+    const WHERE = "name='"+escape(coin1)+"' OR name='"+escape(coin2)+"'";
     
     g_constants.dbTables['coins'].selectAll("ROWID AS id, name, ticker, icon, info", WHERE, "", (err, rows) => {
         if (err || !rows || !rows.length || rows.length != 2)
         {
-            socket.send(JSON.stringify({request: 'wallet', message: {result: false, message: 'Pair not found'} }));
+            callback({result: false, message: 'Pair not found'});
             return;
         }
         
@@ -61,22 +48,74 @@ function GetBalance(socket, status, data)
                 if (rows[i].info.active != true) throw 'Coin is not active'
             }
             catch(e) {
-                socket.send(JSON.stringify({request: 'wallet', message: {result: false, message: e.message} }));
+                callback({result: false, message: e.message});
                 continue;
             }
-            wallet.GetCoinWallet(socket, status.id, rows[i]);
         }
+        callback({result: true, data: rows});
     });
 }
 
-function GetAllOrders(status, data, callback)
+function GetBalance(socket, status, data)
 {
-    callback({result: true, data: {}});
+    if (!status.active || !data || !data.length || data.length != 2)
+    {
+        socket.send(JSON.stringify({request: 'wallet', message: {result: false, message: 'Bad Request'} }));
+        return;
+    }
+    
+    GetCoins(data[0], data[1], err => {
+        if (!err || !err.result || !err.data || err.data.length != 2)
+        {
+            socket.send(JSON.stringify({request: 'wallet', message: {result: false, message: err.message || 'Unknown message'} }));
+            return;
+        }
+        
+        for (var i=0; i<err.data.length; i++)
+            wallet.GetCoinWallet(socket, status.id, err.data[i]);
+    });
+
 }
+
+function GetAllOrders(data, callback)
+{
+    if (!data || !data.length || data.length != 2)
+    {
+        callback({result: false, message: 'Bad Request'});
+        return;
+    }
+    
+    GetCoins(data[0], data[1], err => {
+        if (!err || !err.result || !err.data || err.data.length != 2)
+        {
+            callback({result: false, message: err.message || 'Unknown message'});
+            return;
+        }
+        
+        orders.GetAllOrders(err.data, callback);
+    });
+}
+
 function GetUserOrders(status, data, callback)
 {
-    callback({result: true, data: []});
+    if (!status.active || !data || !data.length || data.length != 2)
+    {
+        callback({result: false, message: 'Bad Request'});
+        return;
+    }
+    
+    GetCoins(data[0], data[1], err => {
+        if (!err || !err.result || !err.data || err.data.length != 2)
+        {
+            callback({result: false, message: err.message || 'Unknown message'});
+            return;
+        }
+        
+        orders.GetUserOrders(status.id, err.data, callback);
+        
+    });
 }
+
 function GetUserTradeHistory(status, data, callback)
 {
     callback({result: true, data: []});

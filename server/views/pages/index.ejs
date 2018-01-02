@@ -191,7 +191,19 @@
               Your active orders:
             </div>
             <div class="card-body">
-              <p class="card-text"></p>
+              <table class="table table-striped table-sm">
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Price</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id='id_user_orders'>
+                </tbody>
+              </table>
             </div>
           </div>          
         </div>
@@ -202,9 +214,15 @@
               <div class="card-header">
                 Buy orders
               </div>
-              <div class="card-body">
-                <h4 class="card-title"></h4>
-                <p class="card-text"></p>
+              <div class="card-body div-orders p-0">
+                <table class="table table-striped table-sm table-orders">
+                  <thead>
+                    <tr id='id_buy_orders_header'>
+                    </tr>
+                  </thead>
+                  <tbody id='id_buy_orders_body'>
+                  </tbody>
+                </table>
               </div>
             </div> 
           </div>
@@ -213,9 +231,15 @@
               <div class="card-header">
                 Sell orders
               </div>
-              <div class="card-body">
-                <h4 class="card-title"></h4>
-                <p class="card-text"></p>
+              <div class="card-body div-orders p-0">
+                <table class="table table-striped table-sm table-orders">
+                  <thead>
+                    <tr id='id_sell_orders_header'>
+                    </tr>
+                  </thead>
+                  <tbody id='id_sell_orders_body'>
+                  </tbody>
+                </table>
               </div>
             </div>          
           </div>

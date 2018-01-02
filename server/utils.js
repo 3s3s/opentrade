@@ -452,3 +452,24 @@ exports.LoadPrivateJS = function(req, res, path)
         console.log(e.message);
     }
 }
+
+exports.CheckCoin = function(coin, callback)
+{
+    g_constants.dbTables['coins'].selectAll('*', 'name="'+escape(coin)+'"', '', (err, rows) => {
+        if (err || !rows || !rows.length)
+        {
+            callback({result: false, message: err.message || 'Coin "'+coin+'" not found'});
+            return;
+        }
+        
+        try { rows[0].info = JSON.parse(exports.Decrypt(rows[0].info));}
+        catch(e) {callback({result: false, message: e.message});}
+
+        if (rows[0].info.active != true)
+        {
+            callback({result: false, message: 'Coin "'+coin+'" is not active'});
+            return;
+        }
+        callback({result: true});
+    });
+}

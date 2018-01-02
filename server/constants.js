@@ -1,5 +1,8 @@
 'use strict';
 
+exports.TRADE_MAIN_COIN = "Marycoin";
+exports.TRADE_COMISSION = 0.001;
+
 exports.recaptcha_pub_key = "6LeX5SQUAAAAAKTieM68Sz4MECO6kJXsSR7_sGP1";
 
 exports.NOREPLY_EMAIL = 'no-reply@multicoins.org';
@@ -64,15 +67,30 @@ exports.dbTables = [
    {
       'name' : 'balance',
       'cols' : [
-          ['userID', 'TEXT PRIMARY KEY'],
+          ['userID', 'TEXT'],
           ['coin', 'TEXT'],
           ['balance', 'TEXT'],
           ['history', 'TEXT'],
           ['info', 'TEXT']
         ],
         'commands' : 'FOREIGN KEY(coin) REFERENCES coins(name)'
-   }/*,
+   },
    {
+      'name' : 'orders',
+      'cols' : [
+          ['userID', 'TEXT'],
+          ['coin', 'TEXT'],
+          ['buysell', 'TEXT'],
+          ['amount', 'TEXT'],
+          ['price', 'TEXT'],
+          ['price_pair', 'TEXT'],
+          ['time', 'TEXT'],
+          ['info', 'TEXT']
+        ],
+        'commands' : 'FOREIGN KEY(coin) REFERENCES coins(name)'
+   },
+   
+/*   {
        'name' : 'tx_journal',
        'cols' : [
            ['from_to', 'TEXT UNIQUE PRIMARY KEY'],
@@ -88,7 +106,12 @@ exports.dbIndexes = [
     'name' : 'uid',
     'table' : 'balance',
     'fields' : 'userID'
-  }
+  },
+  {
+    'name' : 'uid_orders',
+    'table' : 'orders',
+    'fields' : 'userID, coin, buysell, amount, price'
+  },
 ];
 
 

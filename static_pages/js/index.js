@@ -4,6 +4,8 @@ var g_CurrentPair = utils.DEFAULT_PAIR;
 
 var pairData = {};
 
+var coinNameToTicker = {};
+
 $(() => {
   utils.CreateSocket(onSocketMessage, onOpenSocket);
 
@@ -18,16 +20,56 @@ $(() => {
     
   $('#header_sell').text('Sell '+g_CurrentPair);
   $('#header_buy').text('Buy '+g_CurrentPair);
-    
+  
 });
 
 $('#form_buy').submit(e => {
   e.preventDefault();
+  
+  try
+  {
+    const amount = $('#inputBuyAmount').val()*1;
+    const price = $('#inputBuyPrice').val()*1;
+    
+    const order = {order: 'buy', coin: g_CurrentPair, amount: amount, price: price};
+    AddOrder(order);
+  }
+  catch(e)
+  {}
+  
 });
 
 $('#form_sell').submit(e => {
   e.preventDefault();
+
+  try
+  {
+    const amount = $('#inputSellAmount').val()*1;
+    const price = $('#inputSellPrice').val()*1;
+    
+    const order = {order: 'sell', coin: g_CurrentPair, amount: amount, price: price};
+    AddOrder(order);
+  }
+  catch(e)
+  {}
+  
 });
+
+function AddOrder(order)
+{
+    $('#loader').show();
+    $.post( "/submitorder", order, function( data ) {
+      $('#loader').hide();
+      if (data.result != true)
+      {
+        utils.alert_fail(data.message);
+        return;
+      }
+      utils.alert_success('Your order is submitted!');
+      socket.send(JSON.stringify({request: 'getpair', message: [utils.MAIN_COIN, g_CurrentPair]}));
+    }, "json" );
+  
+}
 
 function SendChatMessage()
 {
@@ -96,6 +138,8 @@ function UpdateMarket(message)
   {
     const coinName = message.coins[i].name;
     
+    coinNameToTicker[coinName] = {ticker: message.coins[i].ticker};
+    
     if (coinName == utils.MAIN_COIN)
       continue;
       
@@ -116,6 +160,12 @@ function UpdateMarket(message)
       
     $('#table-market').append(tr);
   }
+  
+  if (!$('#id_buy_orders_header_price').length)
+  {
+    $('#id_buy_orders_header').append($('<th id="id_buy_orders_header_price">Price</th><th>'+coinNameToTicker[utils.MAIN_COIN].ticker+'</th><th>'+coinNameToTicker[g_CurrentPair].ticker+'</th>'))
+    $('#id_sell_orders_header').append($('<th>Price</th><th>'+coinNameToTicker[utils.MAIN_COIN].ticker+'</th><th>'+coinNameToTicker[g_CurrentPair].ticker+'</th>'))
+  }
 }
 
 function AddChatMessage(message)
@@ -129,12 +179,85 @@ function AddChatMessage(message)
 
 function UpdatePairData(message)
 {
+  if (!message || !message.result || !message.data)
+    return;
   
+  if (message.data.orders)
+    UpdateOrders(message.data.orders);
+  if (message.data.userOrders)
+    UpdateUserOrders(message.data.userOrders);
+    
 }
 
 function UpdatePairBalance(message)
 {
   
+}
+
+function UpdateOrders(orders)
+{
+  if (!orders.buy || !orders.sell)
+    return;
+    
+  $('#id_buy_orders_body').empty();
+  $('#id_sell_orders_body').empty();
+  
+  for (var i=0; i<orders.buy.length; i++)
+  {
+    const tr = $('<tr></tr>')
+      .append($('<td>'+(orders.buy[i].price*1.0).toFixed(8)+'</td>'))
+      .append($('<td>'+(orders.buy[i].price*orders.buy[i].amount*1.0).toFixed(8)+'</td>'))
+      .append($('<td>'+(orders.buy[i].amount*1.0).toFixed(8)+'</td>'));
+      
+    $('#id_buy_orders_body').append(tr);
+  }
+  
+  for (var i=0; i<orders.buy.length; i++)
+  {
+    const tr = $('<tr></tr>')
+      .append($('<td>'+(orders.sell[i].price*1.0).toFixed(8)+'</td>'))
+      .append($('<td>'+(orders.sell[i].price*orders.buy[i].amount*1.0).toFixed(8)+'</td>'))
+      .append($('<td>'+(orders.sell[i].amount*1.0).toFixed(8)+'</td>'));
+      
+    $('#id_sell_orders_body').append(tr);
+  }
+}
+
+function UpdateUserOrders(userOrders)
+{
+  $('#id_user_orders').empty();
+  
+  for (var i=0; i<userOrders.length; i++)
+  {
+    if (userOrders[i].coin != g_CurrentPair)
+      continue;
+      
+    const orderID = userOrders[i].id;
+    
+    const close = $('<button type="button" class="btn btn-primary btn-sm">Close</button>').on('click', e => {
+      $('#loader').show();
+      $.post( "/closeorder", {orderID: orderID}, function( data ) {
+        $('#loader').hide();
+        if (data.result != true)
+        {
+          utils.alert_fail(data.message);
+          return;
+        }
+        utils.alert_success('Your order is closed!');
+        socket.send(JSON.stringify({request: 'getpair', message: [utils.MAIN_COIN, g_CurrentPair]}));
+      }, "json" );
+    });
+    
+    const typeColor = userOrders[i].buysell == 'sell' ? "text-danger" : "text-success";
+    const tr = $('<tr></tr>')
+      .append($('<td>'+utils.timeConverter(userOrders[i].time*1)+'</td>'))
+      .append($('<td><p class="'+typeColor+'">'+userOrders[i].buysell+'</p></td>'))
+      .append($('<td>'+userOrders[i].amount+' '+coinNameToTicker[userOrders[i].coin].ticker+'</td>'))
+      .append($('<td>'+userOrders[i].price+" "+coinNameToTicker[utils.MAIN_COIN].ticker+'</td>'))
+      .append($('<td></td>').append(close));
+      
+    $('#id_user_orders').append(tr);
+  }
 }
 
 function UpdateBalance(message)

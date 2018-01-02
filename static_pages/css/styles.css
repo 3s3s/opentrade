@@ -2,19 +2,31 @@ body {
   min-height: 2000px;
   padding-top: 70px;
 }
+
 .container {
     max-width: 100%;
 }
 .d-flex-chat {
-  overflow-y:scroll;
+  overflow-y:auto;
 }
 .d-flex-market {
-  overflow-x:scroll;
+  overflow-x:auto;
 }
 
 .my-info {
-  overflow-y:scroll;
-  overflow-x:scroll;
+  overflow-y:auto;
+  overflow-x:auto;
+}
+
+.table-orders{
+  font-size: 12px;
+}
+
+.div-orders {
+  overflow-y:auto;
+  overflow-x:auto;
+  min-height: 300px;
+  max-height: 300px;
 }
 
 .bd-highlight {

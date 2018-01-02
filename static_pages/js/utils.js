@@ -6,7 +6,7 @@ const utils =
 {
     MAIN_COIN: 'Marycoin',
     DEFAULT_PAIR: 'Litecoin',
-    COMISSION: 0.01,
+    COMISSION: 0.001,
     ValidateEmail: function(text)
     {
         if (!text || !text.length)

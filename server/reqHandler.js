@@ -11,6 +11,7 @@ const profile = require("./modules/registration/profile");
 const wsocket = require("./modules/websocket");
 const admin = require("./modules/admin/utils");
 const wallet = require("./modules/users/wallet");
+const orders = require("./modules/users/orders");
 
 exports.handle = function(app, wss)
 {
@@ -21,6 +22,8 @@ exports.handle = function(app, wss)
     app.get('/private_js/admin.js', onAdminJS);
     
     app.post('/admin/finduser', onAdminFindUser);
+    app.post('/submitorder', onSubmitOrder);
+    app.post('/closeorder', onCloseOrder);
     
     app.get('/logout', onLogout);
     app.get('/login', onLogin);
@@ -173,4 +176,13 @@ function onGetHistory(req, res)
 function onAdminFindUser(req, res)
 {
     admin.onFindUser(req, res);
+}
+
+function onSubmitOrder(req, res)
+{
+    orders.SubmitOrder(req, res);
+}
+function onCloseOrder(req, res)
+{
+    orders.CloseOrder(req, res);
 }

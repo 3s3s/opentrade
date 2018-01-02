@@ -5,6 +5,7 @@ const g_constants = require("../../constants.js");
 const WebSocket = require('ws');
 const RPC = require("../rpc.js");
 const mailer = require("../mailer.js");
+const orders = require("./orders");
 
 const commands = {
     listtransactions: 'listtransactions',
@@ -38,15 +39,18 @@ exports.GetHistory = function(req, res)
         onError(req, res, 'Bad request');
         return;
     }
+    
+    const coinID = escape(req.query.coinID);
+    
     utils.GetSessionStatus(req, status => {
         if (!status.active)
         {
             onError(req, res, 'User not logged');
             return;
         }
-        if (history[status.id] && Date.now()-history[status.id].time < 120000)
+        if (history[status.id] && history[status.id][coinID] && Date.now()-history[status.id][coinID].time < 120000)
         {
-            onSuccess(req, res, history[status.id].data)
+            onSuccess(req, res, history[status.id][coinID].data)
             return;
         }
         const account = utils.Encrypt(status.id);
@@ -57,7 +61,8 @@ exports.GetHistory = function(req, res)
                 onError(req, res, ret.message);
                 return;
             }
-            history[status.id] = {data: ret.data, time: Date.now()};
+            history[status.id] = {};
+            history[status.id][coinID] = {data: ret.data, time: Date.now()};
             onSuccess(req, res, ret.data)
         });
     });
@@ -153,13 +158,18 @@ exports.GetCoinWallet = function(socket, userID, coin, callback)
         RPC.send3(coin.id, commands.getbalance, [account, 0], ret => {
             const awaiting = (!ret || !ret.result || ret.result != 'success') ? 0 : ret.data;
                 
-            const data = JSON.stringify({request: 'wallet', message: {coin: coin, balance: (balance*1).toPrecision(7), awaiting: (awaiting*1).toPrecision(7), hold: 0.0} });
+            if (socket) socket.send(JSON.stringify({request: 'wallet', message: {coin: coin, balance: (balance*1).toFixed(7)*1, awaiting: (awaiting*1).toFixed(7)*1, hold: 0.0} }));
+            
+            orders.GetReservedBalance(userID, coin.name, ret => {
+                const reserved = (!ret || !ret.result || ret.result != 'success') ? 0 : ret.data;
                 
-            balances[userID][coin.id] = {data: data, time: Date.now()};
+                const data = JSON.stringify({request: 'wallet', message: {coin: coin, balance: (balance*1).toFixed(7)*1, awaiting: (awaiting*1).toFixed(7)*1, hold: (reserved*1).toFixed(7)*1} })
                 
-            if (socket) socket.send(data);
-            if (callback) callback(data);
-            return;
+                balances[userID][coin.id] = {data: data, time: Date.now()};
+                    
+                if (socket) socket.send(data);
+                if (callback) callback(data);
+            });
         });
     });
 }
@@ -314,7 +324,7 @@ exports.onConfirmWithdraw = function(req, res)
             const coin = rows[0];
             const coinID = rows[0].id;
             
-            MoveBalance(g_constants.ExchangeBalanceAccountID, userID, coin, (amount*1+(rows[0].info.hold || 0.002)).toPrecision(7), ret => {
+            MoveBalance(g_constants.ExchangeBalanceAccountID, userID, coin, (amount*1+(rows[0].info.hold || 0.002)).toFixed(7)*1, ret => {
                 if (!ret || !ret.result)
                 {
                     callback({result: false, message: '<b>Withdraw error:</b> '+ ret.message});
@@ -323,11 +333,14 @@ exports.onConfirmWithdraw = function(req, res)
                 const comment = JSON.stringify([{from: userAccount, to: address, amount: amount, time: Date.now()}]);
                 
                 RPC.send3(coinID, commands.walletpassphrase, [g_constants.walletpassphrase, 120], ret => {
-                    RPC.send3(coinID, commands.sendfrom, [userAccount, address, (amount*1).toPrecision(7), coin.info.minconf || 3, comment], ret => {
+                    RPC.send3(coinID, commands.sendfrom, [userAccount, address, (amount*1).toFixed(7)*1, coin.info.minconf || 3, comment], ret => {
                         if (ret && ret.result && ret.result == 'success')
                         {
-                            if (balances[userID] && Date.now()-balances[userID].time < 120000)
-                                balances[userID].time = 0;
+                            //if (balances[userID] && Date.now()-balances[userID].time < 120000)
+                            //    balances[userID].time = 0;
+                            //if (balances[userID] && balances[userID][coinID])
+                            //    delete balances[userID][coinID];
+                            exports.ResetBalanceCache(userID);
     
                             callback({result: true, data: ret.data});
                             return;
@@ -343,6 +356,14 @@ exports.onConfirmWithdraw = function(req, res)
         });
     }
 }
+
+exports.ResetBalanceCache = function(userID)
+{
+    if (!balances[userID])
+        return;
+        
+    delete balances[userID];
+};
 
 function MoveBalance(userID_from, userID_to, coin, amount, callback)
 {
@@ -369,7 +390,7 @@ function MoveBalance(userID_from, userID_to, coin, amount, callback)
             }
             if (rows[0].balance*1 < amount*1)
             {
-                callback({result: false, balance: rows[0].balance, message: 'balance < amount ('+(rows[0].balance*1).toPrecision(7)+' < '+(amount*1).toPrecision(7)+')'});
+                callback({result: false, balance: rows[0].balance, message: 'balance < amount ('+(rows[0].balance*1).toFixed(7)*1+' < '+(amount*1).toFixed(7)*1+')'});
                 return;
             }
         }
@@ -380,7 +401,7 @@ function MoveBalance(userID_from, userID_to, coin, amount, callback)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////        
         
 
-        RPC.send3(coin.id, commands.move, [from, to, (amount*1).toPrecision(7), coin.info.minconf || 3, comment], ret => {
+        RPC.send3(coin.id, commands.move, [from, to, (amount*1).toFixed(7)*1, coin.info.minconf || 3, comment], ret => {
             if (!ret || !ret.result || ret.result != 'success')
             {
                 g_constants.dbTables['balance'].selectAll('balance', WHERE, '', (err, rows) => {
@@ -421,7 +442,7 @@ function UpdateBalanceDB(userID_from, userID_to, coin, amount, comment, callback
             g_constants.dbTables['balance'].insert(
                 userID,
                 coin.name,
-                (amount*1).toPrecision(7),
+                (amount*1).toFixed(7),
                 comment,
                 JSON.stringify({}),
                 err => { 
@@ -436,7 +457,7 @@ function UpdateBalanceDB(userID_from, userID_to, coin, amount, comment, callback
             return;
         }
             
-        let newBalance = (rows[0].balance*1 + amount*1).toPrecision(7);
+        let newBalance = (rows[0].balance*1 + amount*1).toFixed(7)*1;
         if (userID_to == userID)
         {
             if (rows[0].balance*1 < amount*1)
@@ -444,7 +465,7 @@ function UpdateBalanceDB(userID_from, userID_to, coin, amount, comment, callback
                 callback({result: false, balance: rows[0].balance, message: 'Critical error: withdraw > balance'});
                 return;
             }
-            newBalance = (rows[0].balance*1 - amount*1).toPrecision(7);
+            newBalance = (rows[0].balance*1 - amount*1).toFixed(7)*1;
         }
         
         const history = JSON.stringify(JSON.parse(unescape(rows[0].history)).concat(comment));
@@ -495,7 +516,7 @@ function SafeMoveBalance(WHERE, from, to, coin, amount, comment, callback)
                 }
             });
             
-            RPC.send3(coin.id, commands.move, [from, to, (amount*1).toPrecision(7), coin.info.minconf || 3, comment], ret => {
+            RPC.send3(coin.id, commands.move, [from, to, (amount*1).toFixed(7)*1, coin.info.minconf || 3, comment], ret => {
                 if (!ret || !ret.result || ret.result != 'success')
                 {
                     g_constants.dbTables['balance'].selectAll('balance', WHERE, '', (err, rows) => {
