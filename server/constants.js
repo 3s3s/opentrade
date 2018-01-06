@@ -90,6 +90,24 @@ exports.dbTables = [
         'commands' : 'FOREIGN KEY(coin) REFERENCES coins(name)'
    },
    
+   {
+      'name' : 'history',
+      'cols' : [
+          ['buyUserID', 'TEXT'],
+          ['sellUserID', 'TEXT'],
+          ['coin', 'TEXT'],
+          ['coin_pair', 'TEXT'],
+          ['fromSellerToBuyer', 'TEXT'],
+          ['fromBuyerToSeller', 'TEXT'],
+          ['buyerChange', 'TEXT'],
+          ['comission', 'TEXT'],
+          ['time', 'TEXT'],
+          ['buysell', 'TEXT'],
+          ['price', 'TEXT'],
+          ['info', 'TEXT']
+        ],
+        'commands' : 'FOREIGN KEY(coin, coin_pair) REFERENCES coins(name, name)'
+   },
 /*   {
        'name' : 'tx_journal',
        'cols' : [
@@ -111,6 +129,11 @@ exports.dbIndexes = [
     'name' : 'uid_orders',
     'table' : 'orders',
     'fields' : 'userID, coin, buysell, amount, price'
+  },
+  {
+    'name' : 'history_index',
+    'table' : 'history',
+    'fields' : 'buyUserID, sellUserID, coin, coin_pair, time'
   },
 ];
 

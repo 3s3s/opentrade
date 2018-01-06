@@ -165,6 +165,7 @@ exports.GetCoinWallet = function(socket, userID, coin, callback)
                 
                 const data = JSON.stringify({request: 'wallet', message: {coin: coin, balance: (balance*1).toFixed(7)*1, awaiting: (awaiting*1).toFixed(7)*1, hold: (reserved*1).toFixed(7)*1} })
                 
+                if (!balances[userID]) balances[userID] = {};
                 balances[userID][coin.id] = {data: data, time: Date.now()};
                     
                 if (socket) socket.send(data);

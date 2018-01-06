@@ -86,6 +86,8 @@
                           <tr><th>Highest Ask:</th></tr>
                         </thead>
                         <tbody>
+                          <tr><td id='id_max_ask'></td></tr>
+                          <tr><td id='id_max_ask_coin'></td></tr>
                         </tbody>
                       </table>
                     </div>
@@ -149,6 +151,8 @@
                                 <tr><th>Highest Bid:</th></tr>
                               </thead>
                               <tbody>
+                                <tr><td id='id_max_bid'></td></tr>
+                                <tr><td id='id_max_bid_coin'></td></tr>
                               </tbody>
                             </table>
                           </div>
@@ -190,7 +194,7 @@
             <div class="card-header">
               Your active orders:
             </div>
-            <div class="card-body">
+            <div class="card-body div-orders">
               <table class="table table-striped table-sm">
                 <thead>
                   <tr>
@@ -212,23 +216,6 @@
         <div class="col-md-3 p-1">
             <div class="card">
               <div class="card-header">
-                Buy orders
-              </div>
-              <div class="card-body div-orders p-0">
-                <table class="table table-striped table-sm table-orders">
-                  <thead>
-                    <tr id='id_buy_orders_header'>
-                    </tr>
-                  </thead>
-                  <tbody id='id_buy_orders_body'>
-                  </tbody>
-                </table>
-              </div>
-            </div> 
-          </div>
-        <div class="col-md-3 p-1">
-            <div class="card">
-              <div class="card-header">
                 Sell orders
               </div>
               <div class="card-body div-orders p-0">
@@ -243,14 +230,42 @@
               </div>
             </div>          
           </div>
+        <div class="col-md-3 p-1">
+            <div class="card">
+              <div class="card-header">
+                Buy orders
+              </div>
+              <div class="card-body div-orders p-0">
+                <table class="table table-striped table-sm table-orders">
+                  <thead>
+                    <tr id='id_buy_orders_header'>
+                    </tr>
+                  </thead>
+                  <tbody id='id_buy_orders_body'>
+                  </tbody>
+                </table>
+              </div>
+            </div> 
+          </div>
         <div class="col-md-6 p-1">
             <div class="card">
               <div class="card-header">
                 Trade history:
               </div>
-              <div class="card-body">
-                <h4 class="card-title"></h4>
-                <p class="card-text"></p>
+              <div class="card-body div-orders">
+                <table class="table table-striped table-sm">
+                  <thead>
+                    <tr>
+                      <th>Time</th>
+                      <th>Type</th>
+                      <th>Volume</th>
+                      <th>Price</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id='id_trade_history'>
+                  </tbody>
+                </table>
               </div>
             </div>          
           </div>

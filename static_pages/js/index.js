@@ -82,7 +82,7 @@ function onOpenSocket()
   socket.send(JSON.stringify({request: 'getchat'}));
   socket.send(JSON.stringify({request: 'getpair', message: [utils.MAIN_COIN, g_CurrentPair]}));
 
-  setInterval(()=>{socket.send(JSON.stringify({request: 'getpair', message: [utils.MAIN_COIN, g_CurrentPair]}));}, 120000)
+  setInterval(()=>{socket.send(JSON.stringify({request: 'getpair', message: [utils.MAIN_COIN, g_CurrentPair]}));}, 5000)
 }
 
 function onSocketMessage(event)
@@ -126,6 +126,19 @@ function onSocketMessage(event)
     UpdateMarket(data.message)
     return;
   }
+  if (data.request == 'exchange-updated')
+  {
+    UpdateExchange(data.message);
+    return;
+  }
+}
+
+function UpdateExchange(message)
+{
+  if (!message || !message.coin || message.coin != g_CurrentPair)
+    return;
+  
+  socket.send(JSON.stringify({request: 'getpair', message: [utils.MAIN_COIN, g_CurrentPair]}));
 }
 
 function UpdateMarket(message)
@@ -143,7 +156,7 @@ function UpdateMarket(message)
     if (coinName == utils.MAIN_COIN)
       continue;
       
-    const price = "0.0";
+    const price = GetCoinPrice(coinName);
     const vol = "0.0";
     const ch = "0.0";
     const tr = $('<tr></tr>')
@@ -186,12 +199,32 @@ function UpdatePairData(message)
     UpdateOrders(message.data.orders);
   if (message.data.userOrders)
     UpdateUserOrders(message.data.userOrders);
+  if (message.data.history)
+    UpdateTradeHistory(message.data.history);
     
 }
 
 function UpdatePairBalance(message)
 {
   
+}
+
+function UpdateTradeHistory(history)
+{
+  $('#id_trade_history').empty();
+  for (var i=0; i<history.length; i++)
+  {
+    history[i].buysell = history[i].buysell == 'sell' ? 'buy' : 'sell';
+    
+    const typeColor = history[i].buysell == 'sell' ? "text-danger" : "text-success";
+    const tr = $('<tr></tr>')
+      .append($('<td>'+utils.timeConverter(history[i].time*1)+'</td>'))
+      .append($('<td><p class="'+typeColor+'">'+history[i].buysell+'</p></td>'))
+      .append($('<td>'+(history[i].volume*1).toFixed(8)+'</td>'))
+      .append($('<td>'+(history[i].price*1).toFixed(8)+'</td>'));
+    
+    $('#id_trade_history').append(tr);
+  }
 }
 
 function UpdateOrders(orders)
@@ -212,15 +245,31 @@ function UpdateOrders(orders)
     $('#id_buy_orders_body').append(tr);
   }
   
-  for (var i=0; i<orders.buy.length; i++)
+  for (var i=0; i<orders.sell.length; i++)
   {
     const tr = $('<tr></tr>')
       .append($('<td>'+(orders.sell[i].price*1.0).toFixed(8)+'</td>'))
-      .append($('<td>'+(orders.sell[i].price*orders.buy[i].amount*1.0).toFixed(8)+'</td>'))
+      .append($('<td>'+(orders.sell[i].price*orders.sell[i].amount*1.0).toFixed(8)+'</td>'))
       .append($('<td>'+(orders.sell[i].amount*1.0).toFixed(8)+'</td>'));
       
     $('#id_sell_orders_body').append(tr);
   }
+  
+  if (!orders.buy.length)
+    orders.buy = [{price: 0.0}];
+  if (!orders.sell.length)
+    orders.sell = [{price: 0.0}];
+    
+  $('#id_max_bid').text((orders.buy[0].price*1.0).toFixed(8));
+  $('#id_max_ask').text((orders.sell[0].price*1.0).toFixed(8));
+  $('#id_max_bid_coin').text(utils.MAIN_COIN);
+  $('#id_max_ask_coin').text(utils.MAIN_COIN);
+  
+}
+
+function GetCoinPrice(coinName)
+{
+  return "0.0";
 }
 
 function UpdateUserOrders(userOrders)
