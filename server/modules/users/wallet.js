@@ -140,25 +140,27 @@ exports.onGetWallet = function(ws, req)
 exports.GetCoinWallet = function(socket, userID, coin, callback)
 {
     if (!balances[userID])
-        balances[userID] = {time:0};
+        balances[userID] = {};
     if (!balances[userID][coin.id])
         balances[userID][coin.id] = {time:0};
         
     if (Date.now() - balances[userID][coin.id].time < 120000)
     {
-        if (socket) socket.send(balances[userID][coin.id].data);
+        if (socket  && (socket.readyState === WebSocket.OPEN)) socket.send(balances[userID][coin.id].data);
         if (callback)  callback(balances[userID][coin.id].data);
         return;
     }
+    
+    balances[userID][coin.id].time = Date.now();
         
     const account = utils.Encrypt(userID);
     GetBalance(socket, userID, coin, balance =>{
-        if (socket) socket.send(JSON.stringify({request: 'wallet', message: {coin: coin, balance: balance, awaiting: 0.0, hold: 0.0} }));
+        if (socket  && (socket.readyState === WebSocket.OPEN)) socket.send(JSON.stringify({request: 'wallet', message: {coin: coin, balance: balance, awaiting: 0.0, hold: 0.0} }));
            
         RPC.send3(coin.id, commands.getbalance, [account, 0], ret => {
             const awaiting = (!ret || !ret.result || ret.result != 'success') ? 0 : ret.data;
                 
-            if (socket) socket.send(JSON.stringify({request: 'wallet', message: {coin: coin, balance: (balance*1).toFixed(7)*1, awaiting: (awaiting*1).toFixed(7)*1, hold: 0.0} }));
+            if (socket  && (socket.readyState === WebSocket.OPEN)) socket.send(JSON.stringify({request: 'wallet', message: {coin: coin, balance: (balance*1).toFixed(7)*1, awaiting: (awaiting*1).toFixed(7)*1, hold: 0.0} }));
             
             orders.GetReservedBalance(userID, coin.name, ret => {
                 const reserved = (!ret || !ret.result || ret.result != 'success') ? 0 : ret.data;
@@ -168,7 +170,7 @@ exports.GetCoinWallet = function(socket, userID, coin, callback)
                 if (!balances[userID]) balances[userID] = {};
                 balances[userID][coin.id] = {data: data, time: Date.now()};
                     
-                if (socket) socket.send(data);
+                if (socket  && (socket.readyState === WebSocket.OPEN)) socket.send(data);
                 if (callback) callback(data);
             });
         });
@@ -185,7 +187,10 @@ function GetBalance(socket, userID, coin, callback)
             callback(0);
             return;
         }
-        if (socket) socket.send(JSON.stringify({request: 'wallet', message: {coin: coin, balance: ret.data, awaiting: 0.0, hold: 0.0, deposit: ['xxx']} }));
+        if (socket && (socket.readyState === WebSocket.OPEN)) 
+        {
+            socket.send(JSON.stringify({request: 'wallet', message: {coin: coin, balance: ret.data, awaiting: 0.0, hold: 0.0, deposit: ['xxx']} }));
+        }
         MoveBalance(userID, g_constants.ExchangeBalanceAccountID, coin, ret.data, err => {
             callback(err.balance);
         });
@@ -469,7 +474,8 @@ function UpdateBalanceDB(userID_from, userID_to, coin, amount, comment, callback
             newBalance = (rows[0].balance*1 - amount*1).toFixed(7)*1;
         }
         
-        const history = JSON.stringify(JSON.parse(unescape(rows[0].history)).concat(comment));
+        let history = "";
+        try {history = JSON.stringify(JSON.parse(unescape(rows[0].history)).concat(comment));} catch(e){};
         g_constants.dbTables['balance'].update('balance='+newBalance+', history="'+escape(history)+'"', WHERE, err => { 
             if (err)
             {
@@ -479,80 +485,4 @@ function UpdateBalanceDB(userID_from, userID_to, coin, amount, comment, callback
             callback({result: true, balance: newBalance}); 
         });
     });
-}
-
-
-function SafeMoveBalance(WHERE, from, to, coin, amount, comment, callback)
-{
-    const from_to = escape(JSON.stringify({from: from, to: to, coin: coin}));
-        
-    g_constants.dbTables['tx_journal'].delete('from_to="'+from_to+'" AND (status="complete" OR status="start")');
-    
-    g_constants.dbTables.BeginTransaction(err => {
-        if (err)
-        {
-            callback({result: false, balance: 0.0, message: 'Database transaction error'});
-            return;
-        }
-            
-        g_constants.dbTables['tx_journal'].selectAll("*", 'from_to="'+from_to+'" AND status=="middle"', '', rows => {
-            if (rows && rows.length)
-            {
-                const info = JSON.parse(unescape(rows[0].from_to));
-                //balance moved in daemon so now we nead update balance in our database
-                try {
-                    UpdateBalanceDB(utils.Decrypt(info.from), utils.Decrypt(info.to), info.coin, rows[0].amount, rows[0].comment, ret => {onBalanceUpdated(ret, from_to)});
-                }
-                catch(e) {
-                    setTimeout(UpdateBalanceDB, 120000, utils.Decrypt(info.from), utils.Decrypt(info.to), info.coin, rows[0].amount, rows[0].comment, ret => {onBalanceUpdated(ret, from_to)});
-                }
-                return;
-            }
-            g_constants.dbTables['tx_journal'].insert(from_to, amount, 'start', comment, err => {
-                if (err)
-                {
-                    g_constants.dbTables['tx_journal'].delete('from_to="'+from_to+'" AND (status="complete" OR status="start")');
-                    g_constants.dbTables.EndTransaction();
-                    return;
-                }
-            });
-            
-            RPC.send3(coin.id, commands.move, [from, to, (amount*1).toFixed(7)*1, coin.info.minconf || 3, comment], ret => {
-                if (!ret || !ret.result || ret.result != 'success')
-                {
-                    g_constants.dbTables['balance'].selectAll('balance', WHERE, '', (err, rows) => {
-                        if (err || !rows || !rows.length)
-                        {
-                            callback({result: false, balance: 0.0, message: 'User not found'});
-                            return;
-                        }
-                        callback({result: true, balance: rows[0].balance});
-                    });
-                    return;
-                }
-                
-                //balance moved in daemon so now we nead update balance in our database
-                try {
-                    UpdateBalanceDB(userID_from, userID_to, coin, amount, comment, callback);
-                }
-                catch(e) {
-                    setTimeout(UpdateBalanceDB, 120000, userID_from, userID_to, coin, amount, comment, callback);
-                }
-            });
-            
-            
-        });
-    });
-    
-    function onBalanceUpdated(err, from_to)
-    {
-        if (!err.result)
-        {
-            g_constants.dbTables.EndTransaction();
-            return;
-        }
-        g_constants.dbTables['tx_journal'].update("status='complete'", "from_to='"+from_to+"'", err => {
-            g_constants.dbTables.EndTransaction();
-        });
-    }
 }

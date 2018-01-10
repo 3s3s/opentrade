@@ -18,8 +18,8 @@
             </div>
             <div class="card-body p-0">
               <div id='market-flex' class="d-flex d-flex-market align-items-start bd-highlight mb-0" >
-                <div id='market-container' class='container'>
-                  <table class="table table-hover">
+                <div id='market-container' class='container p-0'>
+                  <table class="table table-hover table-orders">
                     <thead>
                       <tr>
                         <th scope="col">Coin</th>
@@ -36,11 +36,12 @@
             </div>
           </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-6 p-0">
+          <div id="chart_div" style="width:400; height:400"></div>
         </div>
         <div class="col-md-3">
           <div class="card">
-            <div class="card-header">
+            <div id='id_chat_header' class="card-header">
               Chat
             </div>
             <div class="card-body p-0">
@@ -49,7 +50,7 @@
                 </div>
               </div>
               <div class="input-group">
-                <input id='chat_message' type="text" class="form-control" >
+                <input id='chat_message' type="text" class="form-control" maxlength="150">
                 <span class="input-group-btn">
                   <button id='button_chat' class="btn btn-secondary" type="button">Submit</button>
                 </span>

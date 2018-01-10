@@ -49,11 +49,26 @@ exports.Decrypt = function(str)
     return unescape(deciphered);
 }
 
+let validTokens = {};
+let validSessions = {};
+
 exports.UpdateSession = function(userid, token, callback)
 {
     if (!userid) 
     {
         g_constants.dbTables['sessions'].delete("token='"+escape(token)+"'");
+        if (validTokens[escape(token)])
+            delete validTokens[escape(token)];
+            
+        if (validSessions[escape(token)])
+            delete validSessions[escape(token)];
+            
+        callback();
+        return;
+    }
+    
+    if (validTokens[escape(token)] && (Date.now() - validTokens[escape(token)].time < 60000))
+    {
         callback();
         return;
     }
@@ -62,10 +77,12 @@ exports.UpdateSession = function(userid, token, callback)
         if (!err) 
         {
             g_constants.dbTables['sessions'].delete('time < '+Date.now()+' - '+g_constants.SESSION_TIME);
+            validTokens[escape(token)] = {time: Date.now()};
             callback();
             return;
         }
         g_constants.dbTables['sessions'].update("time='"+Date.now()+"'", "token='"+escape(token)+"'", err => { 
+            validTokens[escape(token)] = {time: Date.now()};
             callback(); 
         });
     });
@@ -186,6 +203,13 @@ exports.GetSessionStatus = function(req, callback)
     }
     
     const token = escape(req.token);
+    
+    if (validSessions[token] && validSessions[token]['data'] && Date.now() - validSessions[token] < 60000)
+    {
+        callback(validSessions[token]['data']);
+        return;
+    }
+    
     g_constants.dbTables['sessions'].selectAll('*', 'token="'+token+'"', '', (err, rows) => {
         if (err || !rows || !rows.length)
         {
@@ -195,6 +219,10 @@ exports.GetSessionStatus = function(req, callback)
         if (Date.now() - rows[0].time > g_constants.SESSION_TIME)
         {
             g_constants.dbTables['sessions'].delete('time < '+Date.now()+' - '+g_constants.SESSION_TIME);
+            
+            if (validSessions[token])
+                delete validSessions[token];
+                
             callback({active: false, message: errMessage});
             return;
         }
@@ -206,10 +234,36 @@ exports.GetSessionStatus = function(req, callback)
                     callback({active: false, message: errMessage});
                     return;
                 }
-                callback({active: true, token: token, user: rows[0].login, password: unescape(rows[0].password), email: rows[0].email, id: rows[0].id, info: rows[0].info});
+                
+                validSessions[token] = {time: Date.now()};
+                validSessions[token]['data'] = {active: true, token: token, user: rows[0].login, password: unescape(rows[0].password), email: rows[0].email, id: rows[0].id, info: rows[0].info};
+                
+                callback(validSessions[token]['data']);
             });
         });
     });
+}
+
+let updateKeysTimer = Date.now();
+exports.GetValidSessionsCount = function()
+{
+    const time = Date.now();
+    if (time - updateKeysTimer > 120000)
+    {
+        var tmp = {};
+        for (var key in validSessions)
+        {
+            if (!validTokens || !validTokens[key])
+                continue;
+                
+            if (time - validTokens[key].time < 120000)
+                tmp[key] = validTokens[key];
+        }
+        validTokens = tmp;
+        updateKeysTimer = Date.now();
+    }
+    
+    return Object.keys(validSessions).length || 0;
 }
 
 exports.parseCookies = function(request) {

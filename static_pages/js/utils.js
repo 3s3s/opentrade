@@ -36,7 +36,7 @@ const utils =
           //setTimeout(utils.CreateSocket, 10000);
         };
     },
-    timeConverter : function (UNIX_timestamp){
+    timeConverter : function (UNIX_timestamp, hideSeconds){
       var a = new Date(UNIX_timestamp);
       var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
       var year = a.getFullYear();
@@ -46,6 +46,9 @@ const utils =
       var min = a.getMinutes();
       var sec = a.getSeconds();
       var time = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec ;
+
+      if (hideSeconds) 
+        time = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min;
       return time;
     },
     alert_fail: function(message) {

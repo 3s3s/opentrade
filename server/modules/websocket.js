@@ -43,6 +43,11 @@ function SendResponce(ws, req, client)
         chat.onRequestMessages(ws);
         return;
     }
+    if (client.request == 'getchart')
+    {
+        trade.onGetChart(ws, req, client.message);
+        return;
+    }
     if (client.request == 'postchat')
     {
         chat.onNewMessage(ws, req, client.message);
@@ -83,5 +88,5 @@ function SendResponce(ws, req, client)
 
 function SendError(ws, message)
 {
-    ws.send(JSON.stringify({request: 'error', message: message}));
+    if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({request: 'error', message: message}));
 }

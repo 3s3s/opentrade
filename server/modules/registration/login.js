@@ -9,8 +9,10 @@ exports.onExit = function(req, res)
     const token = utils.parseCookies(req)['token'] || '';
     
     console.log('exit token='+token);
-    g_constants.dbTables['sessions'].delete('token="'+escape(token)+'"');
-    utils.render(res, 'pages/registration/logout', {status:{active: false}, redirect: '/login'});
+    //g_constants.dbTables['sessions'].delete('token="'+escape(token)+'"');
+    utils.UpdateSession(0, token, () => {
+        utils.render(res, 'pages/registration/logout', {status:{active: false}, redirect: '/login'});
+    });
 }
 
 exports.onSubmit = function(req, res)

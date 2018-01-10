@@ -115,6 +115,8 @@ exports.SubmitOrder = function(req, res)
                 const fullAmount = req.body.order == 'buy' ?
                     (req.body.amount*req.body.price+g_constants.TRADE_COMISSION*req.body.amount*req.body.price).toFixed(7)*1 :
                     (req.body.amount*1).toFixed(7)*1;
+                
+                if (fullAmount*1 < 0.00001) return onError(req, res, 'Bad order total ( total < 0.00001 ) '+'( '+fullAmount*1+' < 0.00001 )');
                 if (rows[0].balance*1 < fullAmount) return onError(req, res, 'Insufficient funds ( '+rows[0].balance*1+' < '+fullAmount+' )');
 
                 AddOrder(status, WHERE, rows[0].balance*1-fullAmount, req, res);
@@ -176,8 +178,16 @@ exports.GetUserOrders = function(userID, coins, callback)
     });
 }
 
-exports.GetAllOrders = function(coins, callback)
+exports.GetAllOrders = function(coinsOrigin, callback)
 {
+    let coins = [coinsOrigin[0], coinsOrigin[1]];
+    if (coins[0].name == g_constants.TRADE_MAIN_COIN)
+        coins = [coinsOrigin[1], coinsOrigin[0]];
+        
+    if (allOrders[coins[0].name] == 'Yenten')
+    {
+        var i=0;
+    }
     if (coins.length != 2)
     {
         callback({result: false, message: 'Coins error'});
@@ -208,6 +218,16 @@ function ValidateOrderRequest(req)
     if (!req.body || !req.body.order || !req.body.coin || !req.body.amount || !req.body.price)
     {
         req['message'] = 'Bad request';
+        return false;
+    }
+    if (req.body.amount*1 < 0.00001)
+    {
+        req['message'] = 'Bad order amount ( amount < 0.00001 ) '+'( '+req.body.amount*1+' < 0.00001 )';
+        return false;
+    }
+    if (req.body.price*1 < 0.00001)
+    {
+        req['message'] = 'Bad order price ( price < 0.00001 )'+' ( '+req.body.price*1+' < 0.00001 )';
         return false;
     }
     return true;
@@ -374,12 +394,20 @@ function ProcessExchange(data)
                 if (err) return callback(err);
 
                 exports.AddBalance(buyOrder.userID, buyerChange, sellOrder.price_pair, err => {
-                    if (err) return callback(err);
-
-                    exports.AddBalance(1, comission, sellOrder.price_pair, callback);
+                    callback(err);
+                    ProcessComission(comission, sellOrder.price_pair);
                 });
             });
         });
+    }
+    
+    function ProcessComission(comission, price_pair)
+    {
+        for (var i=0; i<g_constants.DONATORS; i++)
+        {
+            if (g_constants.DONATORS[i].percent && g_constants.DONATORS[i].userID)
+                exports.AddBalance(g_constants.DONATORS[i].userID, (comission*(g_constants.DONATORS[i].percent*1-1)) / 100.0, price_pair, () => {});
+        }
     }
     
     function UpdateOrders(newBuyAmount, newSellAmount, buyOrderID, sellOrderID, callback)
