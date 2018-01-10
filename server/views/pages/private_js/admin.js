@@ -2,6 +2,9 @@
 
 $(() => {
     utils.CreateSocket(onSocketMessage, onOpenSocket);
+    
+    $('#table_coin_balance').empty();
+    UpdateCoinBalance();
 });
 
 
@@ -190,11 +193,31 @@ function onSocketMessage(event)
   }
 }
 
+function UpdateCoinBalance()
+{
+    var currentCoin = $( "#coins-select option:selected" ).text();
+    $.post( "/admin/getcoinbalance", {coin: currentCoin}, function( data ) {
+        if (data.result != true)
+          return;
+        
+        $('#table_coin_balance').empty();
+        
+        $('#table_coin_balance').append($('<tr></tr>')
+            .append($('<td>'+(data.data.balance*1).toFixed(8)+'</td>'))
+            .append($('<td>'+(data.data.blocked*1).toFixed(8)+'</td>'))
+            .append($('<td>'+(data.data.balance*1+data.data.blocked*1).toFixed(8)+'</td>')));
+        
+     }, "json" );
+}
+
 function UpdateAdminCoins(data, client_request)
 {
     var currentCoin = $( "#coins-select option:selected" ).text();
     
+    UpdateCoinBalance();
+    
     $('#coins-select').empty();
+    
     for (var i=0; i<data.length; i++)
     {
         const option = $('<option value="'+unescape(data[i].name)+'">'+unescape(data[i].name)+'</option>');

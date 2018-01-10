@@ -4,6 +4,7 @@ const url = require('url');
 const utils = require("../../utils.js");
 const g_constants = require("../../constants.js");
 const RPC = require("../rpc.js");
+const WebSocket = require('ws');
 
 exports.onTestRPC = function(ws, req, data)
 {
@@ -12,7 +13,7 @@ exports.onTestRPC = function(ws, req, data)
             return;
             
         SendRPC(data.coin, data.command, data.params, ret => {
-            ws.send(JSON.stringify({request: 'rpc_responce', message: {result: ret.result, data: ret.data}}));
+            if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({request: 'rpc_responce', message: {result: ret.result, data: ret.data}}));
         });
     });
     
@@ -52,7 +53,7 @@ function SendAllCoinsData(ws)
             rows[i].rpc_password = utils.Decrypt(rows[i].rpc_password);
             rows[i].info = utils.Decrypt(rows[i].info);
         }
-        ws.send(JSON.stringify({request: 'coinsadmin', message: rows, client_request: ws['client_request'] || ""}));
+        if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({request: 'coinsadmin', message: rows, client_request: ws['client_request'] || ""}));
     });
 }
 

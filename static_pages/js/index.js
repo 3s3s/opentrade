@@ -1,10 +1,15 @@
 'use strict';
 
+google.charts.load('current', {packages: ['corechart']});
+google.charts.setOnLoadCallback(drawChart);
+
 var g_CurrentPair = utils.DEFAULT_PAIR;
 
 var pairData = {};
 
 var coinNameToTicker = {};
+
+var chartData = [];
 
 $(() => {
   utils.CreateSocket(onSocketMessage, onOpenSocket);
@@ -80,9 +85,10 @@ function SendChatMessage()
 function onOpenSocket()
 {
   socket.send(JSON.stringify({request: 'getchat'}));
+  socket.send(JSON.stringify({request: 'getchart', message: [utils.MAIN_COIN, g_CurrentPair]}));
   socket.send(JSON.stringify({request: 'getpair', message: [utils.MAIN_COIN, g_CurrentPair]}));
 
-  setInterval(()=>{socket.send(JSON.stringify({request: 'getpair', message: [utils.MAIN_COIN, g_CurrentPair]}));}, 120000)
+  setInterval(()=>{socket.send(JSON.stringify({request: 'getpair', message: [utils.MAIN_COIN, g_CurrentPair]}));}, 5000)
 }
 
 function onSocketMessage(event)
@@ -111,6 +117,15 @@ function onSocketMessage(event)
     UpdatePairData(data.message)
     return;
   }
+  if (data.request == 'chartdata')
+  {
+    if (data.message.data.chart)
+    {
+      chartData = data.message.data.chart;
+      drawChart();
+    }
+    return;
+  }
   if (data.request == 'pairbalance')
   {
     UpdatePairBalance(data.message)
@@ -126,6 +141,19 @@ function onSocketMessage(event)
     UpdateMarket(data.message)
     return;
   }
+  if (data.request == 'exchange-updated')
+  {
+    UpdateExchange(data.message);
+    return;
+  }
+}
+
+function UpdateExchange(message)
+{
+  if (!message || !message.coin || message.coin != g_CurrentPair)
+    return;
+  
+  socket.send(JSON.stringify({request: 'getpair', message: [utils.MAIN_COIN, g_CurrentPair]}));
 }
 
 function UpdateMarket(message)
@@ -143,14 +171,17 @@ function UpdateMarket(message)
     if (coinName == utils.MAIN_COIN)
       continue;
       
-    const price = "0.0";
-    const vol = "0.0";
-    const ch = "0.0";
+    const price = (message.coins[i].price*1).toFixed(8);
+    const vol = (message.coins[i].volume*1).toFixed(8);
+    const ch = message.coins[i].prev_price ? (message.coins[i].price*1 - message.coins[i].prev_price*1) : message.coins[i].price*1;
+    
+    const chColor = ch*1 < 0 ? "text-danger" : "text-success";
+    
     const tr = $('<tr></tr>')
       .append($('<td>'+message.coins[i].ticker+'</td>'))
       .append($('<td>'+price+'</td>'))
       .append($('<td>'+vol+'</td>'))
-      .append($('<td>'+ch+'</td>'))
+      .append($('<td><span class="'+chColor+'">'+(ch*1).toFixed(7)+'</span></td>'))
       .on('click', e => {
         if (coinName == g_CurrentPair)
           return;
@@ -186,12 +217,36 @@ function UpdatePairData(message)
     UpdateOrders(message.data.orders);
   if (message.data.userOrders)
     UpdateUserOrders(message.data.userOrders);
-    
+  if (message.data.history)
+    UpdateTradeHistory(message.data.history);
+  if (message.data.online != undefined)
+    $('#id_chat_header').html('<span>Online: </span><strong>'+message.data.online+'</strong>')
 }
 
 function UpdatePairBalance(message)
 {
   
+}
+
+function UpdateTradeHistory(history)
+{
+  $('#id_trade_history').empty();
+  for (var i=0; i<history.length; i++)
+  {
+    if (!history[i].time)
+      continue;
+      
+    history[i].buysell = history[i].buysell == 'sell' ? 'buy' : 'sell';
+    
+    const typeColor = history[i].buysell == 'sell' ? "text-danger" : "text-success";
+    const tr = $('<tr></tr>')
+      .append($('<td>'+utils.timeConverter(history[i].time*1)+'</td>'))
+      .append($('<td><p class="'+typeColor+'">'+history[i].buysell+'</p></td>'))
+      .append($('<td>'+(history[i].volume*1).toFixed(8)+'</td>'))
+      .append($('<td>'+(history[i].price*1).toFixed(8)+'</td>'));
+    
+    $('#id_trade_history').append(tr);
+  }
 }
 
 function UpdateOrders(orders)
@@ -212,15 +267,26 @@ function UpdateOrders(orders)
     $('#id_buy_orders_body').append(tr);
   }
   
-  for (var i=0; i<orders.buy.length; i++)
+  for (var i=0; i<orders.sell.length; i++)
   {
     const tr = $('<tr></tr>')
       .append($('<td>'+(orders.sell[i].price*1.0).toFixed(8)+'</td>'))
-      .append($('<td>'+(orders.sell[i].price*orders.buy[i].amount*1.0).toFixed(8)+'</td>'))
+      .append($('<td>'+(orders.sell[i].price*orders.sell[i].amount*1.0).toFixed(8)+'</td>'))
       .append($('<td>'+(orders.sell[i].amount*1.0).toFixed(8)+'</td>'));
       
     $('#id_sell_orders_body').append(tr);
   }
+  
+  if (!orders.buy.length)
+    orders.buy = [{price: 0.0}];
+  if (!orders.sell.length)
+    orders.sell = [{price: 0.0}];
+    
+  $('#id_max_bid').text((orders.buy[0].price*1.0).toFixed(8));
+  $('#id_max_ask').text((orders.sell[0].price*1.0).toFixed(8));
+  $('#id_max_bid_coin').text(utils.MAIN_COIN);
+  $('#id_max_ask_coin').text(utils.MAIN_COIN);
+  
 }
 
 function UpdateUserOrders(userOrders)
@@ -325,4 +391,56 @@ function UpdateSellComission()
   }
   catch(e) {}
   
+}
+
+function drawChart()
+{
+  if (!chartData.length)
+    return;
+  
+  var table = [];
+  for (var i=0; i<chartData.length; i++)  
+  {
+    const time = utils.timeConverter(chartData[i].t10min*360000, true);
+    //const time = new Date(chartData[i].t10min*360000);
+    const timeStart = chartData[i].t10min;
+    
+    var min = chartData[i].avg_10min;
+    var init = chartData[i].avg_10min;
+    var final = chartData[i].avg_10min;
+    var max = chartData[i].avg_10min;
+    
+    for (var j=i+1; j<chartData.length; j++)
+    {
+      if (chartData[j].t10min*1 > timeStart*1+10)
+        break;
+      
+      if (chartData[j].avg_10min*1 < min)
+        min = chartData[j].avg_10min;
+      if (chartData[j].avg_10min*1 > max)
+        max = chartData[j].avg_10min;
+        
+      final = chartData[j].avg_10min;
+      i++;
+    }
+    
+    table.push([time, min/1000000, init/1000000, final/1000000, max/1000000]);
+  }
+  
+  if (!table.length)
+    return;
+    
+  var data = google.visualization.arrayToDataTable(table, true);
+  var options = {
+      //title: g_CurrentPair,
+      /*hAxis: {
+        minValue: 0,
+        maxValue: 24,
+        ticks: [0, 4, 8, 12, 16, 20, 24]
+      },*/
+      legend: 'none'
+  };
+  
+  var chart = new google.visualization.CandlestickChart(document.getElementById('chart_div'));
+  chart.draw(data, options);
 }

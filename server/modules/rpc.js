@@ -52,7 +52,7 @@ exports.send = function(coin, command, params, callback)
                     {result: result.success, message: result.message || "", data: result.data} :
                     {result: result.success, message: 0, data: result.message || ""};
         
-        console.log('rpcPostJSON: ' + ret.status);
+        console.log('rpcPostJSON: result:' + ret.result);
         callback(ret);
     });
 }
@@ -69,14 +69,24 @@ exports.send2 = function(coin, command, params, callback)
     });
 }
 
+let bWaitCoin = {};
 exports.send3 = function(coinID, command, params, callback)
 {
+    if (bWaitCoin[coinID])
+    {
+        setTimeout(exports.send3, 1000, coinID, command, params, callback);
+        return;
+    }
+    bWaitCoin[coinID] = true;
     g_constants.dbTables['coins'].selectAll('*', 'ROWID="'+coinID+'"', '', (err, rows) => {
         if (err || !rows || !rows.length)
         {
             callback({result: false, message: 'Coin not found'});
             return;
         }
-        exports.send(rows[0], command, params, callback);
+        exports.send(rows[0], command, params, ret => {
+            bWaitCoin[coinID] = false;
+            callback(ret);
+        });
     });
 }

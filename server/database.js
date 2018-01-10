@@ -18,6 +18,8 @@ exports.Init = function(callback)
     
     g_db = new sqlite3.Database(g_constants.dbName);
     
+    //g_db.run('DROP TABLE history');
+    
     RunDBTransaction();
     setInterval(RunDBTransaction, 5000);
     

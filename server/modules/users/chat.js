@@ -20,8 +20,6 @@ exports.onNewMessage = function(ws, req, messageObject)
         const msg = {user: status.user, userID: status.id, message: messageObject};    
         
         SaveMessage(msg);
-        
-        //ws.send(JSON.stringify({request: 'chat-message', message: msg}))
 
         // Broadcast to everyone else.
         g_constants.WEB_SOCKETS.clients.forEach( client => {
@@ -36,7 +34,7 @@ exports.onRequestMessages = function(ws)
     require("./market").UpdateMarket();
     
     GetLastMessages(messages => {
-        ws.send(JSON.stringify({request: 'chat-messages', message: messages}));
+        if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({request: 'chat-messages', message: messages}));
     });
 }
 
