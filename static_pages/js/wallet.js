@@ -50,9 +50,9 @@ function UpdateWallet(data)
     }
     
     const tdCoin = $('<td scope="col" class="align-middle">'+data.coin.name+'</td>');
-    const tdBalance = $('<td id="'+id_balance+'" scope="col" class="align-middle">'+(data.balance*1).toFixed(7)+" "+data.coin.ticker+'</td>');
-    const tdAwaiting = $('<td id="'+id_awaiting+'" scope="col" class="align-middle">'+(data.awaiting*1).toFixed(7)+" "+data.coin.ticker+'</td>');
-    const tdHold = $('<td id="'+id_onhold+'" scope="col" class="align-middle">'+(data.hold*1).toFixed(7)+" "+data.coin.ticker+'</td>');
+    const tdBalance = $('<td id="'+id_balance+'" scope="col" class="align-middle">'+(data.balance*1).toFixed(8)*1+" "+data.coin.ticker+'</td>');
+    const tdAwaiting = $('<td id="'+id_awaiting+'" scope="col" class="align-middle">'+(data.awaiting*1).toFixed(8)*1+" "+data.coin.ticker+'</td>');
+    const tdHold = $('<td id="'+id_onhold+'" scope="col" class="align-middle">'+(data.hold*1).toFixed(8)*1+" "+data.coin.ticker+'</td>');
     
     const tdDeposit = CreateDepositArea(data);//$('<td>'+data.deposit[data.deposit.length-1]+'</td>');
     
@@ -83,10 +83,15 @@ function ShowDepositAddress(coin)
     $('#loader').hide();
     if (!data || !data.result || !data.data || !data.data.length)
       return;
-      
-    modals.OKCancel(
-      'Load your '+coin, 
-      '<div><b>To load your account please send the coins to your address :</b><br>'+data.data[data.data.length-1]+'</div>')
+    
+    var message = '<div><b>To load your account please send the coins to your address :</b><br>'+data.data[data.data.length-1]+'</div>';
+    
+    if (coin == '---TTC---')
+    {
+      message += '<div class="p-3 mb-2 bg-danger text-white">WARNING!!! ---TTC--- IS NOT TittieCoin !!!</div>';
+    }
+    
+    modals.OKCancel('Load your '+coin, message);
   });
 }
 

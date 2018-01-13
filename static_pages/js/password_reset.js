@@ -17,7 +17,8 @@ $(() => {
 function validate()
 {
     $('#id_email').removeClass("is-invalid");
-
+    
+    $("#id_email").val($("#id_email")[0].value.toLowerCase());
     if (!utils.ValidateEmail($("#id_email")[0].value))
     {
         $('#id_email').addClass("is-invalid");

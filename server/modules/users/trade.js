@@ -166,7 +166,7 @@ function GetTradeHistory(data, callback)
         
     if (Date.now() - tradeHistory[data[1]].time < 5000) return callback({result: true, data: tradeHistory[data[1]].data});
 
-    g_constants.dbTables['history'].selectAll('fromSellerToBuyer AS volume, price, buysell, time', 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'"', 'ORDER BY time DESC LIMIT 200', (err, rows) => {
+    g_constants.dbTables['history'].selectAll('fromSellerToBuyer AS volume, fromBuyerToSeller, price, buysell, time', 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'"', 'ORDER BY time DESC LIMIT 200', (err, rows) => {
         if (err || !rows) callback({result: false, data: []});
         
         tradeHistory[data[1]].time = Date.now();

@@ -202,11 +202,13 @@ exports.GetAllOrders = function(coinsOrigin, callback)
     
     g_constants.dbTables['orders'].selectAll('SUM(amount) AS amount, coin, price, time', 'coin="'+escape(coins[0].name)+'" AND buysell="buy" AND amount*1>0', 'GROUP BY price ORDER BY price*1000000 DESC LIMIT 30', (err, rows) => {
         g_constants.dbTables['orders'].selectAll('SUM(amount) AS amount, coin, price, time', 'coin="'+escape(coins[0].name)+'" AND buysell="sell" AND amount*1>0', 'GROUP BY price ORDER BY price*1000000 LIMIT 30', (err2, rows2) => {
-            const data = {buy: rows || [], sell: rows2 || []};
-            allOrders[coins[0].name] = {time: Date.now(), data: data};
-            callback({result: true, data: data});
-            
-            ProcessExchange(data);
+            g_constants.dbTables['orders'].selectAll('SUM(amount*1) AS sum_amount, SUM(amount*price) AS sum_amount_price', 'coin="'+escape(coins[0].name)+'"', 'GROUP BY buysell', (err3, rows3) => {
+                const data = {buy: rows || [], sell: rows2 || [], volumes: rows3 || []};
+                allOrders[coins[0].name] = {time: Date.now(), data: data};
+                callback({result: true, data: data});
+                
+                ProcessExchange(data);
+            })
         });
     });
 }
@@ -288,7 +290,7 @@ function ProcessExchange(data)
         return
     
     const WHERE = 'coin="'+higestBid.coin+'"  AND amount>0 AND ((buysell="sell" AND price*1000000 <= '+higestBid.price*1000000+') OR (buysell="buy" AND price*1000000 >= '+higestAsk.price*1000000+'))';    
-    g_constants.dbTables['orders'].selectAll('ROWID AS id, *', WHERE, 'ORDER BY price, time', (err, rows) => {
+    g_constants.dbTables['orders'].selectAll('ROWID AS id, *', WHERE, 'ORDER BY price*1, time*1', (err, rows) => {
         if (err || !rows || !rows.length)
             return;
         
@@ -322,15 +324,21 @@ function ProcessExchange(data)
         const newBuyAmount = buyOrder.amount*1 < sellOrder.amount*1 ? 0 : (buyOrder.amount*1 - sellOrder.amount*1).toPrecision(8);
         const newSellAmount = buyOrder.amount*1 < sellOrder.amount*1 ? (sellOrder.amount*1 - buyOrder.amount*1).toPrecision(8) : 0;
         
+        const priority = buyOrder.time > sellOrder.time ? 'buyer' : 'seller';
+        
         const fromSellerToBuyer = (buyOrder.amount*1 - newBuyAmount*1).toPrecision(8);
-        const fromBuyerToSeller = (fromSellerToBuyer*sellOrder.price).toPrecision(8);
+        const fromBuyerToSeller = (priority == 'buyer') ?
+            (fromSellerToBuyer*sellOrder.price).toPrecision(8) :
+            (fromSellerToBuyer*buyOrder.price).toPrecision(8);
         
         //if (fromSellerToBuyer*1 == 0 || fromBuyerToSeller*1 == 0 )
         //    return;
         
         const comission = (fromBuyerToSeller*g_constants.TRADE_COMISSION*1).toPrecision(8);
         
-        const buyerChange = ((buyOrder.price*1 - sellOrder.price*1)*fromSellerToBuyer).toPrecision(8);
+        const buyerChange = (priority == 'buyer') ? 
+            ((buyOrder.price*1 - sellOrder.price*1)*fromSellerToBuyer).toPrecision(8) :
+            0.0;
 
         database.BeginTransaction(err => {
             if (err) return;
@@ -403,7 +411,7 @@ function ProcessExchange(data)
     
     function ProcessComission(comission, price_pair)
     {
-        for (var i=0; i<g_constants.DONATORS; i++)
+        for (var i=0; i<g_constants.DONATORS.length; i++)
         {
             if (g_constants.DONATORS[i].percent && g_constants.DONATORS[i].userID)
                 exports.AddBalance(g_constants.DONATORS[i].userID, (comission*(g_constants.DONATORS[i].percent*1-1)) / 100.0, price_pair, () => {});
@@ -427,6 +435,11 @@ function ProcessExchange(data)
 
 exports.AddBalance = function(userID, count, coin, callback)
 {
+    if (count*1.0 == 0.0)
+    {
+        callback(null);
+        return;
+    }
     const WHERE = 'userID="'+userID+'" AND coin="'+coin+'"';
     g_constants.dbTables['balance'].selectAll('*', WHERE, '', (err, rows) => {
         if (err || !rows) return callback(err);

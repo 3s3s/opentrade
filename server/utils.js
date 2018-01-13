@@ -76,7 +76,7 @@ exports.UpdateSession = function(userid, token, callback)
     g_constants.dbTables['sessions'].insert(token, Date.now(), userid, err => {
         if (!err) 
         {
-            g_constants.dbTables['sessions'].delete('time < '+Date.now()+' - '+g_constants.SESSION_TIME);
+            g_constants.dbTables['sessions'].delete('time <'+Date.now()+' - '+g_constants.SESSION_TIME);
             validTokens[escape(token)] = {time: Date.now()};
             callback();
             return;
@@ -251,7 +251,7 @@ exports.GetValidSessionsCount = function()
     if (time - updateKeysTimer > 120000)
     {
         var tmp = {};
-        for (var key in validSessions)
+        for (var key in validTokens)
         {
             if (!validTokens || !validTokens[key])
                 continue;
@@ -263,7 +263,7 @@ exports.GetValidSessionsCount = function()
         updateKeysTimer = Date.now();
     }
     
-    return Object.keys(validSessions).length || 0;
+    return Object.keys(validTokens).length || 0;
 }
 
 exports.parseCookies = function(request) {

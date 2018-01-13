@@ -52,7 +52,7 @@ exports.send = function(coin, command, params, callback)
                     {result: result.success, message: result.message || "", data: result.data} :
                     {result: result.success, message: 0, data: result.message || ""};
         
-        console.log('rpcPostJSON: result:' + ret.result);
+        console.log('rpcPostJSON: result:' + ret.result + " (message: " + (result.message || "")+" )");
         callback(ret);
     });
 }
@@ -72,6 +72,11 @@ exports.send2 = function(coin, command, params, callback)
 let bWaitCoin = {};
 exports.send3 = function(coinID, command, params, callback)
 {
+    if (command == 'move' && params[2]*1 <= 0)
+    {
+        callback({result: false, message: 'Invalid move amount'});
+        return;
+    }
     if (bWaitCoin[coinID])
     {
         setTimeout(exports.send3, 1000, coinID, command, params, callback);

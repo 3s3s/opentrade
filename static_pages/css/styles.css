@@ -3,6 +3,12 @@ body {
   padding-top: 70px;
 }
 
+.form_title_volume {
+    font-weight: 400;
+    color: #8b929b;
+    margin-right: 4px;
+}
+
 .container {
     max-width: 100%;
 }

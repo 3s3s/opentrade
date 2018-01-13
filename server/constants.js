@@ -16,9 +16,10 @@ exports.my_portSSL = 40443;
 exports.dbName = './database/sqlite.db';
 
 exports.DONATORS = [
-    {userID: 1, percent: 10},
-    {userID: 10, percent: 30},
-    {userID: 14, percent: 60}
+    {userID: 1, percent: 9},
+    {userID: 22, percent: 10},
+    {userID: 10, percent: 25},
+    {userID: 14, percent: 55}
 ];
 
 
