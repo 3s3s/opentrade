@@ -21,6 +21,8 @@ exports.handle = function(app, wss)
     app.get('/admin', onAdminMain);
     app.get('/private_js/admin.js', onAdminJS);
     
+    app.get('/fees', onShowFeesPage);
+
     app.post('/admin/finduser', onAdminFindUser);
     app.post('/admin/getcoinbalance', onAdminGetCoinBalance);
     app.post('/submitorder', onSubmitOrder);
@@ -60,6 +62,8 @@ function CommonRender(req, res, page)
             if (req.query && req.query.redirect)
                 info['path_redirect'] = req.query.redirect;
                 
+            info['lang'] = req.acceptsLanguages('ru') ? 'ru' : 'en';   
+            
             utils.render(res, page, info);
         });
     } 
@@ -72,6 +76,11 @@ function onMain(req, res)
 {
     //index.Show(req, res);
     CommonRender(req, res, 'pages/index');
+}
+
+function onShowFeesPage(req, res)
+{
+    CommonRender(req, res, 'pages/fees');
 }
 
 function onAdminMain(req, res)

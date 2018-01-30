@@ -103,14 +103,14 @@ exports.SubmitOrder = function(req, res)
 
         if (!ValidateOrderRequest(req)) return onError(req, res, req.message || 'Bad request');
 
-        utils.CheckCoin(req.body.coin, err => {
+        utils.CheckCoin(unescape(req.body.coin), err => {
             if (err && err.result == false) return onError(req, res, err.message);
 
             const WHERE = req.body.order == 'buy' ? 
                 'coin="'+escape(g_constants.TRADE_MAIN_COIN)+'" AND userID="'+status.id+'"' :
                 'coin="'+escape(req.body.coin)+'" AND userID="'+status.id+'"';
             g_constants.dbTables['balance'].selectAll('*', WHERE, '', (err, rows) => {
-                if (err || !rows || !rows.length) return onError(req, res, err.message || 'User balance not found');
+                if (err || !rows || !rows.length) return onError(req, res, (err && err.message) ? err.message : 'User balance not found');
 
                 const fullAmount = req.body.order == 'buy' ?
                     (req.body.amount*req.body.price+g_constants.TRADE_COMISSION*req.body.amount*req.body.price).toFixed(7)*1 :
@@ -181,10 +181,11 @@ exports.GetUserOrders = function(userID, coins, callback)
 exports.GetAllOrders = function(coinsOrigin, callback)
 {
     let coins = [coinsOrigin[0], coinsOrigin[1]];
-    if (coins[0].name == g_constants.TRADE_MAIN_COIN)
+    if (unescape(coins[0].name) == g_constants.TRADE_MAIN_COIN)
         coins = [coinsOrigin[1], coinsOrigin[0]];
-        
-    if (allOrders[coins[0].name] == 'Yenten')
+    
+    const coin0 = unescape(coins[0].name);
+    if (coin0 == 'Bitcoin Cash')
     {
         var i=0;
     }
@@ -194,17 +195,17 @@ exports.GetAllOrders = function(coinsOrigin, callback)
         return;
     }
     
-    if (allOrders[coins[0].name] && Date.now() - allOrders[coins[0].name].time < 5000)
+    if (allOrders[coin0] && Date.now() - allOrders[coin0].time < 5000)
     {
-        callback({result: true, data: allOrders[coins[0].name].data});
+        callback({result: true, data: allOrders[coin0].data});
         return;
     }
     
-    g_constants.dbTables['orders'].selectAll('SUM(amount) AS amount, coin, price, time', 'coin="'+escape(coins[0].name)+'" AND buysell="buy" AND amount*1>0', 'GROUP BY price ORDER BY price*1000000 DESC LIMIT 30', (err, rows) => {
-        g_constants.dbTables['orders'].selectAll('SUM(amount) AS amount, coin, price, time', 'coin="'+escape(coins[0].name)+'" AND buysell="sell" AND amount*1>0', 'GROUP BY price ORDER BY price*1000000 LIMIT 30', (err2, rows2) => {
-            g_constants.dbTables['orders'].selectAll('SUM(amount*1) AS sum_amount, SUM(amount*price) AS sum_amount_price', 'coin="'+escape(coins[0].name)+'"', 'GROUP BY buysell', (err3, rows3) => {
+    g_constants.dbTables['orders'].selectAll('SUM(amount) AS amount, coin, price, time', 'coin="'+escape(coin0)+'" AND buysell="buy" AND amount*1>0', 'GROUP BY price ORDER BY price*1000000 DESC LIMIT 30', (err, rows) => {
+        g_constants.dbTables['orders'].selectAll('SUM(amount) AS amount, coin, price, time', 'coin="'+escape(coin0)+'" AND buysell="sell" AND amount*1>0', 'GROUP BY price ORDER BY price*1000000 LIMIT 30', (err2, rows2) => {
+            g_constants.dbTables['orders'].selectAll('SUM(amount*1) AS sum_amount, SUM(amount*price) AS sum_amount_price', 'coin="'+escape(coin0)+'"', 'GROUP BY buysell', (err3, rows3) => {
                 const data = {buy: rows || [], sell: rows2 || [], volumes: rows3 || []};
-                allOrders[coins[0].name] = {time: Date.now(), data: data};
+                allOrders[coin0] = {time: Date.now(), data: data};
                 callback({result: true, data: data});
                 
                 ProcessExchange(data);
@@ -379,7 +380,7 @@ function ProcessExchange(data)
         g_constants.dbTables['history'].insert(
             buyOrder.userID,
             sellOrder.userID,
-            buyOrder.coin,
+            unescape(buyOrder.coin),
             sellOrder.price_pair,
             fromSellerToBuyer, //volume
             fromBuyerToSeller,
@@ -453,7 +454,7 @@ exports.AddBalance = function(userID, count, coin, callback)
         }
         g_constants.dbTables['balance'].insert(
             userID,
-            coin,
+            unescape(coin),
             (newBalance*1).toFixed(8),
             JSON.stringify({}),
             JSON.stringify({}),

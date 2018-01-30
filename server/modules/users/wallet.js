@@ -151,6 +151,11 @@ exports.GetCoinWallet = function(socket, userID, coin, callback)
         return;
     }
     
+    if (userID == 2)
+    {
+        var i = 0;
+    }
+    
     balances[userID][coin.id].time = Date.now();
         
     const account = utils.Encrypt(userID);
@@ -187,10 +192,14 @@ function GetBalance(socket, userID, coin, callback)
             callback(0);
             return;
         }
-        if (socket && (socket.readyState === WebSocket.OPEN)) 
+        /*if (socket && (socket.readyState === WebSocket.OPEN)) 
         {
             socket.send(JSON.stringify({request: 'wallet', message: {coin: coin, balance: ret.data, awaiting: 0.0, hold: 0.0, deposit: ['xxx']} }));
         }
+        if (userID == 2)
+        {
+            var i = 1;
+        }*/
         MoveBalance(userID, g_constants.ExchangeBalanceAccountID, coin, ret.data, err => {
             callback(err.balance);
         });
@@ -342,10 +351,6 @@ exports.onConfirmWithdraw = function(req, res)
                     RPC.send3(coinID, commands.sendfrom, [userAccount, address, (amount*1).toFixed(7)*1, coin.info.minconf || 3, comment], ret => {
                         if (ret && ret.result && ret.result == 'success')
                         {
-                            //if (balances[userID] && Date.now()-balances[userID].time < 120000)
-                            //    balances[userID].time = 0;
-                            //if (balances[userID] && balances[userID][coinID])
-                            //    delete balances[userID][coinID];
                             exports.ResetBalanceCache(userID);
     
                             callback({result: true, data: ret.data});
@@ -447,7 +452,7 @@ function UpdateBalanceDB(userID_from, userID_to, coin, amount, comment, callback
             }
             g_constants.dbTables['balance'].insert(
                 userID,
-                coin.name,
+                unescape(coin.name),
                 (amount*1).toFixed(7),
                 comment,
                 JSON.stringify({}),

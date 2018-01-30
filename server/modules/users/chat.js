@@ -56,7 +56,7 @@ function SaveMessage(msg)
 {
     chat.push(msg);
     
-    var tmp = (chat.length > 500) ? chat.slice(chat.length-500) : chat;
+    var tmp = (chat.length > 300) ? chat.slice(chat.length-300) : chat;
     chat = tmp;
     
     setTimeout(SaveToDB, 30000);

@@ -4,6 +4,10 @@ google.charts.load('current', {packages: ['corechart']});
 google.charts.setOnLoadCallback(drawChart);
 
 var g_CurrentPair = utils.DEFAULT_PAIR;
+var g_CurrentLang = 'ru';
+
+var g_bFirstChatFilling = true;
+const chat_languages = ['ru', 'en'];
 
 var pairData = {};
 
@@ -11,8 +15,44 @@ var coinNameToTicker = {};
 
 var chartData = [];
 
+/*function checkInView(elem, container)
+{
+  return container[0].clientHeight + container.offset().top - container[0].offsetTop < 500;
+}*/
+
+function IsNeadScroll()
+{
+  if (g_bFirstChatFilling)
+    return true;
+    
+  const container = $('#chat-container_'+g_CurrentLang);
+  
+  return container[0].clientHeight + container.offset().top - container[0].offsetTop < 500;
+  /*const chatLength = container.children().length;
+  if (!chatLength)
+    return false;
+    
+  const lastElement = $(container.children()[chatLength - 1]);
+  
+  return checkInView(lastElement, container);*/
+  //if (lastElement.offset().top > )
+  //return utils.checkInView(container[0], lastElement, false);
+  
+ /* var elementTop = $(lastElement).offset().top;
+  var elementBottom = elementTop + $(lastElement).outerHeight();
+
+  var viewportTop = container.scrollTop();
+  var viewportBottom = viewportTop + container.height();
+
+  return elementBottom > viewportTop && elementTop < viewportBottom;*/
+};
+
+
 $(() => {
   utils.CreateSocket(onSocketMessage, onOpenSocket);
+  
+  for (var i=0; i<chat_languages.length; i++)
+    $('#chat-container_'+chat_languages[i]).hide();
 
   $('#button_chat').click(event => {
         event.preventDefault();
@@ -26,6 +66,37 @@ $(() => {
   $('#header_sell').text('Sell '+g_CurrentPair);
   $('#header_buy').text('Buy '+g_CurrentPair);
   
+ // setInterval(IsNeadScroll, 5000);
+});
+
+function ShowLanguageChat()
+{
+  $('#chat-container_loading').hide();
+  g_CurrentLang = utils.GetCurrentLang();
+
+  const neadScroll = IsNeadScroll(); //true; //IsNeadScroll();
+
+  for (var i=0; i<chat_languages.length; i++)
+  {
+    //storage.setItem('#chat-container_'+chat_languages[i], {html: $('#chat-container_'+chat_languages[i]).html(), time: Date.now()});
+    $('#chat-container_'+chat_languages[i]).hide();
+  }
+
+  $('#chat-container_'+g_CurrentLang).show();
+  
+  if (neadScroll)
+    $('#chat-flex').animate({scrollTop: $('#chat-container_'+g_CurrentLang).height()}, 0);
+  
+}
+
+$('#id_btn_chat_ru').on('click', e => {
+  storage.setItem('CurrentLang', 'ru');
+  ShowLanguageChat();
+});
+
+$('#id_btn_chat_en').on('click', e => {
+  storage.setItem('CurrentLang', 'en');
+  ShowLanguageChat();
 });
 
 $('#form_buy').submit(e => {
@@ -78,7 +149,7 @@ function AddOrder(order)
 
 function SendChatMessage()
 {
-  socket.send(JSON.stringify({request: 'postchat', message: {text: $('#chat_message').val()}}));
+  socket.send(JSON.stringify({request: 'postchat', message: {text: $('#chat_message').val(), lang: g_CurrentLang}}));
   $('#chat_message').val('');
 }
 
@@ -107,9 +178,13 @@ function onSocketMessage(event)
   }
   if (data.request == 'chat-messages')
   {
-    $('#chat-container').empty();
-    for (var i=0; i<data.message.length; i++)
-      AddChatMessage(data.message[i])
+    //$('#chat-container').empty();
+    
+    const messagesAll = data.message || [];
+    ShowLanguageChat();
+    
+    setTimeout(AsyncAddChatMessage, 0, messagesAll, messagesAll.length-1);
+    
     return;
   }
   if (data.request == 'pairdata')
@@ -148,6 +223,18 @@ function onSocketMessage(event)
   }
 }
 
+function AsyncAddChatMessage(messages, index)
+{
+  if (index < 0) 
+  {
+    g_bFirstChatFilling = false;
+    return;
+  }
+
+  AddChatMessage(messages[index], true, 'prepend');
+  setTimeout(AsyncAddChatMessage, 0, messages, index-1);
+}
+
 function UpdateExchange(message)
 {
   if (!message || !message.coin || message.coin != g_CurrentPair)
@@ -164,7 +251,7 @@ function UpdateMarket(message)
   $('#table-market').empty();  
   for (var i=0; i<message.coins.length; i++)
   {
-    const coinName = message.coins[i].name;
+    const coinName = unescape(message.coins[i].name);
     
     coinNameToTicker[coinName] = {ticker: message.coins[i].ticker};
     
@@ -199,13 +286,43 @@ function UpdateMarket(message)
   }
 }
 
-function AddChatMessage(message)
+function AddChatMessage(message, noscroll, method)
 {
-  const user = $('<a href="#"></a>').text(message.user+":");
+  const userName = unescape(message.user);
+  const user = $('<a href="#"></a>').text(userName+":");
   const text = $('<span class="p-2"></span>').text(message.message.text);
-  $('#chat-container').append($('<div class="row chat_row"></div>').append($('<div class="col-md-12"></div>').append(user).append(text)));
   
-  $('#chat-flex').animate({scrollTop: $('#chat-container').height()}, 0);
+  const privMessage = $('<a href="#" style="text-decoration: none">&#9743;&nbsp</a>')
+  
+  if (!message.message.lang)
+    return;
+  
+  privMessage.on('click', e => {
+    e.preventDefault();
+  });
+    
+  user.on('click', e => {
+    e.preventDefault();
+    const old = $('#chat_message').val();
+    $('#chat_message').val(old + userName + ", ");
+  });
+    
+  const append = method || 'append';
+  
+  const row = $('<div class="row chat_row"></div>').append($('<div class="col-md-12"></div>').append(privMessage).append(user).append(text));
+
+  $('#chat-container_'+message.message.lang)[append](row);
+  
+  /*const lastElement = $('#chat-container_'+message.message.lang).children()[$('#chat-container_'+message.message.lang).children().length - 1];
+  
+  var bNeadScroll = false;
+  if (isInViewport($('#chat-container_'+message.message.lang), lastElement))
+  //if (lastElement && lastElement.isInViewport())
+    bNeadScroll = true;*/
+    
+
+  //if (noscroll == undefined || noscroll == false)
+    ShowLanguageChat();
 }
 
 function UpdatePairData(message)
@@ -219,6 +336,8 @@ function UpdatePairData(message)
     UpdateUserOrders(message.data.userOrders);
   if (message.data.history)
     UpdateTradeHistory(message.data.history);
+  if (message.data.historyUser)
+    UpdateTradeHistoryUser(message.data.historyUser);
   if (message.data.online != undefined)
     $('#id_chat_header').html('<span>Online: </span><strong>'+message.data.online+'</strong>')
 }
@@ -233,7 +352,7 @@ function UpdateTradeHistory(history)
   $('#id_trade_history').empty();
   for (var i=0; i<history.length; i++)
   {
-    if (!history[i].time || !history[i].volume)
+    if (!history[i].time || history[i].volume*1 == 0)
       continue;
       
     history[i].buysell = history[i].buysell == 'sell' ? 'buy' : 'sell';
@@ -241,11 +360,32 @@ function UpdateTradeHistory(history)
     const typeColor = history[i].buysell == 'sell' ? "text-danger" : "text-success";
     const tr = $('<tr></tr>')
       .append($('<td>'+utils.timeConverter(history[i].time*1)+'</td>'))
-      .append($('<td><p class="'+typeColor+'">'+history[i].buysell+'</p></td>'))
+      .append($('<td><span class="'+typeColor+'">'+history[i].buysell+'</span></td>'))
       .append($('<td>'+(history[i].volume*1).toFixed(8)*1+'</td>'))
       .append($('<td>'+(history[i].fromBuyerToSeller/history[i].volume).toFixed(8)*1+'</td>'));
     
     $('#id_trade_history').append(tr);
+  }
+}
+
+function UpdateTradeHistoryUser(history)
+{
+  $('#id_user_orders_history').empty();
+  for (var i=0; i<history.length; i++)
+  {
+    if (!history[i].time || history[i].volume*1 == 0)
+      continue;
+      
+    history[i].buysell = history[i].buysell == 'sell' ? 'buy' : 'sell';
+    
+    const typeColor = history[i].buysell == 'sell' ? "text-danger" : "text-success";
+    const tr = $('<tr></tr>')
+      .append($('<td>'+utils.timeConverter(history[i].time*1)+'</td>'))
+      .append($('<td><span class="'+typeColor+'">'+history[i].buysell+'</span></td>'))
+      .append($('<td>'+(history[i].volume*1).toFixed(8)*1+'</td>'))
+      .append($('<td>'+(history[i].fromBuyerToSeller/history[i].volume).toFixed(8)*1+'</td>'));
+    
+    $('#id_user_orders_history').append(tr);
   }
 }
 
@@ -320,8 +460,8 @@ function UpdateOrders(orders)
     $('#id_sell_orders_body').append(tr);
   }
 
-  if (orders.volumes && orders.volumes.length>0 && orders.volumes[1].sum_price)
-    volumeSell = orders.volumes[1].sum_price
+  if (orders.volumes && orders.volumes.length>1 && orders.volumes[1].sum_amount)
+    volumeSell = orders.volumes[1].sum_amount
 
   $('#id_sell_volume').text(" " + (volumeSell*1).toFixed(8)*1+" "+coinNameToTicker[g_CurrentPair].ticker);
   
@@ -347,7 +487,7 @@ function UpdateUserOrders(userOrders)
   
   for (var i=0; i<userOrders.length; i++)
   {
-    if (userOrders[i].coin != g_CurrentPair)
+    if (unescape(userOrders[i].coin) != g_CurrentPair)
       continue;
       
     const orderID = userOrders[i].id;
@@ -369,8 +509,8 @@ function UpdateUserOrders(userOrders)
     const typeColor = userOrders[i].buysell == 'sell' ? "text-danger" : "text-success";
     const tr = $('<tr></tr>')
       .append($('<td>'+utils.timeConverter(userOrders[i].time*1)+'</td>'))
-      .append($('<td><p class="'+typeColor+'">'+userOrders[i].buysell+'</p></td>'))
-      .append($('<td>'+(userOrders[i].amount*1).toFixed(8)*1+' '+coinNameToTicker[userOrders[i].coin].ticker+'</td>'))
+      .append($('<td><span class="'+typeColor+'">'+userOrders[i].buysell+'</span></td>'))
+      .append($('<td>'+(userOrders[i].amount*1).toFixed(8)*1+' '+coinNameToTicker[g_CurrentPair].ticker+'</td>'))
       .append($('<td>'+(userOrders[i].price*1).toFixed(8)*1+" "+coinNameToTicker[utils.MAIN_COIN].ticker+'</td>'))
       .append($('<td></td>').append(close));
       
@@ -385,7 +525,7 @@ function UpdateBalance(message)
   
   if (message.coin && (message.balance != undefined))
   {
-    if (message.coin.name == utils.MAIN_COIN)
+    if (unescape(message.coin.name) == utils.MAIN_COIN)
     {
       $('#id_buy_balance').empty();
       buyBalance = (message.balance*1.0).toFixed(8)*1;
@@ -393,7 +533,7 @@ function UpdateBalance(message)
       $('#id_buy_balance').text(buyBalance);
       $('#id_buy_coin').text(utils.MAIN_COIN);
     }
-    if (message.coin.name == g_CurrentPair)
+    if (unescape(message.coin.name) == g_CurrentPair)
     {
       $('#id_sell_balance').empty();
       sellBalance = (message.balance*1.0).toFixed(8)*1;

@@ -17,9 +17,10 @@ exports.dbName = './database/sqlite.db';
 
 exports.DONATORS = [
     {userID: 1, percent: 9},
+    {userID: 58, percent: 10},
     {userID: 22, percent: 10},
     {userID: 10, percent: 25},
-    {userID: 14, percent: 55}
+    {userID: 14, percent: 45}
 ];
 
 

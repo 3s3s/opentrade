@@ -115,9 +115,34 @@ $('#id_finduser').submit(e => {
     }
 });
 
-$('#form-add-coin').submit(e => {
+$('#del_coin').click(e => {    
     e.preventDefault();
-    
+
+    const body = 
+        "<form>" +
+            "<div class='form-group'>" +
+                "<label class='col-form-label' for='id-delcoin-name'>Coin name</label>" +
+                "<input type='text' class='form-control' id='id-delcoin-name' placeholder='Marycoin'>" +
+            "</div>" +
+        "</form>";
+        
+    modals.OKCancel('Delete coin', body, ret => {
+        if (ret == 'cancel')
+            return;
+            
+        socket.send(JSON.stringify({
+            request: 'delcoin', 
+            message: {
+                name: $('#id-delcoin-name').val(),
+            }
+        }));
+    });
+
+});
+//$('#form-add-coin').submit(e => {
+//    e.preventDefault();
+$('#add_coin').click(e => {    
+    e.preventDefault();
     const body = 
         "<form>" +
             "<div class='form-group'>" +
@@ -223,10 +248,10 @@ function UpdateAdminCoins(data, client_request)
         const option = $('<option value="'+unescape(data[i].name)+'">'+unescape(data[i].name)+'</option>');
         $('#coins-select').append(option);
         
-        if (currentCoin && currentCoin != data[i].name)
+        if (currentCoin && currentCoin != unescape(data[i].name))
             continue;
         
-        currentCoin = data[i].name;
+        //currentCoin = data[i].name;
         
         $('#coin-ticker').val(unescape(data[i].ticker));  
         $('#coin-icon').val(unescape(data[i].icon));  
@@ -246,8 +271,8 @@ function UpdateAdminCoins(data, client_request)
     $("#coins-select option[value='"+currentCoin+"']").prop('selected', true);
     $('#form-edit-coin').show();
     
-    if ($('#coins-tab').hasClass('active') && client_request == 'newcoin')
-        modals.OKCancel('Ready!', '<p>All coins saved</p>');
+    if ($('#coins-tab').hasClass('active') && (client_request == 'newcoin' || client_request == 'delcoin'))
+        setTimeout(() => {modals.OKCancel('Ready!', '<p>All coins saved</p>')}, 1000);
 }
 
 function onOpenSocket()

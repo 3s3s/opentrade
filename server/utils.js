@@ -300,6 +300,7 @@ exports.render = function(responce, page, info)
     
     render_info['recaptcha'] = g_constants.recaptcha_pub_key;
     render_info['debug'] = g_constants.DEBUG_MODE;
+    render_info['lang'] = lang;
 
     responce.render(page, render_info);
 }

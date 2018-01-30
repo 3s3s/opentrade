@@ -27,6 +27,9 @@ body {
 .table-orders{
   font-size: 12px;
 }
+.font_14{
+  font-size: 14px;
+}
 
 .div-orders {
   overflow-y:auto;

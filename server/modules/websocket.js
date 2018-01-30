@@ -63,6 +63,11 @@ function SendResponce(ws, req, client)
         coins.onNewCoin(ws, req, client.message);
         return;
     }
+    if (client.request == 'delcoin')
+    {
+        coins.onDelCoin(ws, req, client.message);
+        return;
+    }
     if (client.request == "rpc_test")
     {
         coins.onTestRPC(ws, req, client.message);

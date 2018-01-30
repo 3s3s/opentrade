@@ -1,6 +1,8 @@
 <nav class="navbar navbar-expand-lg navbar-light fixed-top bg-light">
     <div class="container" style="max-width: 90%;">
-        <a class="navbar-brand" href="#"><%-__('OpenTrade')%></a>
+        <a class="navbar-brand" href="/">
+            <img  height="30" border="0" align="center"  src="/OpenTrade6.png"/>
+        </a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -9,12 +11,25 @@
             <li class="nav-item active">
               <a class="nav-link" href="/"><%-__('Trade')%></a>
             </li>
+            <li class="nav-item active">
+              <a class="nav-link" target="_blank" href="https://mc-ex.multicoins.org"><%-__('Exchange')%></a>
+            </li>
         </ul>
         <ul class="navbar-nav ml-auto">
             <% var key = ''; try{if (status.active) key = status.token || '';}catch(e){}%>
             <% if (!key.length) {%><% include ../partials/nav_not_logged %><% }%>
             <% if (key.length) {%><%  include ../partials/nav_logged %><% }%>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <span ><%-__('Help')%></span>
+                </a>
+                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                  <a class="dropdown-item" href="/support"><%-__('Support')%></a>
+                  <a class="dropdown-item" href="/fees"><%-__('Fees')%></a>
+                </div>
+            </li>
         </ul>
     </div>
 </nav>
     <div id="loader" style="display:none;"></div>
+    <input id='id_lang' type='hidden' <% var value = 'value="en"'; try{if (lang) value = "value='"+lang+"'"}catch(e){} %> <%- value %>>
