@@ -72,7 +72,8 @@ exports.UpdateSession = function(userid, token, callback)
         callback();
         return;
     }
-        
+    
+    validTokens[escape(token)] = {time: Date.now()};    
     g_constants.dbTables['sessions'].insert(token, Date.now(), userid, err => {
         if (!err) 
         {
@@ -335,6 +336,8 @@ exports.postJSON = function(query, body, callback)
     exports.getHTTP(options, callback);
 };
 
+var lastSocketKey = 0;
+var socketMap = {};
 exports.postString = function(host, port, path, headers, strBody, callback) 
 {
     const options = { 
@@ -362,9 +365,28 @@ exports.postString = function(host, port, path, headers, strBody, callback)
 		});	
     }); 
     
+    req.on('socket', function (socket) {
+        socket.setTimeout(30000);  
+        socket.on('timeout', function() {
+            req.abort();
+        });
+        
+        /* generate a new, unique socket-key */
+        const socketKey = ++lastSocketKey;
+        /* add socket when it is connected */
+        socketMap[socketKey] = socket;
+        socket.on('close', function() {
+            /* remove socket when it is closed */
+            delete socketMap[socketKey];
+        });
+    });
+
     req.on('error', function(e) { 
-        console.log('problem with request: ' + e.message); 
-        callback({'success': false, message: 'problem with request: ' + e.message});
+        if (e.code === "ECONNRESET") {
+            console.log("Timeout occurs");
+        }
+        console.log('problem with request: ' + (e.message || "")); 
+        callback({'success': false, message: 'problem with request: ' + (e.message || "")});
     }); 
     
     // write data to request body 

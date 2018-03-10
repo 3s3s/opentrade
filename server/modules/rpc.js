@@ -77,20 +77,28 @@ exports.send3 = function(coinID, command, params, callback)
         callback({result: false, message: 'Invalid move amount'});
         return;
     }
-    if (bWaitCoin[coinID])
+    if (bWaitCoin[coinID] && bWaitCoin[coinID].status && bWaitCoin[coinID].status == true)
     {
+        /*if (bWaitCoin[coinID].time > Date.now() - 10000)
+        {
+            console.log('Coin '+coinID+' not responce');
+            callback({result: false, message: 'Coin not responce'});
+            return;
+        }*/
+        console.log('Wait coin '+coinID+' RPC queue. ')
         setTimeout(exports.send3, 1000, coinID, command, params, callback);
         return;
     }
-    bWaitCoin[coinID] = true;
+    bWaitCoin[coinID] = {status: true, time: Date.now()};
     g_constants.dbTables['coins'].selectAll('*', 'ROWID="'+coinID+'"', '', (err, rows) => {
         if (err || !rows || !rows.length)
         {
+            bWaitCoin[coinID] = {status: false, time: Date.now()};
             callback({result: false, message: 'Coin not found'});
             return;
         }
         exports.send(rows[0], command, params, ret => {
-            bWaitCoin[coinID] = false;
+            bWaitCoin[coinID] = {status: false, time: Date.now()};
             callback(ret);
         });
     });

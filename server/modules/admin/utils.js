@@ -84,7 +84,7 @@ exports.onFindUser = function(req, res)
             return;
         }
         
-        g_constants.dbTables['users'].selectAll('ROWID as id, *', 'login GLOB "'+query+'"', 'ORDER BY id LIMIT 100', (err, rows) => {
+        g_constants.dbTables['users'].selectAll('ROWID as id, *', 'login GLOB "'+query+'"', 'ORDER BY id LIMIT 1000', (err, rows) => {
             if (err)
             {
                 onError(req, res, err.message || 'Database error');

@@ -155,8 +155,12 @@ exports.ExchangeBalanceAccountID = 0;
 // Private constants
 const PRIVATE = require("./modules/private_constants");
 exports.password_private_suffix = PRIVATE.password_private_suffix;
-exports.walletpassphrase = PRIVATE.walletpassphrase;
 exports.recaptcha_priv_key = PRIVATE.recaptcha_priv_key;
+
+exports.walletpassphrase = function (ticker)
+{
+    return PRIVATE.walletspassphrase[ticker] || "";
+}
 
 exports.SSL_options = {
     key: require("fs").readFileSync(PRIVATE.SSL_KEY),

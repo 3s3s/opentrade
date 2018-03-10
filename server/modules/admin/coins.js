@@ -108,7 +108,10 @@ function SendRPC(coin, command, params, callback)
             callback({result: false, data: {}});
             return;
         }
-        RPC.send(rows[0], command, params, callback);
+        if (command == 'getbalance' || command == 'getinfo' || command == 'getblockchaininfo')
+            RPC.send(rows[0], command, params, callback);
+        else
+            callback({result: false, data: {}});
     });
 }
 

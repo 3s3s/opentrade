@@ -7,19 +7,19 @@
     <% include ../partials/header %>
 
 
-    <div class="container">
+    <div class="container pt-2">
       <% include ../partials/alerts %>
       <input id='id_token' type='hidden' <% var value = ''; try{if (status.token) value = "value='"+status.token+"'"}catch(e){} %> <%- value %>>
       <div class='row'>
-        <div class="col-md-3">
+        <div class="col-md-2 p-0">
           <div class="card">
             <div class="card-header">
-              Market
+              <%-__('Market')%>
             </div>
             <div class="card-body p-0">
               <div id='market-flex' class="d-flex d-flex-market align-items-start bd-highlight mb-0" >
                 <div id='market-container' class='container p-0'>
-                  <table class="table table-hover table-orders">
+                  <table class="table table-sm  table-hover table-orders">
                     <thead>
                       <tr>
                         <th scope="col">Coin</th>
@@ -36,10 +36,11 @@
             </div>
           </div>
         </div>
-        <div class="col-md-6 p-0">
-          <div id="chart_div" style="width:400; height:400"></div>
+        <div class="col-md-7 p-1">
+          <div id='chart_legend'></div>
+          <div id="chart_div" style="width:500; height:400"></div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-3 p-0">
           <div class="card">
             <div id='id_chat_header' class="card-header">
               Chat
@@ -80,7 +81,7 @@
                     <div class='col-md-6'>
                       <table>
                         <thead>
-                          <tr><th>Your balance:</th></tr>
+                          <tr><th><%-__('Your balance:')%></th></tr>
                         </thead>
                         <tbody>
                           <tr><td id='id_buy_balance'></td></tr>
@@ -127,7 +128,7 @@
                     <input type="text" class="form-control" id="inputBuyTotal" readonly placeholder="0.0">
                   </div>
                 </div>
-                <button type="submit" class="btn btn-primary">Buy</button>
+                <button type="submit" class="btn btn-primary"><%-__('Buy')%></button>
               </form>
               
             </div>
@@ -145,7 +146,7 @@
                           <div class='col-md-6'>
                             <table>
                               <thead>
-                                <tr><th>Your balance:</th></tr>
+                                <tr><th><%-__('Your balance:')%></th></tr>
                               </thead>
                               <tbody>
                                 <tr><td id='id_sell_balance'></td></tr>
@@ -192,7 +193,7 @@
                             <input type="text" class="form-control" id="inputSellTotal" readonly placeholder="0.0">
                           </div>
                         </div>
-                        <button type="submit" class="btn btn-primary">Sell</button>
+                        <button type="submit" class="btn btn-primary"><%-__('Sell')%></button>
                       </form>
                   </div>
                 </div>          
@@ -204,10 +205,10 @@
             </div>-->
             <ul class="nav nav-tabs">
               <li class="nav-item">
-                <a class="nav-link active" id="active-orders-tab" data-toggle="tab" href="#active_orders" role="tab" aria-controls="active_orders" aria-selected="true">Your active orders</a>
+                <a class="nav-link active" id="active-orders-tab" data-toggle="tab" href="#active_orders" role="tab" aria-controls="active_orders" aria-selected="true"><%-__('Your active orders')%></a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" id="history-orders-tab" data-toggle="tab" href="#history-orders" role="tab" aria-controls="history-orders" aria-selected="false">Your history</a>
+                <a class="nav-link" id="history-orders-tab" data-toggle="tab" href="#history-orders" role="tab" aria-controls="history-orders" aria-selected="false"><%-__('Your history')%></a>
               </li>
             </ul>
 
@@ -303,7 +304,7 @@
               <div class="card-header p-0">
                 <table class='table table-orders m-0'>
                   <tr>
-                    <td><strong>Trade history:</strong></td>
+                    <td><strong><%-__('Trade history')%>:</strong></td>
                   </tr>
                 </table>
               </div>

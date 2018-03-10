@@ -28,23 +28,6 @@ function IsNeadScroll()
   const container = $('#chat-container_'+g_CurrentLang);
   
   return container[0].clientHeight + container.offset().top - container[0].offsetTop < 500;
-  /*const chatLength = container.children().length;
-  if (!chatLength)
-    return false;
-    
-  const lastElement = $(container.children()[chatLength - 1]);
-  
-  return checkInView(lastElement, container);*/
-  //if (lastElement.offset().top > )
-  //return utils.checkInView(container[0], lastElement, false);
-  
- /* var elementTop = $(lastElement).offset().top;
-  var elementBottom = elementTop + $(lastElement).outerHeight();
-
-  var viewportTop = container.scrollTop();
-  var viewportBottom = viewportTop + container.height();
-
-  return elementBottom > viewportTop && elementTop < viewportBottom;*/
 };
 
 
@@ -66,7 +49,9 @@ $(() => {
   $('#header_sell').text('Sell '+g_CurrentPair);
   $('#header_buy').text('Buy '+g_CurrentPair);
   
- // setInterval(IsNeadScroll, 5000);
+  setInterval(IsNeadScroll, 5000);
+
+  
 });
 
 function ShowLanguageChat()
@@ -78,7 +63,6 @@ function ShowLanguageChat()
 
   for (var i=0; i<chat_languages.length; i++)
   {
-    //storage.setItem('#chat-container_'+chat_languages[i], {html: $('#chat-container_'+chat_languages[i]).html(), time: Date.now()});
     $('#chat-container_'+chat_languages[i]).hide();
   }
 
@@ -133,18 +117,40 @@ $('#form_sell').submit(e => {
 
 function AddOrder(order)
 {
+  const MC = coinNameToTicker[utils.MAIN_COIN] ? coinNameToTicker[utils.MAIN_COIN].ticker || 'MC' : 'MC'; 
+  const bodyModal = 
+    '<table class="table">'+
+      '<tr>'+
+        '<th>Order</th>'+
+        '<th>Amount</th>'+
+        '<th>Coin</th>'+
+        '<th>Price</th>'+
+      '</tr>'+
+      '<tr>'+
+        '<td>'+order.order+'</td>'+
+        '<td>'+order.amount+'</td>'+
+        '<td>'+order.coin+'</td>'+
+        '<td>'+order.price+" "+MC+'</td>'+
+      '</tr>'
+    '</table>';
+  
+  modals.OKCancel("Order confirmation", bodyModal, ret => {
+    if (ret != 'ok')
+      return;
+      
     $('#loader').show();
     $.post( "/submitorder", order, function( data ) {
-      $('#loader').hide();
-      if (data.result != true)
-      {
-        utils.alert_fail(data.message);
-        return;
-      }
-      utils.alert_success('Your order is submitted!');
-      socket.send(JSON.stringify({request: 'getpair', message: [utils.MAIN_COIN, g_CurrentPair]}));
+        $('#loader').hide();
+        if (data.result != true)
+        {
+          utils.alert_fail(data.message);
+          return;
+        }
+        utils.alert_success('Your order is submitted!');
+        socket.send(JSON.stringify({request: 'getpair', message: [utils.MAIN_COIN, g_CurrentPair]}));
     }, "json" );
-  
+  });
+
 }
 
 function SendChatMessage()
@@ -257,10 +263,12 @@ function UpdateMarket(message)
     
     if (coinName == utils.MAIN_COIN)
       continue;
-      
-    const price = (message.coins[i].price*1).toFixed(8)*1;
+    
+    
+//    const price = (message.coins[i].price*1).toFixed(8)*1;
+    const price = (message.coins[i].fromBuyerToSeller/(message.coins[i].volume == 0 ? 1 : message.coins[i].volume)).toFixed(8)*1;
     const vol = (message.coins[i].volume*1).toFixed(8)*1;
-    const ch = message.coins[i].prev_price ? (message.coins[i].price*1 - message.coins[i].prev_price*1) : message.coins[i].price*1;
+    const ch = message.coins[i].prev_frombuyertoseller ? (price - message.coins[i].prev_frombuyertoseller*1) : price;
     
     const chColor = ch*1 < 0 ? "text-danger" : "text-success";
     
@@ -313,16 +321,7 @@ function AddChatMessage(message, noscroll, method)
 
   $('#chat-container_'+message.message.lang)[append](row);
   
-  /*const lastElement = $('#chat-container_'+message.message.lang).children()[$('#chat-container_'+message.message.lang).children().length - 1];
-  
-  var bNeadScroll = false;
-  if (isInViewport($('#chat-container_'+message.message.lang), lastElement))
-  //if (lastElement && lastElement.isInViewport())
-    bNeadScroll = true;*/
-    
-
-  //if (noscroll == undefined || noscroll == false)
-    ShowLanguageChat();
+  ShowLanguageChat();
 }
 
 function UpdatePairData(message)
@@ -587,10 +586,19 @@ function UpdateSellComission()
   
 }
 
+
 function drawChart()
 {
   if (!chartData.length)
     return;
+  
+  SetChartLegend()
+    
+  var tmp = [];
+  for (var j=chartData.length-1; j>=0; j--)
+    tmp.push(chartData[j]);
+    
+  chartData = tmp;
   
   var table = [];
   for (var i=0; i<chartData.length; i++)  
@@ -632,9 +640,38 @@ function drawChart()
         maxValue: 24,
         ticks: [0, 4, 8, 12, 16, 20, 24]
       },*/
+      width: 800,
       legend: 'none'
   };
   
   var chart = new google.visualization.CandlestickChart(document.getElementById('chart_div'));
   chart.draw(data, options);
+}
+
+function SetChartLegend()
+{
+  if (!coinNameToTicker[g_CurrentPair] || !coinNameToTicker[g_CurrentPair].ticker || !coinNameToTicker[utils.MAIN_COIN])
+  {
+    setTimeout(SetChartLegend, 1000);
+    return;
+  }
+    
+  const MC = coinNameToTicker[utils.MAIN_COIN].ticker; 
+  const COIN = coinNameToTicker[g_CurrentPair].ticker
+  
+  $('#chart_legend').empty();
+  $.getJSON( "/api/v1/public/getmarketsummary?market="+MC+"-"+COIN, ret => {
+    if (!ret || !ret.success || ret.success != true || MC != coinNameToTicker[utils.MAIN_COIN].ticker || COIN != coinNameToTicker[g_CurrentPair].ticker) 
+      return;
+      
+    const legend = $(
+      '<ul class="nav">'+
+        '<li class="nav-item mr-3"><h4>'+COIN+' / '+MC+'</h4></li>'+
+        '<li class="nav-item mr-2 ml-3">24High: '+ret.result.High+'</li>'+
+        '<li class="nav-item mr-2 ml-3">24Low: '+ret.result.Low+'</li>'+
+        '<li class="nav-item mr-2 ml-3">24V: '+ret.result.Volume+'</li>'+
+      '</ul>'
+      )//('<h4>'+COIN+' / '+MC+'</h4>');
+    $('#chart_legend').append(legend);
+  });
 }

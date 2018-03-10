@@ -185,10 +185,6 @@ exports.GetAllOrders = function(coinsOrigin, callback)
         coins = [coinsOrigin[1], coinsOrigin[0]];
     
     const coin0 = unescape(coins[0].name);
-    if (coin0 == 'Bitcoin Cash')
-    {
-        var i=0;
-    }
     if (coins.length != 2)
     {
         callback({result: false, message: 'Coins error'});
@@ -238,6 +234,9 @@ function ValidateOrderRequest(req)
 
 function AddOrder(status, WHERE, newBalance, req, res)
 {
+    onError(req, res, 'Operation is temporarily unavailable');
+    return;
+    
     database.BeginTransaction(err => {
         if (err) return onError(req, res, err.message || 'Database transaction error');
 
@@ -295,7 +294,7 @@ function ProcessExchange(data)
         if (err || !rows || !rows.length)
             return;
         
-        const first = rows[0];
+        const first = GetFirst(rows);//rows[0]; //give newest order
         const second = GetPair(first, rows);
         
         if (second == null)
@@ -307,17 +306,45 @@ function ProcessExchange(data)
             RunExchange(second, first);
     });
     
-    function GetPair(first, rows)
+    function GetFirst(rows)
     {
+        var ret = rows[0];
         for (var i=1; i<rows.length; i++)
         {
-            if (i > 100) return null;
-            if (first.buysell == 'buy' && rows[i].buysell == 'sell' && first.price*1 >= rows[i].price*1)
-                return rows[i];
-            if (first.buysell == 'sell' && rows[i].buysell == 'buy' && first.price*1 <= rows[i].price*1)
-                return rows[i];
+            if (i >= 100)
+                break;
+            if (rows[i].time*1 > ret.time*1)
+                ret = rows[i];
         }
-        return null;
+        return ret;
+    }
+    
+    function GetPair(first, rows)
+    {
+        var ret = null;
+        for (var i=0; i<rows.length; i++)
+        {
+            if (i > 100) return null;
+            
+            if (first.id == rows[i]) 
+                continue;
+                
+            if (first.buysell == 'buy' && rows[i].buysell == 'sell' && first.price*1 >= rows[i].price*1)
+            {
+                if (ret && ret.price*1 <= rows[i].price*1)
+                    continue;
+                ret = rows[i];
+                continue;
+            }
+            if (first.buysell == 'sell' && rows[i].buysell == 'buy' && first.price*1 <= rows[i].price*1)
+            {
+                if (ret && ret.price*1 >= rows[i].price*1)
+                    continue;
+                ret = rows[i];
+                continue;
+            }
+        }
+        return ret;
     }
     
     function RunExchange(buyOrder, sellOrder)

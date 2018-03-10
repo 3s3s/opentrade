@@ -151,7 +151,7 @@ exports.GetCoinWallet = function(socket, userID, coin, callback)
         return;
     }
     
-    if (userID == 2)
+    if (userID == 178)
     {
         var i = 0;
     }
@@ -319,6 +319,10 @@ exports.onConfirmWithdraw = function(req, res)
     function ProcessWithdraw(userID, address, amount, coinName, callback)
     {
         const userAccount = utils.Encrypt(userID);
+        
+        //if (coinName == 'Marycoin' || coinName == 'Bitcoin' || )
+        callback({result: false, message: 'Operation temporarily unavailable'});
+        return;
 
         g_constants.dbTables['coins'].selectAll('ROWID AS id, *', 'name="'+coinName+'"', '', (err, rows) => {
             if (err || !rows || !rows.length)
@@ -346,8 +350,18 @@ exports.onConfirmWithdraw = function(req, res)
                     return;
                 }
                 const comment = JSON.stringify([{from: userAccount, to: address, amount: amount, time: Date.now()}]);
+                const walletPassphrase = g_constants.walletpassphrase(coin.ticker);
                 
-                RPC.send3(coinID, commands.walletpassphrase, [g_constants.walletpassphrase, 120], ret => {
+                RPC.send3(coinID, commands.walletpassphrase, [walletPassphrase, 20], ret => {
+                    if ((!ret || !ret.result || ret.result != 'success') && ret.data && ret.data.length)
+                    {
+                        const err = ret.data;
+                        //if false then return coins to user balance
+                        g_bProcessWithdraw = false;
+                        MoveBalance(userID, g_constants.ExchangeBalanceAccountID, coin, amount, ret =>{});
+                        callback({result: false, message: '<b>Withdraw error:</b> '+ err});
+                        return;
+                    }
                     RPC.send3(coinID, commands.sendfrom, [userAccount, address, (amount*1).toFixed(7)*1, coin.info.minconf || 3, comment], ret => {
                         if (ret && ret.result && ret.result == 'success')
                         {
