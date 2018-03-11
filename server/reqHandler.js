@@ -43,6 +43,7 @@ exports.handle = function(app, wss)
     app.get('/api_keys', onGetAPIKeys);
 
     app.post('/admin/finduser', onAdminFindUser);
+    app.post('/admin/findtrades', onAdminFindTrades);
     app.post('/admin/getcoinbalance', onAdminGetCoinBalance);
     app.post('/submitorder', onSubmitOrder);
     app.post('/closeorder', onCloseOrder);
@@ -218,6 +219,10 @@ function onGetHistory(req, res)
 function onAdminFindUser(req, res)
 {
     admin.onFindUser(req, res);
+}
+function onAdminFindTrades(req, res)
+{
+    admin.onFindTrades(req, res);
 }
 
 function onAdminGetCoinBalance(req, res)

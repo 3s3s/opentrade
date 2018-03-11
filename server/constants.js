@@ -1,5 +1,7 @@
 'use strict';
 
+exports.FATAL_ERROR = true;
+
 exports.TRADE_MAIN_COIN = "Marycoin";
 exports.TRADE_COMISSION = 0.001;
 
@@ -10,8 +12,8 @@ exports.SUPPORT_EMAIL = 'ivanivanovkzv@gmail.com';
 
 exports.SESSION_TIME = 3600*1000; //one hour
 
-exports.my_port = process.env.PORT || 40080;
-exports.my_portSSL = 40443;
+exports.my_port = process.env.PORT || 40081;
+exports.my_portSSL = 40444;
 
 exports.dbName = './database/sqlite.db';
 

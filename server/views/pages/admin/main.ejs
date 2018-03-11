@@ -18,6 +18,9 @@
       <li class="nav-item">
         <a class="nav-link" id="coins-tab" data-toggle="tab" href="#coins" role="tab" aria-controls="coins" aria-selected="false">Coins</a>
       </li>
+      <li class="nav-item">
+        <a class="nav-link" id="coins-tab" data-toggle="tab" href="#last_trades" role="tab" aria-controls="last_trades" aria-selected="false">Last Trades</a>
+      </li>
     </ul>
     <div class="tab-content p-4" id="adminTabsContent">
       <div class="tab-pane fade show active" id="users" role="tabpanel" aria-labelledby="users-tab">
@@ -156,6 +159,61 @@
             </div>
           </div>
         </div>
+      </div>
+      <div class="tab-pane fade" id="last_trades" role="tabpanel" aria-labelledby="support-tab">
+        <form id="id_findtrades" class="form-inline">
+          <div class="form-group row">
+            <label for="inputUser" class="col-sm-2 col-form-label">User</label>
+            <div class="col-sm-10">
+              <input type="text" name='user' class="form-control" id="inputUser" placeholder="*">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">Find</button>
+        </form>  
+        <table class="table m-2">
+          <thead>
+            <tr>
+              <th>
+                
+              </th>
+              <th>
+                #
+              </th>
+              <th>
+                buyUserID
+              </th>
+              <th>
+                sellUserID
+              </th>
+              <th>
+                coin
+              </th>
+              <th>
+                fromSellerToBuyer
+              </th>
+              <th>
+                fromBuyerToSeller
+              </th>
+              <th>
+                buyerChange
+              </th>
+              <th>
+                comission
+              </th>
+              <th>
+                time
+              </th>
+              <th>
+                buysell
+              </th>
+              <th>
+                price
+              </th>
+            </tr>
+          </thead>
+          <tbody id='table_trades'>
+          </tbody>
+        </table>
       </div>
     </div>
 

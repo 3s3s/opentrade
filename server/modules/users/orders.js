@@ -117,6 +117,7 @@ exports.SubmitOrder = function(req, res)
                     (req.body.amount*1).toFixed(7)*1;
                 
                 if (fullAmount*1 < 0.00001) return onError(req, res, 'Bad order total ( total < 0.00001 ) '+'( '+fullAmount*1+' < 0.00001 )');
+                if (!IsValidBalance(rows[0].balance)) return onError(req, res, 'Balance error ( '+rows[0].balance+' )');
                 if (rows[0].balance*1 < fullAmount) return onError(req, res, 'Insufficient funds ( '+rows[0].balance*1+' < '+fullAmount+' )');
 
                 AddOrder(status, WHERE, rows[0].balance*1-fullAmount, req, res);
@@ -124,6 +125,17 @@ exports.SubmitOrder = function(req, res)
         });
     });
 };
+
+function IsValidBalance(balance)
+{
+    if (!utils.isNumeric(balance))
+        return false;
+        
+    if (balance*1.0 <= 0.0)
+        return false;
+    
+    return true;
+}
 
 exports.GetReservedBalance = function(userID, coinName, callback)
 {
@@ -234,9 +246,12 @@ function ValidateOrderRequest(req)
 
 function AddOrder(status, WHERE, newBalance, req, res)
 {
-    onError(req, res, 'Operation is temporarily unavailable');
-    return;
-    
+    if (g_constants.FATAL_ERROR)
+    {
+        onError(req, res, 'Operation is temporarily unavailable');
+        return;
+    }
+
     database.BeginTransaction(err => {
         if (err) return onError(req, res, err.message || 'Database transaction error');
 
@@ -463,16 +478,25 @@ function ProcessExchange(data)
 
 exports.AddBalance = function(userID, count, coin, callback)
 {
-    if (count*1.0 == 0.0)
+    if (count*1.0 == 0.0 || !utils.isNumeric(count))
     {
         callback(null);
         return;
     }
+    
+    if (!g_constants.FATAL_ERROR && !utils.isNumeric(count))
+    {
+        callback(null);
+        return;
+    }
+    
     const WHERE = 'userID="'+userID+'" AND coin="'+coin+'"';
     g_constants.dbTables['balance'].selectAll('*', WHERE, '', (err, rows) => {
         if (err || !rows) return callback(err);
         
         const newBalance = rows.length ? rows[0].balance*1 + count*1 : count;
+        
+        if (!utils.isNumeric(count)) return callback(null);
         
         if (rows.length)
         {

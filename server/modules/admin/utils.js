@@ -97,3 +97,35 @@ exports.onFindUser = function(req, res)
         });
     });
 }
+
+exports.onFindTrades = function(req, res)
+{
+    if (!req.body)
+    {
+        onError(req, res, 'Bad request');
+        return;
+    }
+
+    utils.GetSessionStatus(req, status => {
+        if (status.id != 1)
+        {
+            onError(req, res, 'User is not root');
+            return;
+        }
+        
+        g_constants.dbTables['history'].selectAll('ROWID AS id, *', '', 'ORDER BY id DESC LIMIT 1', (err, rows) => {
+            if (err)
+            {
+                onError(req, res, err.message || 'Database error');
+                return;
+            }
+            for (var i=0; i<rows.length; i++)
+            {
+                rows[i]['buyUserAccount'] = utils.Encrypt(rows[i].buyUserID);
+                rows[i]['sellUserAccount'] = utils.Encrypt(rows[i].sellUserID);
+            }
+                
+            onSuccess(req, res, {rows: rows});
+        });
+    });
+}

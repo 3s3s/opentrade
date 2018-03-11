@@ -7,7 +7,64 @@ $(() => {
     UpdateCoinBalance();
 });
 
+$('#id_findtrades').submit(e => {
+    e.preventDefault();
+    
+    $('#inputUser').text('*');
+    
+    $('#loader').show();
+    $.post( "/admin/findtrades", $( '#id_findtrades' ).serialize(), function( data ) {
+        $('#loader').hide();
 
+        if (data.result != true)
+        {
+            utils.alert_fail(data.message);
+            return;
+        }
+        ShowLastTrades(data.data.rows);
+    });
+});
+
+function ShowLastTrades(trades)
+{
+    $('#table_trades').empty();
+    
+    for (var i=0; i<trades.length; i++)
+    {
+        const tradeID = trades[i].id;
+        const delButton = $('<button id=delTrade_"'+tradeID+'" class="btn btn-default">X</button>');
+        delButton.on('click', e => {
+            DeleteTrade(tradeID);
+        });
+            
+        const tr = $('<tr></tr>')
+            .append($('<td></td>').append(delButton))
+            .append($('<td>'+trades[i].id+'</td>'))
+            .append($('<td>'+trades[i].buyUserID+' ('+trades[i].buyUserAccount+') '+'</td>'))
+            .append($('<td>'+trades[i].sellUserID+' ('+trades[i].sellUserAccount+') '+'</td>'))
+            .append($('<td>'+trades[i].coin+'</td>'))
+            .append($('<td>'+trades[i].fromSellerToBuyer+'</td>'))
+            .append($('<td>'+trades[i].fromBuyerToSeller+'</td>'))
+            .append($('<td>'+trades[i].buyerChange+'</td>'))
+            .append($('<td>'+trades[i].comission+'</td>'))
+            .append($('<td>'+trades[i].time+'</td>'))
+            .append($('<td>'+trades[i].buysell+'</td>'))
+            .append($('<td>'+trades[i].price+'</td>'))
+
+        $('#table_trades').append(tr);
+    }
+
+    function DeleteTrade(id)
+    {
+        socket.send(JSON.stringify({
+            request: 'delete_trade', 
+            message: {
+                id: id
+            }
+        }));
+        
+    }
+}
 
 $('#coin-visible').click(function() {
     var info = {};
@@ -209,6 +266,11 @@ function onSocketMessage(event)
     UpdateAdminCoins(data.message, data.client_request);
     return;
   }
+  if (data.request == 'last_trade')
+  {
+    UpdateLastTrade(data.message);
+    return;
+  }
   if (data.request == 'rpc_responce')
   {
       if (data.message.result != "success")
@@ -233,6 +295,12 @@ function UpdateCoinBalance()
             .append($('<td>'+(data.data.balance*1+data.data.blocked*1).toFixed(8)+'</td>')));
         
      }, "json" );
+}
+
+function UpdateLastTrade(data)
+{
+    ShowLastTrades(data);
+    //setTimeout(() => {modals.OKCancel('Ready!', '<p>Trades updated</p>')}, 1000);
 }
 
 function UpdateAdminCoins(data, client_request)

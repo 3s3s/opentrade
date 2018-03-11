@@ -321,8 +321,11 @@ exports.onConfirmWithdraw = function(req, res)
         const userAccount = utils.Encrypt(userID);
         
         //if (coinName == 'Marycoin' || coinName == 'Bitcoin' || )
-        callback({result: false, message: 'Operation temporarily unavailable'});
-        return;
+        if (g_constants.FATAL_ERROR)
+        {
+            onError(req, res, 'Operation is temporarily unavailable');
+            return;
+        }
 
         g_constants.dbTables['coins'].selectAll('ROWID AS id, *', 'name="'+coinName+'"', '', (err, rows) => {
             if (err || !rows || !rows.length)

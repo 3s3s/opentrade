@@ -5,6 +5,7 @@ const g_constants = require("../constants.js");
 const chat = require("./users/chat");
 const wallet = require("./users/wallet");
 const coins = require("./admin/coins");
+const tradeAdmin = require("./admin/trades");
 const trade = require("./users/trade");
 
 exports.onConnect = function(ws, req)
@@ -66,6 +67,11 @@ function SendResponce(ws, req, client)
     if (client.request == 'delcoin')
     {
         coins.onDelCoin(ws, req, client.message);
+        return;
+    }
+    if (client.request == 'delete_trade')
+    {
+        tradeAdmin.onDelTrade(ws, req, client.message);
         return;
     }
     if (client.request == "rpc_test")

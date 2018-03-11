@@ -17,6 +17,10 @@ exports.HashPassword = function(strPassword)
     return exports.Hash(strPassword + g_constants.password_private_suffix);
 };
 
+exports.isNumeric = function(n) {
+  return !isNaN(parseFloat(n)) && isFinite(n);
+}
+
 exports.Encrypt = function(str)
 {
     const algorithm = 'aes256';
