@@ -75,7 +75,7 @@ const utils =
     },
     CreateSocket: function(onmessage, onopen)
     {
-        socket = new WebSocket("wss://"+window.location.host+ ":40444");
+        socket = new WebSocket("wss://"+window.location.host+ ":40443");
         socket.onmessage = onmessage;
         socket.onopen = onopen;
         

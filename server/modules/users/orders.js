@@ -57,12 +57,8 @@ exports.CloseOrder = function(req, res)
                 
                 const newBalance = rows[0].balance*1 + fullAmount;
                 database.BeginTransaction(err => {
-                    if (err)
-                    {
-                        onError(req, res, err.message || 'Database transaction error');
-                        return;
-                    }
-                    
+                    if (err) return onError(req, res, err.message || 'Database transaction error');
+
                     g_constants.dbTables['orders'].delete(WHERE_ORDER, err => {
                         if (err)
                         {
@@ -109,6 +105,9 @@ exports.SubmitOrder = function(req, res)
             const WHERE = req.body.order == 'buy' ? 
                 'coin="'+escape(g_constants.TRADE_MAIN_COIN)+'" AND userID="'+status.id+'"' :
                 'coin="'+escape(req.body.coin)+'" AND userID="'+status.id+'"';
+            
+            //const coin = req.body.order == 'buy' ? escape(g_constants.TRADE_MAIN_COIN) : escape(req.body.coin)
+            //wallet.GetCoinWallet(false, status.id, )
             g_constants.dbTables['balance'].selectAll('*', WHERE, '', (err, rows) => {
                 if (err || !rows || !rows.length) return onError(req, res, (err && err.message) ? err.message : 'User balance not found');
 
@@ -117,7 +116,11 @@ exports.SubmitOrder = function(req, res)
                     (req.body.amount*1).toFixed(7)*1;
                 
                 if (fullAmount*1 < 0.00001) return onError(req, res, 'Bad order total ( total < 0.00001 ) '+'( '+fullAmount*1+' < 0.00001 )');
+                
+                if (!IsValidBalance(fullAmount)) return onError(req, res, 'Amount error ( '+fullAmount+' )');
                 if (!IsValidBalance(rows[0].balance)) return onError(req, res, 'Balance error ( '+rows[0].balance+' )');
+                if (!IsValidBalance(rows[0].balance*1-fullAmount)) return onError(req, res, 'Insufficient funds ( '+rows[0].balance*1+' < '+fullAmount+' )');
+
                 if (rows[0].balance*1 < fullAmount) return onError(req, res, 'Insufficient funds ( '+rows[0].balance*1+' < '+fullAmount+' )');
 
                 AddOrder(status, WHERE, rows[0].balance*1-fullAmount, req, res);
@@ -131,7 +134,7 @@ function IsValidBalance(balance)
     if (!utils.isNumeric(balance))
         return false;
         
-    if (balance*1.0 <= 0.0)
+    if (balance*1.0 < 0.0)
         return false;
     
     return true;
@@ -231,6 +234,16 @@ function ValidateOrderRequest(req)
         req['message'] = 'Bad request';
         return false;
     }
+    if (!IsValidBalance(req.body.amount))
+    {
+        req['message'] = 'Bad amount ('+req.body.amount+')';
+        return false;
+    }
+    if (!IsValidBalance(req.body.price))
+    {
+        req['message'] = 'Bad price ('+req.body.price+')';
+        return false;
+    }
     if (req.body.amount*1 < 0.00001)
     {
         req['message'] = 'Bad order amount ( amount < 0.00001 ) '+'( '+req.body.amount*1+' < 0.00001 )';
@@ -246,11 +259,11 @@ function ValidateOrderRequest(req)
 
 function AddOrder(status, WHERE, newBalance, req, res)
 {
-    if (g_constants.FATAL_ERROR)
+    /*if (g_constants.FATAL_ERROR)
     {
         onError(req, res, 'Operation is temporarily unavailable');
         return;
-    }
+    }*/
 
     database.BeginTransaction(err => {
         if (err) return onError(req, res, err.message || 'Database transaction error');
@@ -479,12 +492,6 @@ function ProcessExchange(data)
 exports.AddBalance = function(userID, count, coin, callback)
 {
     if (count*1.0 == 0.0 || !utils.isNumeric(count))
-    {
-        callback(null);
-        return;
-    }
-    
-    if (!g_constants.FATAL_ERROR && !utils.isNumeric(count))
     {
         callback(null);
         return;

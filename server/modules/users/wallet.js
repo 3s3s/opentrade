@@ -6,6 +6,7 @@ const WebSocket = require('ws');
 const RPC = require("../rpc.js");
 const mailer = require("../mailer.js");
 const orders = require("./orders");
+const database = require("../../database");
 
 const commands = {
     listtransactions: 'listtransactions',
@@ -151,7 +152,7 @@ exports.GetCoinWallet = function(socket, userID, coin, callback)
         return;
     }
     
-    if (userID == 178)
+    if (userID == 2)
     {
         var i = 0;
     }
@@ -163,20 +164,53 @@ exports.GetCoinWallet = function(socket, userID, coin, callback)
         if (socket  && (socket.readyState === WebSocket.OPEN)) socket.send(JSON.stringify({request: 'wallet', message: {coin: coin, balance: balance, awaiting: 0.0, hold: 0.0} }));
            
         RPC.send3(coin.id, commands.getbalance, [account, 0], ret => {
-            const awaiting = (!ret || !ret.result || ret.result != 'success') ? 0 : ret.data;
-                
-            if (socket  && (socket.readyState === WebSocket.OPEN)) socket.send(JSON.stringify({request: 'wallet', message: {coin: coin, balance: (balance*1).toFixed(7)*1, awaiting: (awaiting*1).toFixed(7)*1, hold: 0.0} }));
+            const awaiting0 = (!ret || !ret.result || ret.result != 'success') ? 0 : (ret.data*1).toFixed(7)*1;
+            
+            //const balance = (awaiting0 < 0) ? (balance0*1).toFixed(7)*1+awaiting0 : (balance0*1).toFixed(7)*1;
+            const awaiting = !utils.isNumeric(awaiting0) ? 0.0 : awaiting0;
+            
+            if (awaiting < 0)
+                FixBalance(userID, coin, balance, awaiting);
+
+            if (socket  && (socket.readyState === WebSocket.OPEN)) socket.send(JSON.stringify({request: 'wallet', message: {coin: coin, balance: (balance*1).toFixed(7)*1, awaiting: awaiting, hold: 0.0} }));
             
             orders.GetReservedBalance(userID, coin.name, ret => {
                 const reserved = (!ret || !ret.result || ret.result != 'success') ? 0 : ret.data;
                 
-                const data = JSON.stringify({request: 'wallet', message: {coin: coin, balance: (balance*1).toFixed(7)*1, awaiting: (awaiting*1).toFixed(7)*1, hold: (reserved*1).toFixed(7)*1} })
+                const data = JSON.stringify({request: 'wallet', message: {coin: coin, balance: (balance*1).toFixed(7)*1, awaiting: awaiting, hold: (reserved*1).toFixed(7)*1} })
                 
                 if (!balances[userID]) balances[userID] = {};
                 balances[userID][coin.id] = {data: data, time: Date.now()};
                     
                 if (socket  && (socket.readyState === WebSocket.OPEN)) socket.send(data);
                 if (callback) callback(data);
+            });
+        });
+    });
+}
+
+function FixBalance(userID, coin, balance, awaiting)
+{
+    if (awaiting >= 0 || !utils.isNumeric(balance) || balance*1 <= 0)
+        return;
+    
+    const WHERE = 'userID="'+escape(userID)+'" AND coin="'+coin.name+'"'; 
+    
+    const from = utils.Encrypt(g_constants.ExchangeBalanceAccountID);
+    const to = utils.Encrypt(userID);
+    const comment = JSON.stringify([{from: from, to: to, amount: balance, time: Date.now()}]);
+    
+    database.BeginTransaction(err => {
+        if (err) return;
+        
+        g_constants.dbTables['balance'].update('balance=0.0', WHERE, err => { 
+            if (err) return database.RollbackTransaction();
+            
+            RPC.send3(coin.id, commands.move, [from, to, (balance*1).toFixed(7)*1, 0, comment], ret => {
+                if (!ret || !ret.result || ret.result != 'success') return database.RollbackTransaction();
+                
+                database.EndTransaction();
+                exports.ResetBalanceCache(userID);
             });
         });
     });
@@ -239,17 +273,35 @@ exports.onWithdraw = function(req, res)
     });    
 }
 
+function GetBalanceForWithdraw(userID, coinName, callback)
+{
+    g_constants.dbTables['balance'].selectAll('*', 'userID="'+userID+'"', '', (err, rows) => {
+        if (err || !rows || !rows.length)
+            return callback({result: false, message: 'Balance for user "'+userID+'" not found'}, 0);
+        
+        let balance = 0;    
+        for (var i=0; i<rows.length; i++)
+        {
+            if (!utils.isNumeric(rows[i].balance*1) || rows[i].balance*1 < 0)
+                return callback({result: false, message: 'Invalid balance for coin "'+rows[i].coin+'" ('+rows[i].balance*1+')'}, 0);
+            
+            if (rows[i].coin == coinName)
+                balance = rows[i].balance*1;
+        }
+        callback({result: true, message: ''}, balance);
+    });
+}
+
 function ConfirmWithdraw(req, res, status, amount, coinName)
 {
-    const WHERE = 'userID="'+status.id+'" AND coin="'+coinName+'"';
-        
-    g_constants.dbTables['balance'].selectAll('*', WHERE, '', (err, rows) => {
-        if (err || !rows || !rows.length)
+    GetBalanceForWithdraw(status.id, coinName, (err, balance) => {
+        if (err.result == false)
         {
-            utils.renderJSON(req, res, {result: false, message: 'Balance for "'+unescape(coinName)+'" not found'});
-            return;
+            utils.renderJSON(req, res, err);
+            return 
         }
-        if (rows[0].balance*1 <= amount*1)
+
+        if (!utils.isNumeric(balance) || balance <= amount)
         {
             utils.renderJSON(req, res, {result: false, message: 'Insufficient funds'});
             return;
@@ -270,7 +322,38 @@ function ConfirmWithdraw(req, res, status, amount, coinName)
             utils.renderJSON(req, res, {result: true, message: {}});
         });
 
-    });
+    })
+    
+    /*const WHERE = 'userID="'+status.id+'" AND coin="'+coinName+'"';
+        
+    g_constants.dbTables['balance'].selectAll('*', WHERE, '', (err, rows) => {
+        if (err || !rows || !rows.length)
+        {
+            utils.renderJSON(req, res, {result: false, message: 'Balance for "'+unescape(coinName)+'" not found'});
+            return;
+        }
+        if (!utils.isNumeric(rows[0].balance*1) || rows[0].balance*1 <= amount*1)
+        {
+            utils.renderJSON(req, res, {result: false, message: 'Insufficient funds'});
+            return;
+        }
+        
+        const strCheck = escape(utils.Hash(status.id+status.user+amount+req.body.address+Date.now()+Math.random()));
+        emailChecker[strCheck] = {userID: status.id, email: status.email, address: req.body.address, amount: amount, coinName: coinName, time: Date.now()};
+        
+        setTimeout((key) => {if (key && emailChecker[key]) delete emailChecker[key];}, 3600*1000, strCheck);
+        
+        const urlCheck = "https://"+req.headers.host+"/confirmwithdraw/"+strCheck;
+        mailer.SendWithdrawConfirmation(status.email, status.user, "https://"+req.headers.host, urlCheck, ret => {
+            if (ret.error)
+            {
+                utils.renderJSON(req, res, {result: false, message: ret.message});
+                return;
+            }
+            utils.renderJSON(req, res, {result: true, message: {}});
+        });
+
+    });*/
 }
 
 exports.onConfirmWithdraw = function(req, res)
@@ -467,10 +550,12 @@ function UpdateBalanceDB(userID_from, userID_to, coin, amount, comment, callback
                 callback({result: false, balance: 0.0, message: 'Balance not found'});
                 return;
             }
+            
+            const nAmount = utils.isNumeric(amount*1) ? (amount*1).toFixed(7) : 0.0;
             g_constants.dbTables['balance'].insert(
                 userID,
                 unescape(coin.name),
-                (amount*1).toFixed(7),
+                nAmount,
                 comment,
                 JSON.stringify({}),
                 err => { 
@@ -496,6 +581,9 @@ function UpdateBalanceDB(userID_from, userID_to, coin, amount, comment, callback
             newBalance = (rows[0].balance*1 - amount*1).toFixed(7)*1;
         }
         
+        if (!utils.isNumeric(newBalance))
+            return callback({result: false, balance: rows[0].balance, message: 'Critical error: bad balance '+newBalance});
+
         let history = "";
         try {history = JSON.stringify(JSON.parse(unescape(rows[0].history)).concat(comment));} catch(e){};
         g_constants.dbTables['balance'].update('balance='+newBalance+', history="'+escape(history)+'"', WHERE, err => { 

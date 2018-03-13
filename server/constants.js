@@ -12,17 +12,18 @@ exports.SUPPORT_EMAIL = 'ivanivanovkzv@gmail.com';
 
 exports.SESSION_TIME = 3600*1000; //one hour
 
-exports.my_port = process.env.PORT || 40081;
-exports.my_portSSL = 40444;
+exports.my_port = process.env.PORT || 40080;
+exports.my_portSSL = 40443;
 
 exports.dbName = './database/sqlite.db';
 
 exports.DONATORS = [
-    {userID: 1, percent: 9},
+    {userID: 1, percent: 4},
+    {userID: 68, percent: 25},
     {userID: 58, percent: 10},
     {userID: 22, percent: 10},
-    {userID: 10, percent: 25},
-    {userID: 14, percent: 45}
+    {userID: 10, percent: 15},
+    {userID: 14, percent: 35}
 ];
 
 
