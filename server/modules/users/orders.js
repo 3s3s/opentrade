@@ -55,7 +55,10 @@ exports.CloseOrder = function(req, res)
                     return;
                 }
                 
-                const newBalance = rows[0].balance*1 + fullAmount;
+                const newBalance = (rows[0].balance*1 + fullAmount).toFixed(7)*1;
+                
+                if (!utils.isNumeric(newBalance)) return onError(req, res, 'Balance is not numeric ('+newBalance+')');
+                
                 database.BeginTransaction(err => {
                     if (err) return onError(req, res, err.message || 'Database transaction error');
 
@@ -67,7 +70,7 @@ exports.CloseOrder = function(req, res)
                             return;
                         }
                         
-                        g_constants.dbTables['balance'].update('balance="'+(newBalance*1).toFixed(7)*1+'"', WHERE_BALANCE, err => {
+                        g_constants.dbTables['balance'].update('balance="'+newBalance+'"', WHERE_BALANCE, err => {
                             if (err)
                             {
                                 database.RollbackTransaction();
@@ -267,13 +270,21 @@ function AddOrder(status, WHERE, newBalance, req, res)
 
     database.BeginTransaction(err => {
         if (err) return onError(req, res, err.message || 'Database transaction error');
+        
+        const amount = req.body.amount*1;
+        const price = req.body.price*1;
+        const balance = (newBalance*1).toFixed(7)*1;
+        
+        if (!utils.isNumeric(amount) || !utils.isNumeric(price)) return onError(req, res, 'Bad amount or price');
+        if (amount < 0 || price < 0) return onError(req, res, 'Bad (negative) amount or price');
+        if (!utils.isNumeric(balance)) return onError(req, res, 'Bad balance ('+balance+')');
 
         g_constants.dbTables['orders'].insert(
             status.id,
             req.body.coin,
             req.body.order,
-            req.body.amount,
-            req.body.price,
+            amount,
+            price,
             g_constants.TRADE_MAIN_COIN,
             Date.now(),
             JSON.stringify({}),
@@ -285,7 +296,7 @@ function AddOrder(status, WHERE, newBalance, req, res)
                     return;
                 }
                 
-                g_constants.dbTables['balance'].update('balance="'+(newBalance*1).toFixed(7)*1+'"', WHERE, err => {
+                g_constants.dbTables['balance'].update('balance="'+balance+'"', WHERE, err => {
                     if (err)
                     {
                         database.RollbackTransaction();
@@ -476,6 +487,8 @@ function ProcessExchange(data)
     
     function UpdateOrders(newBuyAmount, newSellAmount, buyOrderID, sellOrderID, callback)
     {
+        if (!utils.isNumeric(newBuyAmount)) return callback(null);
+        
         g_constants.dbTables['orders'].update('amount="'+newBuyAmount+'"', 'ROWID="'+buyOrderID+'"', err => {
             if (err) return callback(err);
 
@@ -503,17 +516,18 @@ exports.AddBalance = function(userID, count, coin, callback)
         
         const newBalance = rows.length ? rows[0].balance*1 + count*1 : count;
         
-        if (!utils.isNumeric(count)) return callback(null);
+        const balance = (newBalance*1).toFixed(8)*1;
+        if (!utils.isNumeric(balance)) return callback(null);
         
         if (rows.length)
         {
-            g_constants.dbTables['balance'].update('balance="'+newBalance.toPrecision(8)+'"', WHERE, callback);
+            g_constants.dbTables['balance'].update('balance="'+balance+'"', WHERE, callback);
             return;
         }
         g_constants.dbTables['balance'].insert(
             userID,
             unescape(coin),
-            (newBalance*1).toFixed(8),
+            balance,
             JSON.stringify({}),
             JSON.stringify({}),
             callback

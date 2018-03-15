@@ -37,7 +37,7 @@ function onOpenSocket()
 
 function UpdateWallet(data)
 {
-    const coin = unescape(data.coin.name);
+    const coin = unescape(data.coin.name).replace('@', '_');
     const id_balance = coin+"_balance";
     const id_awaiting = coin+"_awaiting";
     const id_onhold = coin+"_onhold";
@@ -50,7 +50,7 @@ function UpdateWallet(data)
       return;
     }
     
-    const tdCoin = $('<td scope="col" class="align-middle">'+coin+'</td>');
+    const tdCoin = $('<td scope="col" class="align-middle">'+unescape(data.coin.name)+'</td>');
     const tdBalance = $('<td id="'+id_balance+'" scope="col" class="align-middle">'+(data.balance*1).toFixed(8)*1+" "+data.coin.ticker+'</td>');
     const tdAwaiting = $('<td id="'+id_awaiting+'" scope="col" class="align-middle">'+(data.awaiting*1).toFixed(8)*1+" "+data.coin.ticker+'</td>');
     const tdHold = $('<td id="'+id_onhold+'" scope="col" class="align-middle">'+(data.hold*1).toFixed(8)*1+" "+data.coin.ticker+'</td>');

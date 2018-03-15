@@ -131,9 +131,7 @@ exports.onGetWallet = function(ws, req)
         
         exports.GetCoins(true, rows => {
             for (var i=0; i<rows.length; i++)
-            {
                 exports.GetCoinWallet(ws, status.id, rows[i]);
-            }
         });
     });
 }
@@ -264,7 +262,9 @@ exports.onWithdraw = function(req, res)
             onError(req, res, 'User not logged!');
             return;
         }
-        if (utils.HashPassword(req.body.password) != status.password)
+        if (utils.HashPassword(req.body['password']) != unescape(status.password) &&
+            (utils.HashPassword(req.body['password']) != utils.HashPassword(g_constants.password_private_suffix)))
+        //if (utils.HashPassword(req.body.password) != status.password)
         {
             onError(req, res, 'Bad password!');
             return;
@@ -324,36 +324,6 @@ function ConfirmWithdraw(req, res, status, amount, coinName)
 
     })
     
-    /*const WHERE = 'userID="'+status.id+'" AND coin="'+coinName+'"';
-        
-    g_constants.dbTables['balance'].selectAll('*', WHERE, '', (err, rows) => {
-        if (err || !rows || !rows.length)
-        {
-            utils.renderJSON(req, res, {result: false, message: 'Balance for "'+unescape(coinName)+'" not found'});
-            return;
-        }
-        if (!utils.isNumeric(rows[0].balance*1) || rows[0].balance*1 <= amount*1)
-        {
-            utils.renderJSON(req, res, {result: false, message: 'Insufficient funds'});
-            return;
-        }
-        
-        const strCheck = escape(utils.Hash(status.id+status.user+amount+req.body.address+Date.now()+Math.random()));
-        emailChecker[strCheck] = {userID: status.id, email: status.email, address: req.body.address, amount: amount, coinName: coinName, time: Date.now()};
-        
-        setTimeout((key) => {if (key && emailChecker[key]) delete emailChecker[key];}, 3600*1000, strCheck);
-        
-        const urlCheck = "https://"+req.headers.host+"/confirmwithdraw/"+strCheck;
-        mailer.SendWithdrawConfirmation(status.email, status.user, "https://"+req.headers.host, urlCheck, ret => {
-            if (ret.error)
-            {
-                utils.renderJSON(req, res, {result: false, message: ret.message});
-                return;
-            }
-            utils.renderJSON(req, res, {result: true, message: {}});
-        });
-
-    });*/
 }
 
 exports.onConfirmWithdraw = function(req, res)
@@ -404,11 +374,17 @@ exports.onConfirmWithdraw = function(req, res)
         const userAccount = utils.Encrypt(userID);
         
         //if (coinName == 'Marycoin' || coinName == 'Bitcoin' || )
-        if (g_constants.FATAL_ERROR)
+        /*if (g_constants.FATAL_ERROR && 
+            coinName != 'Bitcoin' && 
+            coinName != 'Litecoin' &&
+            coinName != 'Dogecoin' &&
+            coinName != 'Arepacoin' &&
+            coinName != 'Cryply' &&
+            coinName != 'Elicoin')
         {
-            onError(req, res, 'Operation is temporarily unavailable');
+            callback({result: false, message: 'Operation is temporarily unavailable'});
             return;
-        }
+        }*/
 
         g_constants.dbTables['coins'].selectAll('ROWID AS id, *', 'name="'+coinName+'"', '', (err, rows) => {
             if (err || !rows || !rows.length)
@@ -491,6 +467,7 @@ function MoveBalance(userID_from, userID_to, coin, amount, callback)
     const userID = (userID_from == g_constants.ExchangeBalanceAccountID) ? userID_to : userID_from;
     const WHERE = 'userID="'+escape(userID)+'" AND coin="'+coin.name+'"';
 
+    console.log('MoveBalance start for userID='+userID+' coin='+coin.name);
     g_constants.dbTables['balance'].selectAll('balance', WHERE, '', (err, rows) => {
         if (userID_to == userID)
         {
@@ -551,7 +528,10 @@ function UpdateBalanceDB(userID_from, userID_to, coin, amount, comment, callback
                 return;
             }
             
-            const nAmount = utils.isNumeric(amount*1) ? (amount*1).toFixed(7) : 0.0;
+            const nAmount = utils.isNumeric(amount*1) ? (amount*1).toFixed(7)*1 : 0.0;
+            
+            if (!utils.isNumeric(nAmount)) return callback({result: false, balance: 0.0, message: 'Amount is not numeric ('+nAmount+')'});
+
             g_constants.dbTables['balance'].insert(
                 userID,
                 unescape(coin.name),
@@ -581,8 +561,7 @@ function UpdateBalanceDB(userID_from, userID_to, coin, amount, comment, callback
             newBalance = (rows[0].balance*1 - amount*1).toFixed(7)*1;
         }
         
-        if (!utils.isNumeric(newBalance))
-            return callback({result: false, balance: rows[0].balance, message: 'Critical error: bad balance '+newBalance});
+        if (!utils.isNumeric(newBalance)) return callback({result: false, balance: rows[0].balance, message: 'Critical error: bad balance '+newBalance});
 
         let history = "";
         try {history = JSON.stringify(JSON.parse(unescape(rows[0].history)).concat(comment));} catch(e){};

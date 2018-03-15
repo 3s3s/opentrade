@@ -1,6 +1,6 @@
 'use strict';
 
-exports.FATAL_ERROR = true;
+//exports.FATAL_ERROR = true;
 
 exports.TRADE_MAIN_COIN = "Marycoin";
 exports.TRADE_COMISSION = 0.001;
