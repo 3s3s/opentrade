@@ -375,7 +375,7 @@ function UpdateTradeHistoryUser(history)
     if (!history[i].time || history[i].volume*1 == 0)
       continue;
       
-    history[i].buysell = history[i].buysell == 'sell' ? 'buy' : 'sell';
+    //history[i].buysell = history[i].buysell == 'sell' ? 'buy' : 'sell';
     
     const typeColor = history[i].buysell == 'sell' ? "text-danger" : "text-success";
     const tr = $('<tr></tr>')
@@ -640,7 +640,7 @@ function drawChart()
         maxValue: 24,
         ticks: [0, 4, 8, 12, 16, 20, 24]
       },*/
-      width: 800,
+      //width: 800,
       legend: 'none'
   };
   

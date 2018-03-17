@@ -28,6 +28,8 @@ exports.object = {
         'Buy' : ['Buy', 'Купить'],
         'Sell' : ['Sell', 'Продать'],
         'buy' : ['buy', 'купить'],
+        'Faucet' : ['Faucet', 'Кран'],
+        'Forum' : ['Forum', 'Форум'],
         'sell' : ['sell', 'продать'],
         'Buying' : ['Buying', 'Покупка'],
         'Selling' : ['Selling', 'Продажа'],

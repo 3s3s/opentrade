@@ -58,7 +58,7 @@ exports.onGetCoinBalance = function(req, res)
             }
             else
             {
-                g_constants.dbTables['orders'].selectAll('SUM(amount) AS blocked', 'coin="'+escape(coin)+'" AND buysell="sell"', '', (err2, rows2) => {
+                g_constants.dbTables['orders'].selectAll('SUM(amount) AS blocked', 'coin="'+coin+'" AND buysell="sell"', '', (err2, rows2) => {
                     if (err2 || !rows2 || !rows2.length) rows2 = [{blocked : 0}];
                     onSuccess(req, res, {balance: rows[0].sum_balance, blocked: rows2[0].blocked});
                 });
