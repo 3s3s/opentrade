@@ -1,4 +1,4 @@
-OpenTrade is the best opensource cryptocurrency exchange!
+# OpenTrade is the best opensource cryptocurrency exchange!
 
 Life version https://trade.multicoins.org/
 
@@ -9,6 +9,7 @@ Step-by-step install instructions:
 3. Log in to Droplet console over SSH
 4
 
+```
 sudo apt-get update
 sudo apt-get install build-essential libssl-dev -y
 curl -sL https://raw.githubusercontent.com/creationix/nvm/v0.31.0/install.sh -o install_nvm.sh
@@ -28,10 +29,11 @@ mkdir ~/opentrade/server/database
 >> ~/opentrade/server/modules/private_constants.js
 >> /root/privkey.pem
 >> /root/fullchain.pem
+```
 
-====================================================================================
-Here is an example of file ~/opentrade/server/modules/private_constants.js
+## Here is an example of file ~/opentrade/server/modules/private_constants.js
 
+```
 'use strict';
 
 exports.recaptcha_priv_key = 'YOUR_GOOGLE_RECAPTCHA_PRIVATE_KEY';
@@ -44,12 +46,13 @@ exports.walletspassphrase = {
     'BTC' : 'LONG_RANDOM_STRING3',
     'DOGE' : 'LONG_RANDOM_STRING4'
 };
-====================================================================================
+```
 
-If you have not ssl certificates, you can use this for your tests:
+**If you have not ssl certificates, you can use this for your tests:**
 
-File /root/privkey.pem
+### File /root/privkey.pem
 
+```
 -----BEGIN RSA PRIVATE KEY-----
 MIICXAIBAAKBgQC0+cYKfu3ecWjIrFLfwGyUTEFWguGtSTSCrmH7YVwKs3ZB8OEJ
 iafVDwvx65Ch/KREc+xyowkb+5YIUKwwGXl14CBHGJeSdtx85lHqfnevA+MzkWYF
@@ -65,9 +68,11 @@ W50khBIK/zbqdxaa+9lWZvN6N4N2+yS43jR6/ZOCurkWVHbJHjc391CzDS/xCzPV
 VLf4SeTJubHYyF0SqQJBAMtuyzbq49MZHtMvOmiY/O73G6w2hrxu8GnO2GJxnXtj
 KHsKUISxUHpE6035rjlbyxRR+DPFGqxM7BJrk2qkEqI=
 -----END RSA PRIVATE KEY-----
+```
 
-File /root/fullchain.pem
+### File /root/fullchain.pem
 
+```
 -----BEGIN CERTIFICATE-----
 MIICATCCAWoCCQCIQvm1vUvbqjANBgkqhkiG9w0BAQsFADBFMQswCQYDVQQGEwJB
 VTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50ZXJuZXQgV2lkZ2l0
@@ -81,13 +86,15 @@ AAOBgQBPeC//NfUwivU+hwKK8d5/0J9yxWRI848ghHDXtv0yMiACZHmCThyN/5y6
 +WeC8tZjNUXfUK02piVOHAfVj8dn569lDgBR4eZ2z/OhAtu8xbLlecGKaKkzeTMx
 zSZnnKQRUSzFwo8DObkVCc1JgT+OR3xkysQqFMnGCKkyvTPYwQ==
 -----END CERTIFICATE-----
+```
 
-==================================================================
 
-After all you can run exchange
+**After all you can run exchange**
 
+```
 cd  ~/opentrade/server
 node main.js
+```
 
 In the browser address string type https://127.0.0.1:40443
 You will see OpenTrade.
