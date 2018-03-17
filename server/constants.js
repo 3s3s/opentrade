@@ -1,5 +1,7 @@
 'use strict';
 
+//exports.FATAL_ERROR = true;
+
 exports.TRADE_MAIN_COIN = "Marycoin";
 exports.TRADE_COMISSION = 0.001;
 
@@ -16,9 +18,12 @@ exports.my_portSSL = 40443;
 exports.dbName = './database/sqlite.db';
 
 exports.DONATORS = [
-    {userID: 1, percent: 10},
-    {userID: 10, percent: 30},
-    {userID: 14, percent: 60}
+    {userID: 1, percent: 4},
+    {userID: 68, percent: 25},
+    {userID: 58, percent: 10},
+    {userID: 22, percent: 10},
+    {userID: 10, percent: 15},
+    {userID: 14, percent: 35}
 ];
 
 
@@ -153,8 +158,12 @@ exports.ExchangeBalanceAccountID = 0;
 // Private constants
 const PRIVATE = require("./modules/private_constants");
 exports.password_private_suffix = PRIVATE.password_private_suffix;
-exports.walletpassphrase = PRIVATE.walletpassphrase;
 exports.recaptcha_priv_key = PRIVATE.recaptcha_priv_key;
+
+exports.walletpassphrase = function (ticker)
+{
+    return PRIVATE.walletspassphrase[ticker] || "";
+}
 
 exports.SSL_options = {
     key: require("fs").readFileSync(PRIVATE.SSL_KEY),

@@ -20,6 +20,7 @@ function validate()
     if ($("#id_username")[0].value == "" || $("#id_password")[0].value.length == 0)
         return false;
 
+    $("#id_email").val($("#id_email")[0].value.toLowerCase());
     if (!utils.ValidateEmail($("#id_email")[0].value))
     {
         $('#id_email').addClass("is-invalid");

@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+    
+    <% include ../partials/head %>
+  <body>
+
+    <% include ../partials/header %>
+
+
+    <div class="container">
+        <div class='row m-4'>
+            <div class='col-md-12 '>
+                <center><h1>Developer's Guide - Api</h1></center>
+                <h3>Overview</h3>
+                <p>
+
+                    OpenTrade provides a simple and powerful REST API to allow you to programatically perform nearly all actions you can from our web interface.  All requests use the <code>application/json</code>
+                    content type and go over <code>https</code>.  The base url is <code>https://trade.multicoins.org/api/{version}/</code>.  All requests are GET requests and all responses come in a default response object with
+                    the result in the result field.  Always check the <code>success</code> flag to ensure that your API call succeeded.<br>
+                    <br>
+                    We are currently restricting orders to 500 open orders and 200,000 orders a day.  We reserve the right to change these settings as we tune the system.
+                    <br><br>
+                    If you have any questions, feedback or recommendation for API support you can post a question in our support center.
+                            
+                </p>
+                <hr>
+                <h3>Getting Started</h3>
+                <ul>
+                    <li>General</li>
+                    <li>Authentication</li>
+                    <li>API Reference</li>
+                    <li>Client Libraries</li>
+                </ul>  
+                <hr>
+                <h3>General</h3>
+                We provide a simple RESTful API. All calls are GETs and should be called via <code>https</code>. We will support n-1 versions of the API. Our current stable API is v1. The endpoints have a standard format as follows:
+                <br><br>
+                <pre>https://trade.multicoins.org/api/{version}/{method}?param=value</pre>
+                <hr>
+                <h3>Authentication</h3>
+                In the spirit of keeping things simple, we offer an easy to manage API Key authentication method. 
+                You can have multiple API keys, each with their own level of rights. To manage your API keys please goto 
+                Settings->Manage API Keys. API Rights <br><br>
+                <ul>
+                    <li>Read Info - You can only view the balances, orders, and other details of the account</li>
+                    <li>Trade Limit - This allows the API key to place LIMIT buy and sell orders</li>
+                    <li>Withdraw - We allow you to programatically withdraw any currency to an address you provide. This can be used to quick arbitrage exchanges or move money into cold storage after thresholds.</li>
+                </ul> 
+                For this version, we use a standard HMAC-SHA512 signing. Append <code>apikey</code> and <code>nonce</code> to your request and calculate 
+                the HMAC hash and include it under an <code>apisign</code> header. 
+                Note: the nonce is not respected right now but will be enforced later.
+                <br><br>
+                <pre>
+$apikey='xxx';
+$apisecret='xxx';
+$nonce=time();
+$uri='https://trade.multicoins.org/api/v1/market/getopenorders?apikey='.$apikey.'&nonce='.$nonce;
+$sign=hash_hmac('sha512',$uri,$apisecret);
+$ch = curl_init($uri);
+curl_setopt($ch, CURLOPT_HTTPHEADER, array('apisign:'.$sign));
+$execResult = curl_exec($ch);
+$obj = json_decode($execResult);                    
+                </pre>
+                <hr>
+                <h3>API Reference</h3>
+                Our APIs are broken into distinct groups
+                <ul>
+                    <li>Public - Public information available without an API key</li>
+                    <li>Market - For programatic trading of crypto currencies</li>
+                    <li>Account - For managing your account</li>
+                </ul> 
+                <hr>
+                <h4>Public Api</h4>
+                <div class="api-doc">
+                    <h5>/public/getmarkets</h5>
+                    <p>Used to get the open and available trading markets at OpenTrade along with other meta data. </p>
+                    Parameters 
+                    <p>None</p>
+                    Request: 
+                    <pre>https://trade.multicoins.org/api/v1/public/getmarkets</pre>
+                    Response:
+                    <pre>
+    {
+	"success" : true,
+	"message" : "",
+	"result" : [{
+			"MarketCurrency" : "LTC",
+			"BaseCurrency" : "MC",
+			"MarketCurrencyLong" : "Litecoin",
+			"BaseCurrencyLong" : "Marycoin",
+		}, {
+			"MarketCurrency" : "DOGE",
+			"BaseCurrency" : "MC",
+			"MarketCurrencyLong" : "Dogecoin",
+			"BaseCurrencyLong" : "Marycoin",
+		}
+        ]
+    }
+
+                    </pre>
+                    <h5>/public/getorderbook</h5>
+                    <p>Used to get retrieve the orderbook for a given market </p>
+                    Parameters 
+                    <table class='table'>
+                        <tr>
+                            <th>parameter</th>
+                            <th>required</th>
+                            <th>description</th>
+                        </tr>
+                        <tr>
+                            <td><code>market</code></td>
+                            <td>required</td>
+                            <td>a string literal for the market (ex: MC-LTC)</td>
+                        </tr>
+                        <tr>
+                            <td><code>type</code></td>
+                            <td>optional</td>
+                            <td>buy, sell or both to identify the type of orderbook to return. By default <code>type='both'</code></td>
+                        </tr>
+                    </table>
+                    Request: 
+                    <pre>https://trade.multicoins.org/api/v1/public/getorderbook?market=MC-LTC&amp;type=both </pre>
+                    Response:
+                    <pre>    {
+	"success" : true,
+	"message" : "",
+	"result" : {
+		"buy" : [{
+				"Quantity" : 12.37000000,
+				"Rate" : 0.02525000
+			}
+		],
+		"sell" : [{
+				"Quantity" : 32.55412402,
+				"Rate" : 0.02540000
+			}, {
+				"Quantity" : 60.00000000,
+				"Rate" : 0.02550000
+			}, {
+				"Quantity" : 60.00000000,
+				"Rate" : 0.02575000
+			}, {
+				"Quantity" : 84.00000000,
+				"Rate" : 0.02600000
+			}
+		]
+	}
+    }
+
+                    </pre>
+                    <h5>/public/getmarketsummary</h5>
+                    <p>Used to get the last 24 hour summary of all active exchanges </p>
+                    Parameters 
+                    <table class='table'>
+                        <tr>
+                            <th>parameter</th>
+                            <th>required</th>
+                            <th>description</th>
+                        </tr>
+                        <tr>
+                            <td><code>market</code></td>
+                            <td>required</td>
+                            <td>a string literal for the market (ex: MC-LTC)</td>
+                        </tr>
+                    </table>
+                    Request: 
+                    <pre>https://trade.multicoins.org/api/v1/public/getmarketsummary?market=MC-LTC</pre>
+                    Response:
+                    <pre>
+    {
+	"success" : true,
+	"message" : "",
+	"result" : [{
+			"MarketName" : "MC-LTC",
+			"High" : 0.01350000,
+			"Low" : 0.01200000,
+			"Volume" : 3833.97619253,
+			"Last" : 0.01349998,
+			"Bid" : 0.01271001,
+			"Ask" : 0.01291100,
+			"OpenBuyOrders" : 45,
+			"OpenSellOrders" : 45
+		}
+        ]
+    }
+                    </pre>
+                    
+                    <h5>/public/getmarkethistory</h5>
+                    <p>Used to retrieve the latest trades that have occured for a specific market. </p>
+                    Parameters 
+                    <table class='table'>
+                        <tr>
+                            <th>parameter</th>
+                            <th>required</th>
+                            <th>description</th>
+                        </tr>
+                        <tr>
+                            <td><code>market</code></td>
+                            <td>required</td>
+                            <td>a string literal for the market (ex: MC-LTC)</td>
+                        </tr>
+                    </table>
+                    Request: 
+                    <pre>https://trade.multicoins.org/api/v1/public/getmarkethistory?market=MC-LTC</pre>
+                    Response:
+                    <pre>
+    {
+	"success" : true,
+	"message" : "",
+	"result" : [{
+			"Id" : 319435,
+			"TimeStamp" : "2018-01-01T03:21:20.08",
+			"Quantity" : 0.30802438,
+			"Price" : 0.01263400,
+			"OrderType" : "buy"
+		}, {
+			"Id" : 319433,
+			"TimeStamp" : "2018-01-01T03:21:20.08",
+			"Quantity" : 0.31820814,
+			"Price" : 0.01262800,
+			"OrderType" : "buy"
+		}, {
+			"Id" : 319379,
+			"TimeStamp" : "2018-01-01T02:58:48.127",
+			"Quantity" : 49.64643541,
+			"Price" : 0.01263200,
+			"OrderType" : "sell"
+		}, {
+			"Id" : 319378,
+			"TimeStamp" : "2018-01-01T02:58:46.27",
+			"Quantity" : 0.35356459,
+			"Price" : 0.01263200,
+			"OrderType" : "sell"
+		}
+	]
+    }
+                        
+                    </pre>
+                </div>
+                <br>
+                <h4>Market Apis</h4>
+                <div class="api-doc">
+                    <h5>/market/buylimit</h5>
+                    <p>Used to place a buy order in a specific market. Use <code>buylimit</code> to place limit orders. Make sure you have the proper permissions set on your API keys for this call to work </p>
+                    Parameters 
+                    <table class='table'>
+                        <tr>
+                            <th>parameter</th>
+                            <th>required</th>
+                            <th>description</th>
+                        </tr>
+                        <tr>
+                            <td><code>market</code></td>
+                            <td>required</td>
+                            <td>a string literal for the market (ex: BTC-LTC)</td>
+                        </tr>
+                        <tr>
+                            <td><code>quantity</code></td>
+                            <td>required</td>
+                            <td>the amount to purchase</td>
+                        </tr>
+                        <tr>
+                            <td><code>rate</code></td>
+                            <td>required</td>
+                            <td>the rate at which to place the order.</td>
+                        </tr>
+                    </table>
+                    Request: 
+                    <pre>https://trade.multicoins.org/api/v1/market/buylimit?apikey=API_KEY&market=MC-LTC&quantity=1.2&amp;rate=1.3</pre>
+                    Response - Returns you the order uuid:
+                    <pre>
+    {
+	"success" : true,
+	"message" : "",
+	"result" : {
+		"uuid" : "e606d53c-8d70-11e3-94b5-425861b86ab6"
+	}
+    }                        
+                    </pre>
+                    
+                    <h5>/market/selllimit</h5>
+                    <p>Used to place an sell order in a specific market. Use <code>selllimit</code> to place limit orders. Make sure you have the proper permissions set on your API keys for this call to work</p>
+                    Parameters 
+                    <table class='table'>
+                        <tr>
+                            <th>parameter</th>
+                            <th>required</th>
+                            <th>description</th>
+                        </tr>
+                        <tr>
+                            <td><code>market</code></td>
+                            <td>required</td>
+                            <td>a string literal for the market (ex: BTC-LTC)</td>
+                        </tr>
+                        <tr>
+                            <td><code>quantity</code></td>
+                            <td>required</td>
+                            <td>the amount to purchase</td>
+                        </tr>
+                        <tr>
+                            <td><code>rate</code></td>
+                            <td>required</td>
+                            <td>the rate at which to place the order.</td>
+                        </tr>
+                    </table>
+                    Request: 
+                    <pre>https://trade.multicoins.org/api/v1/market/selllimit?apikey=API_KEY&amp;market=MC-LTC&quantity=1.2&amp;rate=1.3</pre>
+                    Response - Returns you the order uuid:
+                    <pre>
+    {
+	"success" : true,
+	"message" : "",
+	"result" : {
+		"uuid" : "614c34e4-8d71-11e3-94b5-425861b86ab6"
+	}
+    }                        
+                    </pre>
+                    
+                    <h5>/market/cancel</h5>
+                    <p>Used to cancel a buy or sell order. </p>
+                    Parameters 
+                    <table class='table'>
+                        <tr>
+                            <th>parameter</th>
+                            <th>required</th>
+                            <th>description</th>
+                        </tr>
+                        <tr>
+                            <td><code>uuid</code></td>
+                            <td>required</td>
+                            <td>uuid of buy or sell order</td>
+                        </tr>
+                    </table>
+                    Request: 
+                    <pre>https://trade.multicoins.org/api/v1/market/cancel?apikey=API_KEY&amp;uuid=ORDER_UUID </pre>
+                    Response - Returns you the order uuid:
+                    <pre>
+    {
+        "success" : true,
+        "message" : "",
+        "result" : null
+    }
+                    </pre>
+                    
+                    <h5>/market/getopenorders</h5>
+                    <p>Get all orders that you currently have opened. </p>
+                    Parameters 
+                    <table class='table'>
+                        <tr>
+                            <th>parameter</th>
+                            <th>required</th>
+                            <th>description</th>
+                        </tr>
+                        <tr>
+                            <td><code>market</code></td>
+                            <td>required</td>
+                            <td>a string literal for the market (ie. MC-LTC)</td>
+                        </tr>
+                    </table>
+                    Request: 
+                    <pre>https://trade.multicoins.org/api/v1/market/getopenorders?apikey=API_KEY&amp;market=MC-LTC  </pre>
+                    Response - Returns you the order uuid:
+                    <pre>
+    {
+	"success" : true,
+	"message" : "",
+	"result" : [{
+			"OrderUuid" : "09aa5bb6-8232-41aa-9b78-a5a1093e0211",
+			"Exchange" : "MC-LTC",
+			"QuantityRemaining" : 5.00000000,
+			"Price" : 2.00000000,
+			"Opened" : "2018-01-01T03:55:48.77",
+		}, {
+			"OrderUuid" : "8925d746-bc9f-4684-b1aa-e507467aaa99",
+			"Exchange" : "MC-LTC",
+			"QuantityRemaining" : 100000.00000000,
+			"Price" : 0.00000001,
+			"Opened" : "2018-01-01T03:55:48.583",
+		}
+	]
+    }
+                        
+                    </pre>
+                </div>
+                <br>
+                <h4>Account Api</h4>
+                <div class="api-doc">
+                    <h5>/account/getbalance</h5>
+                    <p>Used to retrieve the balance from your account for a specific currency. </p>
+                    Parameters 
+                    <table class='table'>
+                        <tr>
+                            <th>parameter</th>
+                            <th>required</th>
+                            <th>description</th>
+                        </tr>
+                        <tr>
+                            <td><code>currency</code></td>
+                            <td>required</td>
+                            <td>a string literal for the currency (ex: BTC)</td>
+                        </tr>
+                    </table>
+                    Request: 
+                    <pre>https://trade.multicoins.org/api/v1/account/getbalance?currency=BTC</pre>
+                    Response:
+                    <pre>
+    {
+	"success" : true,
+	"message" : "",
+	"result" : {
+		"Currency" : "BTC",
+		"Balance" : 4.21549076,
+		"Available" : 4.21549076,
+		"Pending" : 0.00000000
+	}
+    }                        
+                    </pre>
+                    
+                    <h5>/account/getdepositaddress</h5>
+                    <p>Used to retrieve or generate an address for a specific currency. </p>
+                    Parameters 
+                    <table class='table'>
+                        <tr>
+                            <th>parameter</th>
+                            <th>required</th>
+                            <th>description</th>
+                        </tr>
+                        <tr>
+                            <td><code>currency</code></td>
+                            <td>required</td>
+                            <td>a string literal for the currency (ie. BTC)</td>
+                        </tr>
+                    </table>
+                    Request: 
+                    <pre>https://trade.multicoins.org/api/v1/account/getdepositaddress?apikey=API_KEY&amp;currency=LTC</pre>
+                    Response:
+                    <pre>
+    {
+    	"success" : true,
+    	"message" : "",
+    	"result" : {
+    		"Currency" : "BTC",
+    		"Address" : "1y5SKeKGXUHKS2WVpJ76HYuKAu3URastUo"
+    	}
+    }
+                    </pre>
+                    
+                    <h5>/account/getorder</h5>
+                    <p>Used to retrieve a single order by uuid. </p>
+                    Parameters 
+                    <table class='table'>
+                        <tr>
+                            <th>parameter</th>
+                            <th>required</th>
+                            <th>description</th>
+                        </tr>
+                        <tr>
+                            <td><code>uuid</code></td>
+                            <td>required</td>
+                            <td>the uuid of the buy or sell order</td>
+                        </tr>
+                    </table>
+                    Request: 
+                    <pre>https://trade.multicoins.org/api/v1/account/getorder?apikey=API_KEY&amp;uuid=ORDER_UUID</pre>
+                    Response:
+                    <pre>
+    {
+    	"success" : true,
+    	"message" : "",
+    	"result" : {
+    		"OrderUuid" : "0cb4c4e4-bdc7-4e13-8c13-430e587d2cc1",
+    		"Exchange" : "MC-BTC",
+    		"QuantityRemaining" : 1000.00000000,
+    		"Price" : 0.00000001,
+    		"Opened" : "2018-01-01T07:45:46.27",
+    		"IsOpen" : true
+    	}
+    }
+                    </pre>
+                    
+                    <h5>/account/getorderhistory</h5>
+                    <p>Used to retrieve your order history. </p>
+                    Parameters 
+                    <table class='table'>
+                        <tr>
+                            <th>parameter</th>
+                            <th>required</th>
+                            <th>description</th>
+                        </tr>
+                        <tr>
+                            <td><code>market</code></td>
+                            <td>required</td>
+                            <td>a string literal for the market (ie. MC-LTC).</td>
+                        </tr>
+                    </table>
+                    Request: 
+                    <pre>https://trade.multicoins.org/api/v1/account/getorderhistory?apikey=API_KEY&amp;market=MC-LTC</pre>
+                    Response:
+                    <pre>
+    {
+    	"success" : true,
+    	"message" : "",
+    	"result" : [{
+    			"OrderUuid" : "fd97d393-e9b9-4dd1-9dbf-f288fc72a185",
+    			"TimeStamp" : "2018-01-01T04:01:00.667",
+    			"Price" : 0.00000001,
+    			"QuantityRemaining" : 100000.00000000,
+    		}, {
+    			"OrderUuid" : "17fd64d1-f4bd-4fb6-adb9-42ec68b8697d",
+    			"TimeStamp" : "2018-01-01T20:38:58.317",
+    			"Price" : 0.00002950,
+    			"QuantityRemaining" : 0.00000000,
+    		}
+    	]
+    }
+                    </pre>
+                    
+                </div>
+            </div>
+        </div>
+    </div> <!-- /container -->
+
+
+    <% include ../partials/footer %>
+    <script src='/js/support.js'></script>
+  </body>
+</html>

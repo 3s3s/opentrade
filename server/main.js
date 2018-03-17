@@ -28,9 +28,32 @@ app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
 var httpServer = http.createServer(app);
 var httpsServer = https.createServer(g_constants.SSL_options, app);
 
-httpServer.listen(g_constants.my_port);
-httpsServer.listen(g_constants.my_portSSL, function(){
+var httpListener = httpServer.listen(g_constants.my_port);
+var httpsListener = httpsServer.listen(g_constants.my_portSSL, function(){
     console.log("SSL Proxy listening on port "+g_constants.my_portSSL);
+});
+
+var lastSocketKey = 0;
+var socketMap = {http: {}, https: {}};
+httpListener.on('connection', function(socket) {
+    /* generate a new, unique socket-key */
+    const socketKey = ++lastSocketKey;
+    /* add socket when it is connected */
+    socketMap.http[socketKey] = socket;
+    socket.on('close', function() {
+        /* remove socket when it is closed */
+        delete socketMap.http[socketKey];
+    });
+});
+httpsListener.on('connection', function(socket) {
+    /* generate a new, unique socket-key */
+    const socketKey = ++lastSocketKey;
+    /* add socket when it is connected */
+    socketMap.https[socketKey] = socket;
+    socket.on('close', function() {
+        /* remove socket when it is closed */
+        delete socketMap.https[socketKey];
+    });
 });
 
 g_constants.WEB_SOCKETS = new WebSocketServer({ server: httpsServer, clientTracking: true });

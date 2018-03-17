@@ -7,7 +7,64 @@ $(() => {
     UpdateCoinBalance();
 });
 
+$('#id_findtrades').submit(e => {
+    e.preventDefault();
+    
+    $('#inputUser').text('*');
+    
+    $('#loader').show();
+    $.post( "/admin/findtrades", $( '#id_findtrades' ).serialize(), function( data ) {
+        $('#loader').hide();
 
+        if (data.result != true)
+        {
+            utils.alert_fail(data.message);
+            return;
+        }
+        ShowLastTrades(data.data.rows);
+    });
+});
+
+function ShowLastTrades(trades)
+{
+    $('#table_trades').empty();
+    
+    for (var i=0; i<trades.length; i++)
+    {
+        const tradeID = trades[i].id;
+        const delButton = $('<button id=delTrade_"'+tradeID+'" class="btn btn-default">X</button>');
+        delButton.on('click', e => {
+            DeleteTrade(tradeID);
+        });
+            
+        const tr = $('<tr></tr>')
+            .append($('<td></td>').append(delButton))
+            .append($('<td>'+trades[i].id+'</td>'))
+            .append($('<td>'+trades[i].buyUserID+' ('+trades[i].buyUserAccount+') '+'</td>'))
+            .append($('<td>'+trades[i].sellUserID+' ('+trades[i].sellUserAccount+') '+'</td>'))
+            .append($('<td>'+trades[i].coin+'</td>'))
+            .append($('<td>'+trades[i].fromSellerToBuyer+'</td>'))
+            .append($('<td>'+trades[i].fromBuyerToSeller+'</td>'))
+            .append($('<td>'+trades[i].buyerChange+'</td>'))
+            .append($('<td>'+trades[i].comission+'</td>'))
+            .append($('<td>'+trades[i].time+'</td>'))
+            .append($('<td>'+trades[i].buysell+'</td>'))
+            .append($('<td>'+trades[i].price+'</td>'))
+
+        $('#table_trades').append(tr);
+    }
+
+    function DeleteTrade(id)
+    {
+        socket.send(JSON.stringify({
+            request: 'delete_trade', 
+            message: {
+                id: id
+            }
+        }));
+        
+    }
+}
 
 $('#coin-visible').click(function() {
     var info = {};
@@ -115,9 +172,34 @@ $('#id_finduser').submit(e => {
     }
 });
 
-$('#form-add-coin').submit(e => {
+$('#del_coin').click(e => {    
     e.preventDefault();
-    
+
+    const body = 
+        "<form>" +
+            "<div class='form-group'>" +
+                "<label class='col-form-label' for='id-delcoin-name'>Coin name</label>" +
+                "<input type='text' class='form-control' id='id-delcoin-name' placeholder='Marycoin'>" +
+            "</div>" +
+        "</form>";
+        
+    modals.OKCancel('Delete coin', body, ret => {
+        if (ret == 'cancel')
+            return;
+            
+        socket.send(JSON.stringify({
+            request: 'delcoin', 
+            message: {
+                name: $('#id-delcoin-name').val(),
+            }
+        }));
+    });
+
+});
+//$('#form-add-coin').submit(e => {
+//    e.preventDefault();
+$('#add_coin').click(e => {    
+    e.preventDefault();
     const body = 
         "<form>" +
             "<div class='form-group'>" +
@@ -184,6 +266,11 @@ function onSocketMessage(event)
     UpdateAdminCoins(data.message, data.client_request);
     return;
   }
+  if (data.request == 'last_trade')
+  {
+    UpdateLastTrade(data.message);
+    return;
+  }
   if (data.request == 'rpc_responce')
   {
       if (data.message.result != "success")
@@ -210,6 +297,12 @@ function UpdateCoinBalance()
      }, "json" );
 }
 
+function UpdateLastTrade(data)
+{
+    ShowLastTrades(data);
+    //setTimeout(() => {modals.OKCancel('Ready!', '<p>Trades updated</p>')}, 1000);
+}
+
 function UpdateAdminCoins(data, client_request)
 {
     var currentCoin = $( "#coins-select option:selected" ).text();
@@ -223,10 +316,10 @@ function UpdateAdminCoins(data, client_request)
         const option = $('<option value="'+unescape(data[i].name)+'">'+unescape(data[i].name)+'</option>');
         $('#coins-select').append(option);
         
-        if (currentCoin && currentCoin != data[i].name)
+        if (currentCoin && currentCoin != unescape(data[i].name))
             continue;
         
-        currentCoin = data[i].name;
+        //currentCoin = data[i].name;
         
         $('#coin-ticker').val(unescape(data[i].ticker));  
         $('#coin-icon').val(unescape(data[i].icon));  
@@ -246,8 +339,8 @@ function UpdateAdminCoins(data, client_request)
     $("#coins-select option[value='"+currentCoin+"']").prop('selected', true);
     $('#form-edit-coin').show();
     
-    if ($('#coins-tab').hasClass('active') && client_request == 'newcoin')
-        modals.OKCancel('Ready!', '<p>All coins saved</p>');
+    if ($('#coins-tab').hasClass('active') && (client_request == 'newcoin' || client_request == 'delcoin'))
+        setTimeout(() => {modals.OKCancel('Ready!', '<p>All coins saved</p>')}, 1000);
 }
 
 function onOpenSocket()

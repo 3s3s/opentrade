@@ -37,11 +37,12 @@ function onOpenSocket()
 
 function UpdateWallet(data)
 {
-    const id_balance = data.coin.name+"_balance";
-    const id_awaiting = data.coin.name+"_awaiting";
-    const id_onhold = data.coin.name+"_onhold";
+    const coin = unescape(data.coin.name).replace('@', '_');
+    const id_balance = coin+"_balance";
+    const id_awaiting = coin+"_awaiting";
+    const id_onhold = coin+"_onhold";
     
-    if ($('#'+data.coin.name).length)
+    if ($('#'+escape(coin).replace('%', '_')).length)
     {
       $('#'+id_balance).text(data.balance+" "+data.coin.ticker);
       $('#'+id_awaiting).text(data.awaiting+" "+data.coin.ticker);
@@ -49,20 +50,20 @@ function UpdateWallet(data)
       return;
     }
     
-    const tdCoin = $('<td scope="col" class="align-middle">'+data.coin.name+'</td>');
-    const tdBalance = $('<td id="'+id_balance+'" scope="col" class="align-middle">'+(data.balance*1).toFixed(7)+" "+data.coin.ticker+'</td>');
-    const tdAwaiting = $('<td id="'+id_awaiting+'" scope="col" class="align-middle">'+(data.awaiting*1).toFixed(7)+" "+data.coin.ticker+'</td>');
-    const tdHold = $('<td id="'+id_onhold+'" scope="col" class="align-middle">'+(data.hold*1).toFixed(7)+" "+data.coin.ticker+'</td>');
+    const tdCoin = $('<td scope="col" class="align-middle">'+unescape(data.coin.name)+'</td>');
+    const tdBalance = $('<td id="'+id_balance+'" scope="col" class="align-middle">'+(data.balance*1).toFixed(8)*1+" "+data.coin.ticker+'</td>');
+    const tdAwaiting = $('<td id="'+id_awaiting+'" scope="col" class="align-middle">'+(data.awaiting*1).toFixed(8)*1+" "+data.coin.ticker+'</td>');
+    const tdHold = $('<td id="'+id_onhold+'" scope="col" class="align-middle">'+(data.hold*1).toFixed(8)*1+" "+data.coin.ticker+'</td>');
     
     const tdDeposit = CreateDepositArea(data);//$('<td>'+data.deposit[data.deposit.length-1]+'</td>');
     
     $('#id_wallet_body').append(
-      $('<tr id="'+data.coin.name+'"></tr>').append(tdCoin).append(tdBalance).append(tdAwaiting).append(tdHold).append(tdDeposit));
+      $('<tr id="'+escape(coin).replace('%', '_')+'"></tr>').append(tdCoin).append(tdBalance).append(tdAwaiting).append(tdHold).append(tdDeposit));
 }
 
 function CreateDepositArea(data)
 {
-  const coin = data.coin.name;
+  const coin = unescape(data.coin.name);
   const coinID = data.coin.id;
   const btnDeposit = $('<button class="btn btn-secondary m-1 align-middle" type="button">Deposit</button>')
     .on('click', e => { ShowDepositAddress(coin) });
@@ -83,10 +84,19 @@ function ShowDepositAddress(coin)
     $('#loader').hide();
     if (!data || !data.result || !data.data || !data.data.length)
       return;
-      
-    modals.OKCancel(
-      'Load your '+coin, 
-      '<div><b>To load your account please send the coins to your address :</b><br>'+data.data[data.data.length-1]+'</div>')
+    
+    var message = '<div><b>To load your account please send the coins to your address :</b><br>'+data.data[data.data.length-1]+'</div>';
+    
+    if (coin == '---TTC---')
+    {
+      message += '<div class="p-3 mb-2 bg-danger text-white">WARNING!!! ---TTC--- IS NOT TittieCoin !!!</div>';
+    }
+    if (coin == 'Bitcoin Cash')
+    {
+      message += '<div class="p-3 mb-2 bg-warning text-white"><a href="https://cashaddr.bitcoincash.org/" target="_blank">Convert to Legacy address format</a></div>';
+    }
+    
+    modals.OKCancel1('Load your '+coin, message);
   });
 }
 
@@ -94,9 +104,17 @@ function ShowWithdrawDialog(coin, coinID)
 {
   $('#alert-fail').hide();
   $('#alert-success').hide();
+  
+  var message = "";
+  if (coin == '---TTC---')
+  {
+      message = '<div class="p-3 mb-2 bg-danger text-white">WARNING!!! ---TTC--- IS NOT TittieCoin !!!</div>';
+  }
+  
   modals.OKCancel(
       'Withdraw your '+coin, 
       '<div>'+
+        message +
         '<form id="withdraw-form" class="paper-form" action="/withdraw" method="post" >'+
           '<input type="hidden" name="coin", value="'+coin+'">'+
           '<div class="form-group">'+
@@ -167,7 +185,7 @@ function ShowHistoryDialog(coin, coinID)
     }
     
     let table = $('<table class="table table-striped table-bordered"><thead><tr><th>amount</th><th>time</th></tr></thead></table>').append(tbody);
-    modals.OKCancel(
+    modals.OKCancel1(
         'Recent transactions '+coin, 
         table[0].outerHTML
     );

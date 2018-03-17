@@ -7,6 +7,7 @@ const wallet = require("./wallet");
 const orders = require("./orders");
 
 let tradeHistory = {};
+let tradeHistoryUser = {};
 let chartData = {};
 
 exports.onGetChart = function(ws, req, data)
@@ -24,7 +25,7 @@ exports.onGetPair = function(ws, req, data)
 {
     utils.GetSessionStatus(req, status => {
         GetBalance(ws, status, data);
-        GetAllOrders(data, ret => {
+        exports.GetAllOrders(data, ret => {
             const orders = ret.data || {};
             GetUserOrders(status, data, ret => {
                 const userOrders = ret.data || [];
@@ -51,12 +52,14 @@ exports.GetLastCoinHistory = function(coin)
     if (!tradeHistory[coin.name] || !tradeHistory[coin.name].data) return GetTradeHistory([g_constants.TRADE_MAIN_COIN, coin.name], () => {});
     
     if (!tradeHistory[coin.name].data.length) 
-        tradeHistory[coin.name].data.push({volume: 0.0, price: 0.0, buysell: 'buy', prev_price: 0.0, prev_buysell: 'buy'});
+        tradeHistory[coin.name].data.push({volume: 0.0, price: 0.0, fromBuyerToSeller: 0.0, prev_frombuyertoseller: 0.0, buysell: 'buy', prev_price: 0.0, prev_buysell: 'buy'});
     
     coin['volume'] = tradeHistory[coin.name].data[0].volume;
     coin['price'] = tradeHistory[coin.name].data[0].price;
+    coin['fromBuyerToSeller'] = tradeHistory[coin.name].data[0].fromBuyerToSeller;
     coin['buysell'] = tradeHistory[coin.name].data[0].buysell;
     coin['prev_price'] = tradeHistory[coin.name].data[0].prev_price;
+    coin['prev_frombuyertoseller'] = tradeHistory[coin.name].data[0].prev_frombuyertoseller;
     coin['prev_buysell'] = tradeHistory[coin.name].data[0].prev_buysell;
 }
 
@@ -66,7 +69,7 @@ exports.onGetBalance= function(ws, req, data)
 
 function GetCoins(coin1, coin2, callback)
 {
-    const WHERE = "name='"+escape(coin1)+"' OR name='"+escape(coin2)+"'";
+    const WHERE = "(name='"+escape(coin1)+"' OR name='"+escape(coin2)+"') OR (ticker='"+escape(coin1)+"' OR ticker='"+escape(coin2)+"')";
     
     g_constants.dbTables['coins'].selectAll("ROWID AS id, name, ticker, icon, info", WHERE, "", (err, rows) => {
         if (err || !rows || !rows.length || rows.length != 2)
@@ -111,7 +114,7 @@ function GetBalance(socket, status, data)
 
 }
 
-function GetAllOrders(data, callback)
+exports.GetAllOrders = function(data, callback)
 {
     if (!data || !data.length || data.length != 2)
     {
@@ -120,10 +123,6 @@ function GetAllOrders(data, callback)
     }
     
     GetCoins(data[0], data[1], err => {
-        if (data[0] == 'Yenten' || data[1] == 'Yenten')
-        {
-            var i = 0;
-        }
         if (!err || !err.result || !err.data || err.data.length != 2)
         {
             callback({result: false, message: err.message || 'Unknown message'});
@@ -156,7 +155,35 @@ function GetUserOrders(status, data, callback)
 
 function GetUserTradeHistory(status, data, callback)
 {
-    callback({result: true, data: []});
+    if (!status.active)
+        return callback({result: true, data: []});
+
+    if (!tradeHistoryUser[status.id]) 
+        tradeHistoryUser[status.id] = {};
+        
+    if (!tradeHistoryUser[status.id][data[1]])
+        tradeHistoryUser[status.id][data[1]] = {time: 0, data: []};
+        
+    if (Date.now() - tradeHistoryUser[status.id][data[1]].time < 5000) 
+        return callback({result: true, data: tradeHistoryUser[status.id][data[1]].data});
+
+    const WHERE = 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'" AND (buyUserID='+status.id+' OR sellUserID='+status.id+')';
+    g_constants.dbTables['history'].selectAll('buyUserID, sellUserID, fromSellerToBuyer AS volume, fromBuyerToSeller, price, buysell, time', WHERE, 'ORDER BY time DESC LIMIT 200', (err, rows) => {
+        if (err || !rows) callback({result: false, data: []});
+        
+        let ret = [];
+        for (let i=0; i<rows.length; i++)
+        {
+            ret.push(rows[i]);
+            
+            ret[i].buysell = (ret[i].buyUserID == status.id) ? 'buy' : 'sell';
+        }
+        
+        tradeHistoryUser[status.id][data[1]].time = Date.now();
+        tradeHistoryUser[status.id][data[1]].data = ret;
+        
+        callback({result: true, data: ret});
+    });
 }
 
 function GetTradeHistory(data, callback)
@@ -166,8 +193,13 @@ function GetTradeHistory(data, callback)
         
     if (Date.now() - tradeHistory[data[1]].time < 5000) return callback({result: true, data: tradeHistory[data[1]].data});
 
-    g_constants.dbTables['history'].selectAll('fromSellerToBuyer AS volume, price, buysell, time', 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'"', 'ORDER BY time DESC LIMIT 200', (err, rows) => {
+    g_constants.dbTables['history'].selectAll('fromSellerToBuyer AS volume, fromBuyerToSeller, price, buysell, time', 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'"', 'ORDER BY time DESC LIMIT 200', (err, rows) => {
         if (err || !rows) callback({result: false, data: []});
+        
+        if (data[1] == 'Dogecoin')
+        {
+            var i = 1;
+        }
         
         tradeHistory[data[1]].time = Date.now();
         tradeHistory[data[1]].data = rows;
@@ -175,6 +207,7 @@ function GetTradeHistory(data, callback)
         if (tradeHistory[data[1]].data.length > 1)
         {
             tradeHistory[data[1]].data[0]['prev_price'] = tradeHistory[data[1]].data[1].price;
+            tradeHistory[data[1]].data[0]['prev_frombuyertoseller'] = tradeHistory[data[1]].data[1].fromBuyerToSeller/tradeHistory[data[1]].data[1].volume;
             tradeHistory[data[1]].data[0]['prev_buysell'] = tradeHistory[data[1]].data[1].buysell;
         }
             
@@ -189,7 +222,8 @@ function GetChartData(data, callback)
         
     if (Date.now() - chartData[data[1]].time < 3600000) return callback({result: true, data: chartData[data[1]].data});
 
-    g_constants.dbTables['history'].selectAll('fromSellerToBuyer AS volume, AVG(price*1000000) AS avg_10min, (time/360000) AS t10min', 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'"', 'GROUP BY t10min ORDER BY t10min LIMIT 200', (err, rows) => {
+    //g_constants.dbTables['history'].selectAll('fromSellerToBuyer AS volume, AVG(price*1000000) AS avg_10min, (time/360000) AS t10min', 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'"', 'GROUP BY t10min ORDER BY t10min DESC LIMIT 60', (err, rows) => {
+    g_constants.dbTables['history'].selectAll('fromSellerToBuyer AS volume, AVG((fromBuyerToSeller/fromSellerToBuyer)*1000000) AS avg_10min, (time/360000) AS t10min', 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'"', 'GROUP BY t10min ORDER BY t10min DESC LIMIT 60', (err, rows) => {
         if (err || !rows) callback({result: false, data: []});
         
         chartData[data[1]].time = Date.now();

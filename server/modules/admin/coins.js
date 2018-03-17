@@ -39,6 +39,17 @@ exports.onNewCoin = function(ws, req, data)
         });
     });
 };
+exports.onDelCoin = function(ws, req, data)
+{
+    utils.GetSessionStatus(req, status => {
+        if (!status.active || status.id != 1)
+            return;
+            
+        DeleteCoin(data, ret => {
+            SendAllCoinsData(ws);
+        });
+    });
+};
 
 function SendAllCoinsData(ws)
 {
@@ -55,6 +66,11 @@ function SendAllCoinsData(ws)
         }
         if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({request: 'coinsadmin', message: rows, client_request: ws['client_request'] || ""}));
     });
+}
+
+function DeleteCoin(data, callback)
+{
+    g_constants.dbTables['coins'].delete('name="'+escape(data.name)+'"', callback);
 }
 
 function SaveCoin(data, callback)
@@ -92,7 +108,10 @@ function SendRPC(coin, command, params, callback)
             callback({result: false, data: {}});
             return;
         }
-        RPC.send(rows[0], command, params, callback);
+        if (command == 'getbalance' || command == 'getinfo' || command == 'getblockchaininfo')
+            RPC.send(rows[0], command, params, callback);
+        else
+            callback({result: false, data: {}});
     });
 }
 
