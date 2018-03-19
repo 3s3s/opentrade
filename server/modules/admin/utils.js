@@ -58,7 +58,7 @@ exports.onGetCoinBalance = function(req, res)
             }
             else
             {
-                g_constants.dbTables['orders'].selectAll('SUM(amount) AS blocked', 'coin="'+escape(coin)+'" AND buysell="sell"', '', (err2, rows2) => {
+                g_constants.dbTables['orders'].selectAll('SUM(amount) AS blocked', 'coin="'+coin+'" AND buysell="sell"', '', (err2, rows2) => {
                     if (err2 || !rows2 || !rows2.length) rows2 = [{blocked : 0}];
                     onSuccess(req, res, {balance: rows[0].sum_balance, blocked: rows2[0].blocked});
                 });
@@ -84,7 +84,7 @@ exports.onFindUser = function(req, res)
             return;
         }
         
-        g_constants.dbTables['users'].selectAll('ROWID as id, *', 'login GLOB "'+query+'"', 'ORDER BY id LIMIT 100', (err, rows) => {
+        g_constants.dbTables['users'].selectAll('ROWID as id, *', 'login GLOB "'+query+'"', 'ORDER BY id LIMIT 1000', (err, rows) => {
             if (err)
             {
                 onError(req, res, err.message || 'Database error');
@@ -94,6 +94,38 @@ exports.onFindUser = function(req, res)
                 rows[i]['account'] = utils.Encrypt(rows[i].id);
                 
             onSuccess(req, res, {users: rows});
+        });
+    });
+}
+
+exports.onFindTrades = function(req, res)
+{
+    if (!req.body)
+    {
+        onError(req, res, 'Bad request');
+        return;
+    }
+
+    utils.GetSessionStatus(req, status => {
+        if (status.id != 1)
+        {
+            onError(req, res, 'User is not root');
+            return;
+        }
+        
+        g_constants.dbTables['history'].selectAll('ROWID AS id, *', '', 'ORDER BY id DESC LIMIT 1', (err, rows) => {
+            if (err)
+            {
+                onError(req, res, err.message || 'Database error');
+                return;
+            }
+            for (var i=0; i<rows.length; i++)
+            {
+                rows[i]['buyUserAccount'] = utils.Encrypt(rows[i].buyUserID);
+                rows[i]['sellUserAccount'] = utils.Encrypt(rows[i].sellUserID);
+            }
+                
+            onSuccess(req, res, {rows: rows});
         });
     });
 }

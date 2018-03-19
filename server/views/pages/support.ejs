@@ -7,7 +7,7 @@
     <% include ../partials/header %>
 
 
-    <div class="container">
+    <div class="container pt-2">
       <% include ../partials/alerts %>
       <div id='id_firststep' class='row'>
         <div class="offset2 col-md-6">
@@ -29,7 +29,7 @@
                 <textarea class="form-control" id="id_mesage" name='message' rows="10" required></textarea>
                 <div class="invalid-feedback">This field is required.</div>
               </div>
-              <div class="g-recaptcha" data-sitekey="6LeX5SQUAAAAAKTieM68Sz4MECO6kJXsSR7_sGP1"></div>
+              <div class="g-recaptcha" data-sitekey="<%- recaptcha%>"></div>
               <p>
                 <button class="btn btn-success" id="submit-button">Submit</button>
               </p>

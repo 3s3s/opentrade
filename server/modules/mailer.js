@@ -24,7 +24,8 @@ exports.SendSignupConfirmation = function(email, url, urlCheck, callback)
     {
         let isSent = false;
         sendmail({
-            from: g_constants.NOREPLY_EMAIL,
+            from: 'OpenTrade Mailer <'+g_constants.NOREPLY_EMAIL+'>',
+            sender: g_constants.NOREPLY_EMAIL,
             to: unescape(email),
             subject: subject,
             html: body,
@@ -99,7 +100,8 @@ exports.SendTicket = function(ticket, callback)
     {
         let isSent = false;
         sendmail({
-            from: g_constants.NOREPLY_EMAIL,
+            from: 'OpenTrade Mailer <'+g_constants.NOREPLY_EMAIL+'>',
+            sender: g_constants.NOREPLY_EMAIL,
             to: g_constants.SUPPORT_EMAIL,
             replyTo: unescape(ticket.email),
             subject: 'Ticket from OpenTrades #'+ticket.id+": "+unescape(ticket.subject),
@@ -141,7 +143,8 @@ exports.SendWithdrawConfirmation = function(email, user, url, urlCheck, callback
     {
         let isSent = false;
         sendmail({
-            from: g_constants.NOREPLY_EMAIL,
+            from: 'OpenTrade Mailer <'+g_constants.NOREPLY_EMAIL+'>',
+            sender: g_constants.NOREPLY_EMAIL,
             to: unescape(email),
             subject: subject,
             html: body,

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+    
+    <% include ../partials/head %>
+  <body>
+
+    <% include ../partials/header %>
+
+
+    <div class="container pt-2">
+      <div class='row'>
+        <div class="offset2 col-md-12">
+            <h2 id="register_header">API keys</h2>
+            <button class='mt-2 btn btn-success' id='btn_add_key'>Add key</button>
+            <table class='mt-2 table table-striped table-bordered'>
+                <thead>
+                    <tr>
+                        <th>API key</th>
+                        <th>Read Info</th>
+                        <th>Trade Limit</th>
+                        <th>Withdraw</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id='table_api_keys'>
+                </tbody>
+            </table>
+            <button class='btn btn-success' id='btn_update_keys'>Update keys</button>
+        </div>
+      </div>
+
+    </div> <!-- /container -->
+
+
+    <% include ../partials/footer %>
+    <script src='/js/api_keys.js'></script>
+  </body>
+</html>

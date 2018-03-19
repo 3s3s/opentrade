@@ -23,7 +23,8 @@ exports.UpdateMarket = function()
 
             if (rows[i].info.active != true)
                 continue;
-                
+            
+            rows[i].name = unescape(rows[i].name);    
             require("./trade").GetLastCoinHistory(rows[i]);
                 
             data.push(rows[i]);

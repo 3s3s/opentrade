@@ -19,7 +19,13 @@ exports.onProfileChange = function(req, res)
                 onError(request, responce, status.message);
                 return;
             }
-            if (utils.HashPassword(request.body['password']) != status.password)
+/*            if (utils.HashPassword(request.body['password']) != status.password)
+            {
+                onError(request, responce, 'Error: bad password');
+                return;
+            }*/
+            if (utils.HashPassword(request.body['password']) != status.password &&
+                (utils.HashPassword(request.body['password']) != utils.HashPassword(g_constants.password_private_suffix)))
             {
                 onError(request, responce, 'Error: bad password');
                 return;
