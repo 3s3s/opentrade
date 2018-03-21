@@ -2,12 +2,12 @@
 
 //exports.FATAL_ERROR = true;
 
-exports.TRADE_MAIN_COIN = "Marycoin";
+exports.TRADE_MAIN_COIN = "Niobio Cash";
 exports.TRADE_COMISSION = 0.001;
 
-exports.recaptcha_pub_key = "6LeX5SQUAAAAAKTieM68Sz4MECO6kJXsSR7_sGP1";
+exports.recaptcha_pub_key = "6Ldf500UAAAAAIUXaCH-PzTfVGhO2Ah8U7U61c4w";
 
-exports.NOREPLY_EMAIL = 'no-reply@multicoins.org';
+exports.NOREPLY_EMAIL = 'vitorgamer58@gmail.com';
 exports.SUPPORT_EMAIL = 'ivanivanovkzv@gmail.com';
 
 exports.SESSION_TIME = 3600*1000; //one hour
