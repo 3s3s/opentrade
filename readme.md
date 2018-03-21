@@ -21,10 +21,11 @@ nvm install 6.0.0
 git clone https://github.com/3s3s/opentrade.git
 cd opentrade
 
-npm install express
-npm install ws
-npm install sendmail
-npm install sqlite3
+sudo npm install express
+sudo npm install ws
+sudo npm install sendmail
+sudo npm install sqlite3
+sudo npm install ejs
 mkdir ~/opentrade/server/database
 >> ~/opentrade/server/modules/private_constants.js
 >> /root/privkey.pem
@@ -93,7 +94,7 @@ zSZnnKQRUSzFwo8DObkVCc1JgT+OR3xkysQqFMnGCKkyvTPYwQ==
 
 ```
 cd  ~/opentrade/server
-node main.js
+sudo node main.js
 ```
 
 In the browser address string type https://127.0.0.1:40443
@@ -101,11 +102,34 @@ You will see OpenTrade.
 
 The first registered user will be exchange administrator. 
 
+# Add trade pairs
 
+1. Register on exchange. The first registered user will be exchange administrator.
+2. Go to "Admin Area" -> "Coins" -> "Add coin"
+3. Fill up all fields and click "Confirm"
+4. Fill "Minimal confirmations count" and "Minimal balance" and uncheck and check "Coin visible" button
+5. Click "Save"
+6. Check RPC command for the coin. If it worked then coin was added to the exchange!
 
+All visible coins should be appear in the Wallet. You shoud create default coin pairs now.
 
+File ~/opentrade/server/constants.js have constant that you can change
 
+https://github.com/3s3s/opentrade/blob/master/server/constants.js#L5
 
+```
+exports.TRADE_MAIN_COIN = "Marycoin"; //change Marycoin to your main coin pair
+```
 
+Also ypu should change file ~/opentrade/static_pages/js/utils.js
+
+https://github.com/3s3s/opentrade/blob/master/static_pages/js/utils.js#L56
+
+```
+MAIN_COIN: 'Marycoin', //change Marycoin to your main coin pair
+DEFAULT_PAIR: 'Litecoin', //change Litecoin to your default coin pair
+```
+
+After that you coins should appear on the main page.
 
 
