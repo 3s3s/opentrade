@@ -215,8 +215,8 @@ exports.GetAllOrders = function(coinsOrigin, callback)
         return;
     }
     
-    g_constants.dbTables['orders'].selectAll('SUM(amount) AS amount, coin, price, time', 'coin="'+escape(coin0)+'" AND buysell="buy" AND amount*1>0', 'GROUP BY price ORDER BY price*1000000 DESC LIMIT 30', (err, rows) => {
-        g_constants.dbTables['orders'].selectAll('SUM(amount) AS amount, coin, price, time', 'coin="'+escape(coin0)+'" AND buysell="sell" AND amount*1>0', 'GROUP BY price ORDER BY price*1000000 LIMIT 30', (err2, rows2) => {
+    g_constants.dbTables['orders'].selectAll('SUM(amount) AS amount, coin, price, time', 'coin="'+escape(coin0)+'" AND buysell="buy" AND amount*1>0', 'GROUP BY price*1000000 ORDER BY price*1000000 DESC LIMIT 30', (err, rows) => {
+        g_constants.dbTables['orders'].selectAll('SUM(amount) AS amount, coin, price, time', 'coin="'+escape(coin0)+'" AND buysell="sell" AND amount*1>0', 'GROUP BY price*1000000 ORDER BY price*1000000 LIMIT 30', (err2, rows2) => {
             g_constants.dbTables['orders'].selectAll('SUM(amount*1) AS sum_amount, SUM(amount*price) AS sum_amount_price', 'coin="'+escape(coin0)+'"', 'GROUP BY buysell', (err3, rows3) => {
                 const data = {buy: rows || [], sell: rows2 || [], volumes: rows3 || []};
                 allOrders[coin0] = {time: Date.now(), data: data};
@@ -271,49 +271,58 @@ function AddOrder(status, WHERE, newBalance, req, res)
     database.BeginTransaction(err => {
         if (err) return onError(req, res, err.message || 'Database transaction error');
         
-        const amount = req.body.amount*1;
-        const price = req.body.price*1;
-        const balance = (newBalance*1).toFixed(7)*1;
-        
-        if (!utils.isNumeric(amount) || !utils.isNumeric(price)) return onError(req, res, 'Bad amount or price');
-        if (amount < 0 || price < 0) return onError(req, res, 'Bad (negative) amount or price');
-        if (!utils.isNumeric(balance)) return onError(req, res, 'Bad balance ('+balance+')');
-
-        g_constants.dbTables['orders'].insert(
-            status.id,
-            req.body.coin,
-            req.body.order,
-            amount,
-            price,
-            g_constants.TRADE_MAIN_COIN,
-            Date.now(),
-            JSON.stringify({}),
-            err => {
-                if (err)
-                {
-                    database.EndTransaction();
-                    onError(req, res, err.message || 'Database Insert error');
-                    return;
-                }
-                
-                g_constants.dbTables['balance'].update('balance="'+balance+'"', WHERE, err => {
+        try 
+        {
+            const amount = (req.body.amount*1).toFixed(8)*1;
+            const price = (req.body.price*1).toFixed(8)*1;
+            const balance = (newBalance*1).toFixed(8)*1;
+            
+            if (!utils.isNumeric(amount) || !utils.isNumeric(price)) return onError(req, res, 'Bad amount or price');
+            if (amount < 0 || price < 0) return onError(req, res, 'Bad (negative) amount or price');
+            if (!utils.isNumeric(balance)) return onError(req, res, 'Bad balance ('+balance+')');
+    
+            g_constants.dbTables['orders'].insert(
+                status.id,
+                req.body.coin,
+                req.body.order,
+                amount.toFixed(8),
+                price.toFixed(8),
+                g_constants.TRADE_MAIN_COIN,
+                Date.now(),
+                JSON.stringify({}),
+                err => {
                     if (err)
                     {
-                        database.RollbackTransaction();
-                        onError(req, res, err.message || 'Database Update error');
+                        database.EndTransaction();
+                        onError(req, res, err.message || 'Database Insert error');
                         return;
                     }
-                    database.EndTransaction();
                     
-                    wallet.ResetBalanceCache(status.id);
-                    allOrders = {};
-                    if (userOrders[status.id])
-                        delete userOrders[status.id];
-                    
-                    onSuccess(req, res, {});
-                });
-            }
-        );
+                    g_constants.dbTables['balance'].update('balance="'+balance+'"', WHERE, err => {
+                        if (err)
+                        {
+                            database.RollbackTransaction();
+                            onError(req, res, err.message || 'Database Update error');
+                            return;
+                        }
+                        database.EndTransaction();
+                        
+                        wallet.ResetBalanceCache(status.id);
+                        allOrders = {};
+                        if (userOrders[status.id])
+                            delete userOrders[status.id];
+                        
+                        onSuccess(req, res, {});
+                    });
+                }
+            );
+        }
+        catch(e)
+        {
+            database.RollbackTransaction();
+            onError(req, res, err.message || 'Fatal error: '+e.message);
+            return;
+        }
     });
 }
 
@@ -322,13 +331,16 @@ function ProcessExchange(data)
     if (!data.buy.length || !data.sell.length)
         return;
         
+    if (!utils.isNumeric(data.buy[0].price) || !utils.isNumeric(data.sell[0].price))
+        return;
+
     const higestBid = data.buy[0];
     const higestAsk = data.sell[0];
     
-    if (higestBid.price*1 < higestAsk.price*1)
+    if (higestBid.price*100000000 - higestAsk.price*100000000 < -1)
         return
     
-    const WHERE = 'coin="'+higestBid.coin+'"  AND amount>0 AND ((buysell="sell" AND price*1000000 <= '+higestBid.price*1000000+') OR (buysell="buy" AND price*1000000 >= '+higestAsk.price*1000000+'))';    
+    const WHERE = 'coin="'+higestBid.coin+'"  AND amount>0 AND ((buysell="sell" AND (price*100000000 - '+higestBid.price*100000000+' < 1)) OR (buysell="buy" AND price*100000000 - '+higestAsk.price*100000000+' > -1))';    
     g_constants.dbTables['orders'].selectAll('ROWID AS id, *', WHERE, 'ORDER BY price*1, time*1', (err, rows) => {
         if (err || !rows || !rows.length)
             return;
@@ -365,17 +377,17 @@ function ProcessExchange(data)
         {
             if (i > 100) return null;
             
-            if (first.id == rows[i]) 
+            if (first.id == rows[i] || (!utils.isNumeric(first.price) || (!utils.isNumeric(rows[i].price)))) 
                 continue;
                 
-            if (first.buysell == 'buy' && rows[i].buysell == 'sell' && first.price*1 >= rows[i].price*1)
+            if (first.buysell == 'buy' && rows[i].buysell == 'sell' && first.price*100000000 - rows[i].price*100000000 > -1)
             {
                 if (ret && ret.price*1 <= rows[i].price*1)
                     continue;
                 ret = rows[i];
                 continue;
             }
-            if (first.buysell == 'sell' && rows[i].buysell == 'buy' && first.price*1 <= rows[i].price*1)
+            if (first.buysell == 'sell' && rows[i].buysell == 'buy' && first.price*100000000 - rows[i].price*100000000 < 1)
             {
                 if (ret && ret.price*1 >= rows[i].price*1)
                     continue;
@@ -409,34 +421,41 @@ function ProcessExchange(data)
 
         database.BeginTransaction(err => {
             if (err) return;
-                
-            UpdateOrders(newBuyAmount, newSellAmount, buyOrder.id, sellOrder.id, err => {
-                if (err) return database.RollbackTransaction();
-                
-                UpdateBalances(buyOrder, sellOrder, fromSellerToBuyer, fromBuyerToSeller, buyerChange, comission, err => {
+            
+            try
+            {
+                UpdateOrders(newBuyAmount, newSellAmount, buyOrder.id, sellOrder.id, err => {
                     if (err) return database.RollbackTransaction();
                     
-                    UpdateHistory(buyOrder, sellOrder, fromSellerToBuyer, fromBuyerToSeller, buyerChange, comission, err => {
+                    UpdateBalances(buyOrder, sellOrder, fromSellerToBuyer, fromBuyerToSeller, buyerChange, comission, err => {
                         if (err) return database.RollbackTransaction();
                         
-                        database.EndTransaction();
-                        
-                        wallet.ResetBalanceCache(buyOrder.userID);
-                        wallet.ResetBalanceCache(sellOrder.userID);
-                        allOrders = {};
-                        if (userOrders[sellOrder.userID])
-                            delete userOrders[sellOrder.userID];
-                        if (userOrders[buyOrder.userID])
-                            delete userOrders[buyOrder.userID];
+                        UpdateHistory(buyOrder, sellOrder, fromSellerToBuyer, fromBuyerToSeller, buyerChange, comission, err => {
+                            if (err) return database.RollbackTransaction();
                             
-                        // Broadcast to everyone else.
-                        g_constants.WEB_SOCKETS.clients.forEach( client => {
-                            if (client.readyState === WebSocket.OPEN) 
-                                client.send(JSON.stringify({request: 'exchange-updated', message: {coin: buyOrder.coin}}));
+                            database.EndTransaction();
+                            
+                            wallet.ResetBalanceCache(buyOrder.userID);
+                            wallet.ResetBalanceCache(sellOrder.userID);
+                            allOrders = {};
+                            if (userOrders[sellOrder.userID])
+                                delete userOrders[sellOrder.userID];
+                            if (userOrders[buyOrder.userID])
+                                delete userOrders[buyOrder.userID];
+                                
+                            // Broadcast to everyone else.
+                            g_constants.WEB_SOCKETS.clients.forEach( client => {
+                                if (client.readyState === WebSocket.OPEN) 
+                                    client.send(JSON.stringify({request: 'exchange-updated', message: {coin: buyOrder.coin}}));
+                            });
                         });
                     });
                 });
-            });
+            }
+            catch(e) {
+                return database.RollbackTransaction();
+            }
+                
         });
     }
     

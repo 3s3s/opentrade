@@ -1,4 +1,4 @@
-OpenTrade is the best opensource cryptocurrency exchange!
+# OpenTrade is the best opensource cryptocurrency exchange!
 
 Life version https://trade.multicoins.org/
 
@@ -9,6 +9,7 @@ Step-by-step install instructions:
 3. Log in to Droplet console over SSH
 4
 
+```
 sudo apt-get update
 sudo apt-get install build-essential libssl-dev -y
 curl -sL https://raw.githubusercontent.com/creationix/nvm/v0.31.0/install.sh -o install_nvm.sh
@@ -20,18 +21,20 @@ nvm install 6.0.0
 git clone https://github.com/3s3s/opentrade.git
 cd opentrade
 
-npm install express
-npm install ws
-npm install sendmail
-npm install sqlite3
+sudo npm install express
+sudo npm install ws
+sudo npm install sendmail
+sudo npm install sqlite3
+sudo npm install ejs
 mkdir ~/opentrade/server/database
 >> ~/opentrade/server/modules/private_constants.js
 >> /root/privkey.pem
 >> /root/fullchain.pem
+```
 
-====================================================================================
-Here is an example of file ~/opentrade/server/modules/private_constants.js
+## Here is an example of file ~/opentrade/server/modules/private_constants.js
 
+```
 'use strict';
 
 exports.recaptcha_priv_key = 'YOUR_GOOGLE_RECAPTCHA_PRIVATE_KEY';
@@ -44,12 +47,13 @@ exports.walletspassphrase = {
     'BTC' : 'LONG_RANDOM_STRING3',
     'DOGE' : 'LONG_RANDOM_STRING4'
 };
-====================================================================================
+```
 
-If you have not ssl certificates, you can use this for your tests:
+**If you have not ssl certificates, you can use this for your tests:**
 
-File /root/privkey.pem
+### File /root/privkey.pem
 
+```
 -----BEGIN RSA PRIVATE KEY-----
 MIICXAIBAAKBgQC0+cYKfu3ecWjIrFLfwGyUTEFWguGtSTSCrmH7YVwKs3ZB8OEJ
 iafVDwvx65Ch/KREc+xyowkb+5YIUKwwGXl14CBHGJeSdtx85lHqfnevA+MzkWYF
@@ -65,9 +69,11 @@ W50khBIK/zbqdxaa+9lWZvN6N4N2+yS43jR6/ZOCurkWVHbJHjc391CzDS/xCzPV
 VLf4SeTJubHYyF0SqQJBAMtuyzbq49MZHtMvOmiY/O73G6w2hrxu8GnO2GJxnXtj
 KHsKUISxUHpE6035rjlbyxRR+DPFGqxM7BJrk2qkEqI=
 -----END RSA PRIVATE KEY-----
+```
 
-File /root/fullchain.pem
+### File /root/fullchain.pem
 
+```
 -----BEGIN CERTIFICATE-----
 MIICATCCAWoCCQCIQvm1vUvbqjANBgkqhkiG9w0BAQsFADBFMQswCQYDVQQGEwJB
 VTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50ZXJuZXQgV2lkZ2l0
@@ -81,24 +87,49 @@ AAOBgQBPeC//NfUwivU+hwKK8d5/0J9yxWRI848ghHDXtv0yMiACZHmCThyN/5y6
 +WeC8tZjNUXfUK02piVOHAfVj8dn569lDgBR4eZ2z/OhAtu8xbLlecGKaKkzeTMx
 zSZnnKQRUSzFwo8DObkVCc1JgT+OR3xkysQqFMnGCKkyvTPYwQ==
 -----END CERTIFICATE-----
+```
 
-==================================================================
 
-After all you can run exchange
+**After all you can run exchange**
 
+```
 cd  ~/opentrade/server
-node main.js
+sudo node main.js
+```
 
 In the browser address string type https://127.0.0.1:40443
 You will see OpenTrade.
 
 The first registered user will be exchange administrator. 
 
+# Add trade pairs
 
+1. Register on exchange. The first registered user will be exchange administrator.
+2. Go to "Admin Area" -> "Coins" -> "Add coin"
+3. Fill up all fields and click "Confirm"
+4. Fill "Minimal confirmations count" and "Minimal balance" and uncheck and check "Coin visible" button
+5. Click "Save"
+6. Check RPC command for the coin. If it worked then coin was added to the exchange!
 
+All visible coins should be appear in the Wallet. You shoud create default coin pairs now.
 
+File ~/opentrade/server/constants.js have constant that you can change
 
+https://github.com/3s3s/opentrade/blob/master/server/constants.js#L5
 
+```
+exports.TRADE_MAIN_COIN = "Marycoin"; //change Marycoin to your main coin pair
+```
 
+Also ypu should change file ~/opentrade/static_pages/js/utils.js
+
+https://github.com/3s3s/opentrade/blob/master/static_pages/js/utils.js#L56
+
+```
+MAIN_COIN: 'Marycoin', //change Marycoin to your main coin pair
+DEFAULT_PAIR: 'Litecoin', //change Litecoin to your default coin pair
+```
+
+After that you coins should appear on the main page.
 
 

@@ -64,6 +64,24 @@ const utils =
         const mailformat = /^[-a-z0-9!#$%&'*+/=?^_`{|}~]+(?:\.[-a-z0-9!#$%&'*+/=?^_`{|}~]+)*@(?:[a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?\.)*(?:aero|arpa|asia|biz|cat|com|coop|club|edu|gov|info|int|jobs|mil|mobi|museum|name|net|org|pro|tel|travel|[a-z][a-z])$/;
         return text.match(mailformat);
     },
+    isNumeric: function(n)
+    {
+        return !isNaN(parseFloat(n)) && isFinite(n);
+    },
+    MakePrice: function(str)
+    {
+        if (!utils.isNumeric(str))
+            return 0.0;
+        if ((str*1.0).toFixed(8)*1.0 == str*1.0)
+            return str*1.0;
+        
+        const str0 = str.toString();
+        const ret = str0.substring(0, str0.indexOf(".") + 8);
+        
+        if ((ret*1.0).toString().length < ret.length)
+            return ret*1.0;
+        return ret;
+    },
     GetCurrentLang: function()
     {
       const currentLang = storage.getItem('CurrentLang');

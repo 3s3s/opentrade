@@ -282,7 +282,7 @@ function GetBalanceForWithdraw(userID, coinName, callback)
         let balance = 0;    
         for (var i=0; i<rows.length; i++)
         {
-            if (!utils.isNumeric(rows[i].balance*1) || rows[i].balance*1 < 0)
+            if (!utils.isNumeric(rows[i].balance*1) || rows[i].balance*1 < -0.000001)
                 return callback({result: false, message: 'Invalid balance for coin "'+rows[i].coin+'" ('+rows[i].balance*1+')'}, 0);
             
             if (rows[i].coin == coinName)

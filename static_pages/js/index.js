@@ -128,9 +128,9 @@ function AddOrder(order)
       '</tr>'+
       '<tr>'+
         '<td>'+order.order+'</td>'+
-        '<td>'+order.amount+'</td>'+
+        '<td>'+order.amount.toFixed(8)*1+'</td>'+
         '<td>'+order.coin+'</td>'+
-        '<td>'+order.price+" "+MC+'</td>'+
+        '<td>'+order.price.toFixed(8)*1+" "+MC+'</td>'+
       '</tr>'
     '</table>';
   
@@ -357,11 +357,16 @@ function UpdateTradeHistory(history)
     history[i].buysell = history[i].buysell == 'sell' ? 'buy' : 'sell';
     
     const typeColor = history[i].buysell == 'sell' ? "text-danger" : "text-success";
+    
+    const volume = utils.MakePrice(history[i].volume);
+    const price = utils.MakePrice(history[i].fromBuyerToSeller/history[i].volume);
     const tr = $('<tr></tr>')
       .append($('<td>'+utils.timeConverter(history[i].time*1)+'</td>'))
       .append($('<td><span class="'+typeColor+'">'+history[i].buysell+'</span></td>'))
-      .append($('<td>'+(history[i].volume*1).toFixed(8)*1+'</td>'))
-      .append($('<td>'+(history[i].fromBuyerToSeller/history[i].volume).toFixed(8)*1+'</td>'));
+      .append($('<td>'+volume+'</td>'))
+      .append($('<td>'+price+'</td>'));
+//      .append($('<td>'+(history[i].volume*1).toFixed(8)*1+'</td>'))
+//      .append($('<td>'+(history[i].fromBuyerToSeller/history[i].volume).toFixed(8)*1+'</td>'));
     
     $('#id_trade_history').append(tr);
   }
@@ -400,17 +405,17 @@ function UpdateOrders(orders)
   var volumeBuyPair = 0.0;
   for (var i=0; i<orders.buy.length; i++)
   {
-    const price = (orders.buy[i].price*1.0).toFixed(8)*1;
-    const amountMain = (orders.buy[i].price*orders.buy[i].amount*1.0).toFixed(8)*1;
-    const amountPair = (orders.buy[i].amount*1.0).toFixed(8)*1;
+    const price = utils.MakePrice(orders.buy[i].price);//(orders.buy[i].price*1.0).toFixed(8)*1;
+    const amountMain = utils.MakePrice(orders.buy[i].price*orders.buy[i].amount); //(orders.buy[i].price*orders.buy[i].amount*1.0).toFixed(8)*1;
+    const amountPair = utils.MakePrice(orders.buy[i].amount); //(orders.buy[i].amount*1.0).toFixed(8)*1;
     
     const tr = $('<tr></tr>')
       .append($('<td>'+price+'</td>'))
       .append($('<td>'+amountMain+'</td>'))
       .append($('<td>'+amountPair+'</td>'));
       
-    volumeBuy += amountMain;
-    volumeBuyPair += amountPair;
+    volumeBuy += amountMain*1;
+    volumeBuyPair += amountPair*1;
     
     const curVolumeBuy = (volumeBuy*1.0).toFixed(8)*1;
     const curVolumePair = (volumeBuyPair*1.0).toFixed(8)*1;
@@ -434,17 +439,17 @@ function UpdateOrders(orders)
   var volumeSellPair = 0.0;
   for (var i=0; i<orders.sell.length; i++)
   {
-    const price = (orders.sell[i].price*1.0).toFixed(8)*1;
-    const amountMain = (orders.sell[i].price*orders.sell[i].amount*1.0).toFixed(8)*1;
-    const amountPair = (orders.sell[i].amount*1.0).toFixed(8)*1;
+    const price = utils.MakePrice(orders.sell[i].price); //(orders.sell[i].price*1.0).toFixed(8)*1;
+    const amountMain = utils.MakePrice(orders.sell[i].price*orders.sell[i].amount); //(orders.sell[i].price*orders.sell[i].amount*1.0).toFixed(8)*1;
+    const amountPair = utils.MakePrice(orders.sell[i].amount); //(orders.sell[i].amount*1.0).toFixed(8)*1;
     
     const tr = $('<tr></tr>')
       .append($('<td>'+price+'</td>'))
       .append($('<td>'+amountMain+'</td>'))
       .append($('<td>'+amountPair+'</td>'));
       
-    volumeSell += amountPair;
-    volumeSellPair += amountMain;
+    volumeSell += amountPair*1;
+    volumeSellPair += amountMain*1;
     
     const curVolumeSell = (volumeSell*1.0).toFixed(8)*1;
     const curVolumePair = (volumeSellPair*1.0).toFixed(8)*1;
@@ -469,8 +474,8 @@ function UpdateOrders(orders)
   if (!orders.sell.length)
     orders.sell = [{price: 0.0}];
     
-  $('#id_max_bid').text((orders.buy[0].price*1.0).toFixed(8)*1);
-  $('#id_max_ask').text((orders.sell[0].price*1.0).toFixed(8)*1);
+  $('#id_max_bid').text(utils.MakePrice(orders.buy[0].price)); //((orders.buy[0].price*1.0).toFixed(8)*1);
+  $('#id_max_ask').text(utils.MakePrice(orders.sell[0].price)); //((orders.sell[0].price*1.0).toFixed(8)*1);
   
   if ($('#inputSellPrice').val().length == 0) $('#inputSellPrice').val($('#id_max_bid').text());
   if ($('#inputBuyPrice').val().length == 0) $('#inputBuyPrice').val($('#id_max_ask').text());
