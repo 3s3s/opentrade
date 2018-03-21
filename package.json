@@ -1,0 +1,9 @@
+  },
+  "author": "3s3s",
+  "license": "",
+  "dependencies": {
+    "ws": "^5.1.10",
+    "ejs": "^2.5.7",
+    "express": "^4.16.2"
+  }
+}

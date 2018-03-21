@@ -21,10 +21,11 @@ nvm install 6.0.0
 git clone https://github.com/3s3s/opentrade.git
 cd opentrade
 
-npm install express
-npm install ws
-npm install sendmail
-npm install sqlite3
+sudo npm install express
+sudo npm install ws
+sudo npm install sendmail
+sudo npm install sqlite3
+sudop npm install ejs
 mkdir ~/opentrade/server/database
 >> ~/opentrade/server/modules/private_constants.js
 >> /root/privkey.pem
@@ -93,7 +94,7 @@ zSZnnKQRUSzFwo8DObkVCc1JgT+OR3xkysQqFMnGCKkyvTPYwQ==
 
 ```
 cd  ~/opentrade/server
-node main.js
+sudo node main.js
 ```
 
 In the browser address string type https://127.0.0.1:40443
