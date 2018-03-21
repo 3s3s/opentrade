@@ -7,7 +7,7 @@ exports.TRADE_COMISSION = 0.001;
 
 exports.recaptcha_pub_key = "6Ldf500UAAAAAIUXaCH-PzTfVGhO2Ah8U7U61c4w";
 
-exports.NOREPLY_EMAIL = 'vitorgamer58@gmail.com';
+exports.NOREPLY_EMAIL = 'vitorgamer58@bolsotrade.tk';
 exports.SUPPORT_EMAIL = 'ivanivanovkzv@gmail.com';
 
 exports.SESSION_TIME = 3600*1000; //one hour
