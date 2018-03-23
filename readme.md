@@ -119,15 +119,15 @@ https://github.com/3s3s/opentrade/blob/master/server/constants.js#L5
 
 ```
 exports.TRADE_MAIN_COIN = "Marycoin"; //change Marycoin to your main coin pair
-```
+exports.TRADE_DEFAULT_PAIR = "Litecoin"; //change Litecoin to your default coin pair
+exports.TRADE_COMISSION = 0.001; //change trade comission percent
 
-Also ypu should change file ~/opentrade/static_pages/js/utils.js
+exports.recaptcha_pub_key = "6LeX5SQUAAAAAKTieM68Sz4MECO6kJXsSR7_sGP1"; //change to your recaptcha public key
 
-https://github.com/3s3s/opentrade/blob/master/static_pages/js/utils.js#L56
+exports.NOREPLY_EMAIL = 'no-reply@multicoins.org'; //change no-reply email
+exports.SUPPORT_EMAIL = 'ivanivanovkzv@gmail.com'; //change to your valid email for support requests
+exports.my_portSSL = 40443; //change to your ssl port
 
-```
-MAIN_COIN: 'Marycoin', //change Marycoin to your main coin pair
-DEFAULT_PAIR: 'Litecoin', //change Litecoin to your default coin pair
 ```
 
 After that you coins should appear on the main page.

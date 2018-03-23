@@ -48,6 +48,11 @@ exports.handle = function(app, wss)
     app.post('/submitorder', onSubmitOrder);
     app.post('/closeorder', onCloseOrder);
     
+    app.post('/generateapikey', API1.onGenerateAPIkey);
+    app.post('/deleteapikey', API1.onDeleteAPIkey);
+    app.post('/listapikeys', API1.onListAPIkeys);
+    app.post('/editapikey', API1.onEditAPIkey);
+    
     app.get('/logout', onLogout);
     app.get('/login', onLogin);
     app.post('/login', onLoginPost);

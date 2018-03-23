@@ -3,29 +3,20 @@
 //exports.FATAL_ERROR = true;
 
 exports.TRADE_MAIN_COIN = "Marycoin";
+exports.TRADE_DEFAULT_PAIR = "Litecoin";
 exports.TRADE_COMISSION = 0.001;
 
 exports.recaptcha_pub_key = "6LeX5SQUAAAAAKTieM68Sz4MECO6kJXsSR7_sGP1";
 
 exports.NOREPLY_EMAIL = 'no-reply@multicoins.org';
 exports.SUPPORT_EMAIL = 'ivanivanovkzv@gmail.com';
+exports.my_portSSL = 40443;
+
+exports.my_port = process.env.PORT || 40080;
 
 exports.SESSION_TIME = 3600*1000; //one hour
 
-exports.my_port = process.env.PORT || 40080;
-exports.my_portSSL = 40443;
-
 exports.dbName = './database/sqlite.db';
-
-exports.DONATORS = [
-    {userID: 1, percent: 4},
-    {userID: 68, percent: 25},
-    {userID: 58, percent: 10},
-    {userID: 22, percent: 10},
-    {userID: 10, percent: 15},
-    {userID: 14, percent: 35}
-];
-
 
 exports.dbTables = [
    {
@@ -44,6 +35,17 @@ exports.dbTables = [
           ['info', 'TEXT']
         ],
         'commands' : 'PRIMARY KEY (login, email)'
+   },
+   {
+       'name' : 'apikeys',
+       'cols' : [
+           ['userid', 'INTEGER'],
+           ['key', 'TEXT UNIQUE PRIMARY KEY'],
+           ['read', 'INTEGER'],
+           ['write', 'INTEGER'],
+           ['withdraw', 'INTEGER'],
+           ['info', 'TEXT']
+        ]
    },
    {
       'name' : 'sessions',
@@ -159,6 +161,12 @@ exports.ExchangeBalanceAccountID = 0;
 const PRIVATE = require("./modules/private_constants");
 exports.password_private_suffix = PRIVATE.password_private_suffix;
 exports.recaptcha_priv_key = PRIVATE.recaptcha_priv_key;
+
+exports.DONATORS = [
+    {userID: 1, percent: 99},
+];
+
+if (PRIVATE.donators) exports.DONATORS = PRIVATE.donators;
 
 exports.walletpassphrase = function (ticker)
 {
