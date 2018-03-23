@@ -329,6 +329,83 @@ exports.onAccountGetBalance = function(req, res)
     onError(req, res, 'getbalance under construction');
 }
 
+exports.onGenerateAPIkey = function(req, res)
+{
+    utils.GetSessionStatus(req, status => {
+        if (!status.active)
+        {
+            onError(req, res, 'User not logged');
+            return;
+        }
+        
+        g_constants.dbTables['apikeys'].selectAll('*', 'userid="'+status.id+'"', '', (err, rows) => {
+            if (err) return onError(req, res, err.message || 'Database Select error');
+            if (rows && rows.length > 9) return onError(req, res, 'Max number api keys exceeded');
+            
+            const key = utils.Encrypt(Math.random()*10000 + "and" + Date.now());
+            
+            g_constants.dbTables['apikeys'].insert(
+                status.id,
+                key,
+                0, 0, 0, 
+                JSON.stringify({}),
+                err => {
+                    if (err) return onError(req, res, err.message || 'Database Insert error');
+                    
+                    onSuccess(req, res, key);
+                }
+            );
+        });
+   });
+}
+exports.onDeleteAPIkey = function(req, res)
+{
+    utils.GetSessionStatus(req, status => {
+        if (!status.active) return  onError(req, res, 'User not logged');
+        if (!req.body || !req.body.key) return onError(req, res, 'Bad Request');
+
+        g_constants.dbTables['apikeys'].delete('userid="'+status.id+'" AND key="'+escape(req.body.key)+'"');
+        onSuccess(req, res, 0);
+    });
+}
+
+exports.onListAPIkeys = function(req, res)
+{
+    utils.GetSessionStatus(req, status => {
+        if (!status.active) return onError(req, res, 'User not logged');
+
+        g_constants.dbTables['apikeys'].selectAll('*', 'userid="'+status.id+'"', '', (err, rows) => {
+            if (err) return onError(req, res, 'Database error');
+                
+            if (!rows || !rows.length) return onSuccess(req, res, []);
+                
+            onSuccess(req, res, rows);
+        });
+    });
+}
+
+exports.onEditAPIkey = function(req, res)
+{
+    utils.GetSessionStatus(req, status => {
+        if (!status.active) return onError(req, res, 'User not logged');
+        if (!req.body || !req.body.key) return onError(req, res, 'Bad Request');
+        
+        const SET = 'read="'+MakeFlag(req.body.read)+'", write="'+MakeFlag(req.body.write)+'", withdraw="'+MakeFlag(req.body.withdraw)+'"';
+        g_constants.dbTables['apikeys'].update(SET, 'userid="'+status.id+'" AND key="'+escape(req.body.key)+'"', err => {
+            if (err) return onError(req, res, 'Database update error');
+            
+            onSuccess(req, res, 0);
+        });
+    });
+    
+    function MakeFlag(str)
+    {
+        if (!utils.isNumeric(str)) return 0;
+        if (str*1 < 0 || str*1 > 1) return 0;
+        return str;
+    }
+}
+
 exports.onAccountGetDepositAddress = function(req, res)
 {
     onError(req, res, 'getdepositaddress under construction');

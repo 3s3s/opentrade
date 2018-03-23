@@ -53,8 +53,8 @@ const storage = {
 
 const utils = 
 {
-    MAIN_COIN: 'Marycoin',
-    DEFAULT_PAIR: 'Litecoin',
+    MAIN_COIN: MAIN_COIN,
+    DEFAULT_PAIR: DEFAULT_PAIR,
     COMISSION: 0.001,
     ValidateEmail: function(text)
     {
@@ -93,7 +93,7 @@ const utils =
     },
     CreateSocket: function(onmessage, onopen)
     {
-        socket = new WebSocket("wss://"+window.location.host+ ":40443");
+        socket = new WebSocket("wss://"+window.location.hostname+":"+PORT_SSL);
         socket.onmessage = onmessage;
         socket.onopen = onopen;
         
