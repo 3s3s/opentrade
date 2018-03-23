@@ -20,6 +20,7 @@ nvm install 6.0.0
 
 git clone https://github.com/3s3s/opentrade.git
 cd opentrade
+git checkout test
 
 sudo npm install express
 sudo npm install ws
