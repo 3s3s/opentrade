@@ -144,7 +144,7 @@ exports.Init = function(callback)
                 if (err)
                     console.log("SELECT ERROR: query="+query+" message=" + err.message);
                 
-                if (callback) callback(err, rows);
+                if (callback) setTimeout(callback, 1, err, rows);
             });        
         }
         catch (e) {

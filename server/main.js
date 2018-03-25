@@ -1,5 +1,6 @@
 'use strict';
 
+require("../debug/dump.js").init('/root/marycoin/Trade2/debug');
 const g_constants = require('./constants');
 
 const http = require('http');

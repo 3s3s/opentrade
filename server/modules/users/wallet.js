@@ -20,6 +20,7 @@ const commands = {
 let emailChecker = {};
 
 let balances = {};
+let coinsBalance = {};
 let history = {};
 
 let g_bProcessWithdraw = false;
@@ -141,22 +142,31 @@ exports.GetCoinWallet = function(socket, userID, coin, callback)
     if (!balances[userID])
         balances[userID] = {};
     if (!balances[userID][coin.id])
-        balances[userID][coin.id] = {time:0};
+        balances[userID][coin.id] = {time:0, coinBalance:0};
+    if (!coinsBalance[coin.id])
+        coinsBalance[coin.id] = {time:0, balance:0};
         
-    if (Date.now() - balances[userID][coin.id].time < 120000)
-    {
-        if (socket  && (socket.readyState === WebSocket.OPEN)) socket.send(balances[userID][coin.id].data);
-        if (callback)  callback(balances[userID][coin.id].data);
-        return;
-    }
-    
     if (userID == 2)
     {
-        var i = 0;
+        var ii = 1;
     }
     
-    balances[userID][coin.id].time = Date.now();
+    if (Date.now() - balances[userID][coin.id].time < 120000 || (balances[userID][coin.id].coinBalance == coinsBalance[coin.id].balance && coinsBalance[coin.id].balance != 0))
+        return GetCachedBalance(socket, userID, coin, callback);
+
+    if (Date.now() - coinsBalance[coin.id].time > 120000)
+    {
+        coinsBalance[coin.id].time = Date.now();
         
+        RPC.send3(coin.id, commands.getbalance, ["*", 0], ret => {
+            if (!ret || !ret.result || ret.result != 'success') return;
+                
+            coinsBalance[coin.id].balance = (ret.data*1).toFixed(7)*1;
+        });
+    }
+
+    balances[userID][coin.id].time = Date.now();
+
     const account = utils.Encrypt(userID);
     GetBalance(socket, userID, coin, balance =>{
         if (socket  && (socket.readyState === WebSocket.OPEN)) socket.send(JSON.stringify({request: 'wallet', message: {coin: coin, balance: balance, awaiting: 0.0, hold: 0.0} }));
@@ -179,12 +189,46 @@ exports.GetCoinWallet = function(socket, userID, coin, callback)
                 
                 if (!balances[userID]) balances[userID] = {};
                 balances[userID][coin.id] = {data: data, time: Date.now()};
+                
+                if (awaiting <= 0.0 && awaiting >= -0.0000001)
+                    balances[userID][coin.id].coinBalance = coinsBalance[coin.id].balance;
                     
                 if (socket  && (socket.readyState === WebSocket.OPEN)) socket.send(data);
                 if (callback) callback(data);
             });
         });
     });
+}
+
+function GetCachedBalance(socket, userID, coin, callback)
+{
+    if (!balances[userID][coin.id].data)
+        balances[userID][coin.id]['data'] = JSON.stringify({message: {awaiting: 0.0}});
+
+    const oldData = JSON.parse(balances[userID][coin.id].data);
+    const awaiting = oldData.message.awaiting;
+       
+    const WHERE = 'userID="'+escape(userID)+'" AND coin="'+coin.name+'"';
+    
+    g_constants.dbTables['balance'].selectAll('balance', WHERE, '', (err, rows) => {
+        const balance = (err || !rows || !rows.length) ? 0.0 : rows[0].balance;
+
+        orders.GetReservedBalance(userID, coin.name, ret => {
+            const reserved = (!ret || !ret.result || ret.result != 'success') ? 0 : ret.data;
+                
+            const data = JSON.stringify({request: 'wallet', message: {coin: coin, balance: (balance*1).toFixed(7)*1, awaiting: awaiting, hold: (reserved*1).toFixed(7)*1} })
+                    
+            balances[userID][coin.id].data = data;
+                
+            if (socket  && (socket.readyState === WebSocket.OPEN)) socket.send(balances[userID][coin.id].data);
+            if (callback)  callback(balances[userID][coin.id].data);
+        });
+    });
+    return;
+        
+    //if (socket  && (socket.readyState === WebSocket.OPEN)) socket.send(balances[userID][coin.id].data);
+    //if (callback)  callback(balances[userID][coin.id].data);
+    //return;
 }
 
 function FixBalance(userID, coin, balance, awaiting)
@@ -424,7 +468,12 @@ exports.onConfirmWithdraw = function(req, res)
                         callback({result: false, message: '<b>Withdraw error:</b> '+ err});
                         return;
                     }
-                    RPC.send3(coinID, commands.sendfrom, [userAccount, address, (amount*1).toFixed(7)*1, coin.info.minconf || 3, comment], ret => {
+                    
+                    const rpcParams = (coin.ticker == 'WAVI') ? 
+                        [userAccount, address, (amount*1).toFixed(7)*1, coin.info.minconf || 3, false, comment] :
+                        [userAccount, address, (amount*1).toFixed(7)*1, coin.info.minconf || 3, comment];
+
+                    RPC.send3(coinID, commands.sendfrom, rpcParams, ret => {
                         if (ret && ret.result && ret.result == 'success')
                         {
                             exports.ResetBalanceCache(userID);

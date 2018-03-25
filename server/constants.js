@@ -3,6 +3,7 @@
 //exports.FATAL_ERROR = true;
 
 exports.TRADE_MAIN_COIN = "Marycoin";
+exports.TRADE_MAIN_COIN_TICKER = "MC";
 exports.TRADE_DEFAULT_PAIR = "Litecoin";
 exports.TRADE_COMISSION = 0.001;
 

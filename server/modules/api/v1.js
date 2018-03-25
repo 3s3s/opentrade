@@ -60,14 +60,14 @@ exports.onGetMarkets = function(req, res)
             for (var i=0; i<rows.length; i++)
             {
                 rows[i].info = JSON.parse(utils.Decrypt(rows[i].info));
-                if (rows[i].ticker == 'MC' || rows[i].info.active != true)
+                if (rows[i].ticker == g_constants.TRADE_MAIN_COIN_TICKER || rows[i].info.active != true)
                     continue;
                     
                 data.push({
                     MarketCurrency: unescape(rows[i].ticker),
-                    "BaseCurrency": "MC",
+                    "BaseCurrency": g_constants.TRADE_MAIN_COIN_TICKER,
                     MarketCurrencyLong: unescape(rows[i].name),
-                    "BaseCurrencyLong" : "Marycoin",
+                    "BaseCurrencyLong" : g_constants.TRADE_MAIN_COIN,
                 });
             }
             onSuccess(req, res, data);
