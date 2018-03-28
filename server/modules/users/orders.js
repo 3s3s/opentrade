@@ -177,21 +177,21 @@ exports.GetUserOrders = function(userID, coins, callback)
             WHERE += " ) ";
     }
     
-    if (userOrders[userID] && userOrders[userID][WHERE] && Date.now() - userOrders[userID][WHERE].time < 120000)
+    /*if (userOrders[userID] && userOrders[userID][WHERE] && Date.now() - userOrders[userID][WHERE].time < 120000)
     {
         callback({result: true, data: userOrders[userID][WHERE].data});
         return;
-    }
+    }*/
     
-    g_constants.dbTables['orders'].selectAll('ROWID AS id, *', WHERE, 'ORDER BY time DESC', (err, rows) => {
-        userOrders[userID] = {};
-        userOrders[userID][WHERE] = {time: Date.now()};
+    g_constants.dbTables['orders'].selectAll('ROWID AS id, *', WHERE, 'ORDER BY time DESC LIMIT 20', (err, rows) => {
+        //userOrders[userID] = {};
+        //userOrders[userID][WHERE] = {time: Date.now()};
         if (err)
         {
             callback({result: false, message: err.message || 'Unknown database error'});
             return;
         }
-        userOrders[userID][WHERE]['data'] = rows;
+        //userOrders[userID][WHERE]['data'] = rows;
         callback({result: true, data: rows});
     });
 }
@@ -214,15 +214,17 @@ exports.GetAllOrders = function(coinsOrigin, callback)
         callback({result: true, data: allOrders[coin0].data});
         return;
     }
+    if (allOrders[coin0]) delete allOrders[coin0];
     
     g_constants.dbTables['orders'].selectAll('SUM(amount) AS amount, coin, price, time', 'coin="'+escape(coin0)+'" AND buysell="buy" AND amount*1>0', 'GROUP BY price*1000000 ORDER BY price*1000000 DESC LIMIT 30', (err, rows) => {
         g_constants.dbTables['orders'].selectAll('SUM(amount) AS amount, coin, price, time', 'coin="'+escape(coin0)+'" AND buysell="sell" AND amount*1>0', 'GROUP BY price*1000000 ORDER BY price*1000000 LIMIT 30', (err2, rows2) => {
             g_constants.dbTables['orders'].selectAll('SUM(amount*1) AS sum_amount, SUM(amount*price) AS sum_amount_price', 'coin="'+escape(coin0)+'"', 'GROUP BY buysell', (err3, rows3) => {
                 const data = {buy: rows || [], sell: rows2 || [], volumes: rows3 || []};
-                allOrders[coin0] = {time: Date.now(), data: data};
-                callback({result: true, data: data});
                 
-                ProcessExchange(data);
+                allOrders[coin0] = {time: Date.now(), data: JSON.parse(JSON.stringify(data)+"")};
+                callback({result: true, data: allOrders[coin0].data});
+                
+                ProcessExchange(allOrders[coin0].data);
             })
         });
     });
@@ -446,7 +448,10 @@ function ProcessExchange(data)
                             // Broadcast to everyone else.
                             g_constants.WEB_SOCKETS.clients.forEach( client => {
                                 if (client.readyState === WebSocket.OPEN) 
-                                    client.send(JSON.stringify({request: 'exchange-updated', message: {coin: buyOrder.coin}}));
+                                {
+                                    try {client.send(JSON.stringify({request: 'exchange-updated', message: {coin: buyOrder.coin}}));}
+                                    catch(e) {client.terminate();}
+                                }
                             });
                         });
                     });

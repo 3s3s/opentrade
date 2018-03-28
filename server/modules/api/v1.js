@@ -24,13 +24,19 @@ function GetCache(method)
         return null;
         
     if (Date.now() - g_Cache[method].time > g_Cache[method].timeCached)
+    {
+        delete g_Cache[method];
         return null;
+    }
         
     return g_Cache[method].data;
 }
 
 function SetCache(method, timeCached, data)
 {
+    if (g_Cache[method])
+        delete g_Cache[method];
+        
     g_Cache[method] = {data: data, timeCached: timeCached, time: Date.now()};
 }
 
@@ -142,6 +148,8 @@ exports.onGetOrderbook = function(req, res)
 
 exports.onGetMarketSummary = function(req, res)
 {
+    //return onError(req, res, 'Under construction');
+    
     const dataParsed = url.parse(req.url);
     if (!dataParsed || !dataParsed.query)
     {

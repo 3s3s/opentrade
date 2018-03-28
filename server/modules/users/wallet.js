@@ -63,6 +63,9 @@ exports.GetHistory = function(req, res)
                 onError(req, res, ret.message);
                 return;
             }
+            if (history[status.id])
+                delete history[status.id];
+            
             history[status.id] = {};
             history[status.id][coinID] = {data: ret.data, time: Date.now()};
             onSuccess(req, res, ret.data)
@@ -156,6 +159,9 @@ exports.GetCoinWallet = function(socket, userID, coin, callback)
 
     if (Date.now() - coinsBalance[coin.id].time > 120000)
     {
+        delete coinsBalance[coin.id];
+        coinsBalance[coin.id] = {time:0, balance:0};
+        
         coinsBalance[coin.id].time = Date.now();
         
         RPC.send3(coin.id, commands.getbalance, ["*", 0], ret => {
@@ -163,6 +169,13 @@ exports.GetCoinWallet = function(socket, userID, coin, callback)
                 
             coinsBalance[coin.id].balance = (ret.data*1).toFixed(7)*1;
         });
+    }
+    
+    if (balances[userID])
+    {
+        delete balances[userID];
+        balances[userID] = {};
+        balances[userID][coin.id] = {time:0, coinBalance:0};
     }
 
     balances[userID][coin.id].time = Date.now();
@@ -194,7 +207,7 @@ exports.GetCoinWallet = function(socket, userID, coin, callback)
                     balances[userID][coin.id].coinBalance = coinsBalance[coin.id].balance;
                     
                 if (socket  && (socket.readyState === WebSocket.OPEN)) socket.send(data);
-                if (callback) callback(data);
+                if (callback) setTimeout(callback, 1, data); //callback(data);
             });
         });
     });
@@ -217,11 +230,11 @@ function GetCachedBalance(socket, userID, coin, callback)
             const reserved = (!ret || !ret.result || ret.result != 'success') ? 0 : ret.data;
                 
             const data = JSON.stringify({request: 'wallet', message: {coin: coin, balance: (balance*1).toFixed(7)*1, awaiting: awaiting, hold: (reserved*1).toFixed(7)*1} })
-                    
-            balances[userID][coin.id].data = data;
+            
+            //balances[userID][coin.id].data = data;
                 
-            if (socket  && (socket.readyState === WebSocket.OPEN)) socket.send(balances[userID][coin.id].data);
-            if (callback)  callback(balances[userID][coin.id].data);
+            if (socket  && (socket.readyState === WebSocket.OPEN)) socket.send(data);
+            if (callback)  setTimeout(callback, 1, data); //callback(balances[userID][coin.id].data);
         });
     });
     return;
@@ -245,16 +258,23 @@ function FixBalance(userID, coin, balance, awaiting)
     database.BeginTransaction(err => {
         if (err) return;
         
-        g_constants.dbTables['balance'].update('balance=0.0', WHERE, err => { 
-            if (err) return database.RollbackTransaction();
-            
-            RPC.send3(coin.id, commands.move, [from, to, (balance*1).toFixed(7)*1, 0, comment], ret => {
-                if (!ret || !ret.result || ret.result != 'success') return database.RollbackTransaction();
+        try
+        {
+            g_constants.dbTables['balance'].update('balance=0.0', WHERE, err => { 
+                if (err) return database.RollbackTransaction();
                 
-                database.EndTransaction();
-                exports.ResetBalanceCache(userID);
+                RPC.send3(coin.id, commands.move, [from, to, (balance*1).toFixed(7)*1, 0, comment], ret => {
+                    if (!ret || !ret.result || ret.result != 'success') return database.RollbackTransaction();
+                    
+                    exports.ResetBalanceCache(userID);
+                    database.EndTransaction();
+                });
             });
-        });
+        }
+        catch(e)
+        {
+            database.RollbackTransaction();
+        }
     });
 }
 
@@ -612,9 +632,9 @@ function UpdateBalanceDB(userID_from, userID_to, coin, amount, comment, callback
         
         if (!utils.isNumeric(newBalance)) return callback({result: false, balance: rows[0].balance, message: 'Critical error: bad balance '+newBalance});
 
-        let history = "";
-        try {history = JSON.stringify(JSON.parse(unescape(rows[0].history)).concat(comment));} catch(e){};
-        g_constants.dbTables['balance'].update('balance='+newBalance+', history="'+escape(history)+'"', WHERE, err => { 
+        let historyStr = "";
+        try {historyStr = JSON.stringify(JSON.parse(unescape(rows[0].history)).concat(comment));} catch(e){};
+        g_constants.dbTables['balance'].update('balance='+newBalance+', history="'+escape(historyStr)+'"', WHERE, err => { 
             if (err)
             {
                 setTimeout(UpdateBalanceDB, 10000, userID_from, userID_to, coin, amount, comment, callback);

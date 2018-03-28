@@ -2,5 +2,6 @@
 *.crt
 *.db
 *.log
+*.py
 node_modules
 private_constants.js

@@ -24,7 +24,10 @@ exports.onNewMessage = function(ws, req, messageObject)
         // Broadcast to everyone else.
         g_constants.WEB_SOCKETS.clients.forEach( client => {
             if (client.readyState === WebSocket.OPEN) 
-                client.send(JSON.stringify({request: 'chat-message', message: msg}));
+            {
+                try {client.send(JSON.stringify({request: 'chat-message', message: msg}));}
+                catch(e) {client.terminate();}
+            }
         });
     });
 }

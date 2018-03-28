@@ -196,8 +196,14 @@ function onConfirmPasswordReset(req, res)
     password.onConfirmReset(req, res);
 }
 
+function heartbeat() {
+  this.isAlive = true;
+}
+
 function onWebSocketConnection(ws, req)
 {
+    ws.isAlive = true;
+    ws.on('pong', heartbeat);
     wsocket.onConnect(ws, req);
 }
 

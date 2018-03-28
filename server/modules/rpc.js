@@ -53,7 +53,7 @@ exports.send = function(coin, command, params, callback)
                     {result: result.success, message: 0, data: result.message || ""};
         
         console.log('rpcPostJSON: result:' + ret.result + " (message: " + (result.message || "")+" )");
-        callback(ret);
+        setTimeout(callback, 1, ret); //callback(ret);
     });
 }
 
@@ -79,12 +79,12 @@ exports.send3 = function(coinID, command, params, callback)
     }
     if (bWaitCoin[coinID] && bWaitCoin[coinID].status && bWaitCoin[coinID].status == true)
     {
-       /* if (bWaitCoin[coinID].time > Date.now() - 10000)
+        if (bWaitCoin[coinID].time > Date.now() - 10000)
         {
             console.log('Coin '+coinID+' not responce');
             callback({result: false, message: 'Coin not responce'});
             return;
-        }*/
+        }
         console.log('Wait coin '+coinID+' RPC queue. ')
         setTimeout(exports.send3, 1000, coinID, command, params, callback);
         return;

@@ -13,7 +13,7 @@ let chartData = {};
 exports.onGetChart = function(ws, req, data)
 {
     GetChartData(data, ret => {
-        const chart = ret.data || [];
+        const chart = JSON.parse(JSON.stringify(ret.data || {})+"");
                         
         if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({
             request: 'chartdata', 
@@ -23,7 +23,7 @@ exports.onGetChart = function(ws, req, data)
 
 exports.onGetPair = function(ws, req, data)
 {
-    utils.GetSessionStatus(req, status => {
+    /*utils.GetSessionStatus(req, status => {
         GetBalance(ws, status, data);
         exports.GetAllOrders(data, ret => {
             const orders = ret.data || {};
@@ -39,6 +39,42 @@ exports.onGetPair = function(ws, req, data)
                         if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({
                             request: 'pairdata', 
                             message: {result: true, data: {online: online, orders: orders, userOrders: userOrders, historyUser: historyUser, history: history}}}));
+                    });    
+                });
+            });
+        });
+    });*/
+
+    let retMessage = {
+        request: 'pairdata',
+        message: {result: true, data: {online: utils.GetValidSessionsCount(), orders: '', userOrders: '', historyUser: '', history: ''}}
+    };
+
+    utils.GetSessionStatus(req, status => {
+        GetBalance(ws, status, data);
+        exports.GetAllOrders(data, ret => {
+            retMessage.message.data.orders = JSON.parse(JSON.stringify(ret.data || {})+"");
+            GetUserOrders(status, data, ret => {
+                retMessage.message.data.userOrders = JSON.parse(JSON.stringify(ret.data || {})+"");
+                GetUserTradeHistory(status, data, ret => {
+                    retMessage.message.data.historyUser = JSON.parse(JSON.stringify(ret.data || {})+"");
+                    if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(retMessage));
+                    GetTradeHistory(data, ret => {
+                        retMessage.message.data.history = JSON.parse(JSON.stringify(ret.data || {})+"");
+                        
+                        //const online = utils.GetValidSessionsCount();
+                        
+                        //retMessage.message.data.history = history;
+                        //retMessage.message.data.orders = orders;
+                        //retMessage.message.data.userOrders = userOrders;
+                        //retMessage.message.data.historyUser = historyUser;
+                        //retMessage.message.data.online = online;
+
+                        //if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({
+                        //    request: 'pairdata', 
+                        //    message: {result: true, data: {online: online, orders: orders, userOrders: userOrders, historyUser: historyUser, history: history}}}));
+                        if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(retMessage));
+                        delete retMessage['message'];
                     });    
                 });
             });
@@ -89,7 +125,7 @@ function GetCoins(coin1, coin2, callback)
                 continue;
             }
         }
-        callback({result: true, data: rows});
+        callback({result: true, data: JSON.parse(JSON.stringify(rows)+"")});
     });
 }
 
@@ -109,7 +145,7 @@ function GetBalance(socket, status, data)
         }
         
         for (var i=0; i<err.data.length; i++)
-            wallet.GetCoinWallet(socket, status.id, err.data[i]);
+            setTimeout(wallet.GetCoinWallet, 1, socket, status.id, JSON.parse(JSON.stringify(err.data[i])+""));
     });
 
 }
@@ -158,14 +194,14 @@ function GetUserTradeHistory(status, data, callback)
     if (!status.active)
         return callback({result: true, data: []});
 
-    if (!tradeHistoryUser[status.id]) 
+    /*if (!tradeHistoryUser[status.id]) 
         tradeHistoryUser[status.id] = {};
         
     if (!tradeHistoryUser[status.id][data[1]])
         tradeHistoryUser[status.id][data[1]] = {time: 0, data: []};
         
     if (Date.now() - tradeHistoryUser[status.id][data[1]].time < 5000) 
-        return callback({result: true, data: tradeHistoryUser[status.id][data[1]].data});
+        return callback({result: true, data: tradeHistoryUser[status.id][data[1]].data});*/
 
     const WHERE = 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'" AND (buyUserID='+status.id+' OR sellUserID='+status.id+')';
     g_constants.dbTables['history'].selectAll('buyUserID, sellUserID, fromSellerToBuyer AS volume, fromBuyerToSeller, price, buysell, time', WHERE, 'ORDER BY time DESC LIMIT 200', (err, rows) => {
@@ -179,8 +215,8 @@ function GetUserTradeHistory(status, data, callback)
             ret[i].buysell = (ret[i].buyUserID == status.id) ? 'buy' : 'sell';
         }
         
-        tradeHistoryUser[status.id][data[1]].time = Date.now();
-        tradeHistoryUser[status.id][data[1]].data = ret;
+        //tradeHistoryUser[status.id][data[1]].time = Date.now();
+        //tradeHistoryUser[status.id][data[1]].data = ret;
         
         callback({result: true, data: ret});
     });
@@ -188,21 +224,24 @@ function GetUserTradeHistory(status, data, callback)
 
 function GetTradeHistory(data, callback)
 {
-    if (!tradeHistory[data[1]]) 
-        tradeHistory[data[1]] = {time: 0, data: []};
-        
-    if (Date.now() - tradeHistory[data[1]].time < 5000) return callback({result: true, data: tradeHistory[data[1]].data});
+    if (tradeHistory && tradeHistory[data[1]] && tradeHistory[data[1]].time && Date.now() - tradeHistory[data[1]].time < 5000) 
+        return callback({result: true, data: tradeHistory[data[1]].data});
+    
 
     g_constants.dbTables['history'].selectAll('fromSellerToBuyer AS volume, fromBuyerToSeller, price, buysell, time', 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'"', 'ORDER BY time DESC LIMIT 200', (err, rows) => {
         if (err || !rows) callback({result: false, data: []});
         
-        if (data[1] == 'Dogecoin')
+        if (tradeHistory[data[1]])
         {
-            var i = 1;
+            delete tradeHistory[data[1]];
+            tradeHistory[data[1]] = {};
         }
         
-        tradeHistory[data[1]].time = Date.now();
-        tradeHistory[data[1]].data = rows;
+        if (!tradeHistory[data[1]])
+            tradeHistory[data[1]] = {};
+            
+        tradeHistory[data[1]]['time'] = Date.now();
+        tradeHistory[data[1]]['data'] = JSON.parse(JSON.stringify(rows)+"");
         
         if (tradeHistory[data[1]].data.length > 1)
         {
@@ -211,7 +250,7 @@ function GetTradeHistory(data, callback)
             tradeHistory[data[1]].data[0]['prev_buysell'] = tradeHistory[data[1]].data[1].buysell;
         }
             
-        callback({result: true, data: rows});
+        callback({result: true, data: tradeHistory[data[1]].data});
     });
 }
 
@@ -226,10 +265,14 @@ function GetChartData(data, callback)
     g_constants.dbTables['history'].selectAll('fromSellerToBuyer AS volume, AVG((fromBuyerToSeller/fromSellerToBuyer)*1000000) AS avg_10min, (time/360000) AS t10min', 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'"', 'GROUP BY t10min ORDER BY t10min DESC LIMIT 60', (err, rows) => {
         if (err || !rows) callback({result: false, data: []});
         
-        chartData[data[1]].time = Date.now();
-        chartData[data[1]].data = rows;
+        if (chartData[data[1]]) delete chartData[data[1]];
+            
+        chartData[data[1]] = {time: 0, data: []};
         
-        callback({result: true, data: rows});
+        chartData[data[1]].time = Date.now();
+        chartData[data[1]].data = JSON.parse(JSON.stringify(rows)+"");
+        
+        callback({result: true, data: chartData[data[1]].data});
     });
     
 }
