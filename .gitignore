@@ -3,5 +3,6 @@
 *.db
 *.log
 *.py
+*.out
 node_modules
 private_constants.js
