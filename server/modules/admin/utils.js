@@ -69,6 +69,45 @@ exports.onGetCoinBalance = function(req, res)
     });
 }
 
+exports.onFindBannedChatUser = function(req, res)
+{
+    if (!req.body || !req.body.user)
+    {
+        onError(req, res, 'Bad request');
+        return;
+    }
+    const query = escape(req.body.user);
+    utils.GetSessionStatus(req, status => {
+        if (status.id != 1)
+        {
+            onError(req, res, 'User is not root');
+            return;
+        }
+        
+        g_constants.dbTables['users'].selectAll('ROWID AS id, login', 'login GLOB "'+query+'"', 'ORDER BY id LIMIT 10', (err, rows) => {
+            if (err || !rows || !rows.length)
+                return onError(req, res, 'User is not root');
+            
+            let WHERE = '(';
+            for (var i=0; i<rows.length; i++)
+            {
+                WHERE += ' userID="'+rows[i].id+'" ';
+                if (i+1 < rows.length)
+                    WHERE += ' OR ';
+            }
+            WHERE += ') ';
+            
+            if (query == '*')
+                WHERE = '';
+            
+            g_constants.dbTables['chatban'].selectAll('*', WHERE, '', (err, rows) => {
+                onSuccess(req, res, {users: rows});
+            })
+        })
+    });
+    
+}
+
 exports.onFindUser = function(req, res)
 {
     if (!req.body || !req.body.user)

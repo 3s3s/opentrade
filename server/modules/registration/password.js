@@ -11,37 +11,46 @@ exports.onPassworReset = function(req, res)
 {
     const responce = res;
     const request = req;
-
-    if (request.body && request.body['check'] && request.body['checked-email'] &&
-        emailChecker[request.body['check']].email == request.body['checked-email'])
-    {
-        PasswordReset(req, res);
-        return;
-    }
     
-    utils.validateRecaptcha(req, ret => {
-        if (ret.error)
+    try
+    {
+        if (request.body && request.body['check'] && request.body['checked-email'] && 
+            emailChecker[request.body['check']] && emailChecker[request.body['check']]['email'] &&
+            emailChecker[request.body['check']].email == request.body['checked-email'])
         {
-            PasswordResetError(request, responce, ret.message);
+            delete emailChecker[request.body['check']];
+            PasswordReset(req, res);
             return;
         }
-        validateForm(req, ret => {
+        
+        utils.validateRecaptcha(req, ret => {
             if (ret.error)
             {
                 PasswordResetError(request, responce, ret.message);
                 return;
             }
-            
-            utils.CheckUserExist('', request.body['email'], ret => {
-                if (ret.result == false)
+            validateForm(req, ret => {
+                if (ret.error)
                 {
                     PasswordResetError(request, responce, ret.message);
                     return;
                 }
-                ConfirmPasswordReset(request, responce, ret.info.login);
+                
+                utils.CheckUserExist('', request.body['email'], ret => {
+                    if (ret.result == false)
+                    {
+                        PasswordResetError(request, responce, ret.message);
+                        return;
+                    }
+                    ConfirmPasswordReset(request, responce, ret.info.login);
+                });
             });
         });
-    });
+    }
+    catch(e)
+    {
+        PasswordResetError(request, responce, e.message);
+    }
 }
 
 exports.onConfirmReset = function(req, res)
@@ -57,7 +66,6 @@ exports.onConfirmReset = function(req, res)
         return;
     }
     utils.render(res, 'pages/registration/new_password', {error: false, message: 'Almost ready. Type new password', strCheck: strCheck, email: emailChecker[strCheck].email});
-    delete emailChecker[strCheck];
 }
 
 function ConfirmPasswordReset(req, res, user)

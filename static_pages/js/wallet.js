@@ -180,14 +180,40 @@ function ShowHistoryDialog(coin, coinID)
       if (data[i].category == 'move')
         continue;
       
+      const txTime = utils.timeConverter(data[i].time*1000);
+      
+      const button = $('<button type="button" class="btn btn-link">'+txTime+'</button>').on('click', e => {
+          e.preventDefault();
+          modals.OKCancel1('Transaction info', '');
+        });
+
+      if (data[i]['txid'] != undefined)
+      {
+        const rows = $('<tr><td>txid</td><td>'+data[i]['txid']+'</td></tr>');
+        
+        const txInfo = $('<table class="table table-striped table-bordered"><thead><tr><th></th><th></th></tr></thead></table>')
+          .append($('<tbody></tbody>').append(rows));
+        
+        button.on('click', e => {
+          e.preventDefault();
+          modals.OKCancel1('Transaction info', txInfo);
+        });
+        
+      }
+      
       const amount = (data[i].category == 'receive') ? "+"+data[i].amount : data[i].amount;
-      tbody.append($('<tr></tr>').append($('<td>'+amount+'</td>').append($('<td>'+utils.timeConverter(data[i].time*1000)+'</td>'))))
+      tbody.append($('<tr></tr>')
+        .append($('<td>'+amount+'</td>'))
+        .append($('<td></td>').append(button))
+        )
     }
     
-    let table = $('<table class="table table-striped table-bordered"><thead><tr><th>amount</th><th>time</th></tr></thead></table>').append(tbody);
+    var table = $('<table class="table table-striped table-bordered"><thead><tr><th>amount</th><th>time</th></tr></thead></table>').append(tbody);
     modals.OKCancel1(
         'Recent transactions '+coin, 
-        table[0].outerHTML
+        table,
+        function(){},
+        true
     );
       
   }

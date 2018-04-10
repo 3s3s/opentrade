@@ -3,6 +3,7 @@
 //exports.FATAL_ERROR = true;
 
 exports.TRADE_MAIN_COIN = "Marycoin";
+exports.TRADE_MAIN_COIN_TICKER = "MC";
 exports.TRADE_DEFAULT_PAIR = "Litecoin";
 exports.TRADE_COMISSION = 0.001;
 
@@ -35,6 +36,16 @@ exports.dbTables = [
           ['info', 'TEXT']
         ],
         'commands' : 'PRIMARY KEY (login, email)'
+   },
+   {
+       'name' : 'chatban',
+       'cols' : [
+           ['userID', 'TEXT UNIQUE'],
+           ['startBanTime', 'INTEGER'],
+           ['endBanTime', 'INTEGER'],
+           ['comment', 'TEXT']
+        ],
+        'commands' : 'PRIMARY KEY (userID)'
    },
    {
        'name' : 'apikeys',

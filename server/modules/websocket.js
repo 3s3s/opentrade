@@ -7,6 +7,7 @@ const wallet = require("./users/wallet");
 const coins = require("./admin/coins");
 const tradeAdmin = require("./admin/trades");
 const trade = require("./users/trade");
+const WebSocket = require('ws')
 
 exports.onConnect = function(ws, req)
 {
@@ -38,6 +39,9 @@ exports.onConnect = function(ws, req)
 
 function SendResponce(ws, req, client)
 {
+    if (ws['client_request'])
+        delete ws['client_request'];
+        
     ws['client_request'] = client.request;
     if (client.request == 'getchat')
     {
@@ -47,6 +51,26 @@ function SendResponce(ws, req, client)
     if (client.request == 'getchart')
     {
         trade.onGetChart(ws, req, client.message);
+        return;
+    }
+    if (client.request == 'getrole')
+    {
+        tradeAdmin.onQueryRole(ws, req, client.message);
+        return;
+    }
+    if (client.request == 'del_chat_message')
+    {
+        chat.onDeleteMessage(ws, req, client.message);
+        return;
+    }
+    if (client.request == 'ban_chat_user')
+    {
+        chat.onBanUser(ws, req, client.message);
+        return;
+    }
+    if (client.request == 'deleteBan')
+    {
+        chat.onDeleteBanUser(ws, req, client.message.userID);
         return;
     }
     if (client.request == 'postchat')
@@ -99,5 +123,5 @@ function SendResponce(ws, req, client)
 
 function SendError(ws, message)
 {
-    if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({request: 'error', message: message}));
+   if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({request: 'error', message: message}));
 }

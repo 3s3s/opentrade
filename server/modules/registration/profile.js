@@ -59,9 +59,9 @@ exports.onProfileChange = function(req, res)
 
 function UpdateProfile(request, responce, status)
 {
-    const newLogin = request.body['username'];
-    const newEmail = request.body['email'];
-    const newPassword = request.body['password1'].length ? utils.HashPassword(request.body['password1']) : status.password;
+    const newLogin = escape(request.body['username']);
+    const newEmail = escape(request.body['email']);
+    const newPassword = request.body['password1'].length ? escape(utils.HashPassword(request.body['password1'])) : escape(status.password);
     
     const savedStatus = status;
     
@@ -77,7 +77,7 @@ function UpdateProfile(request, responce, status)
                 onError(request, responce, 'Error: e-mail already exist');
                 return;
             }
-            g_constants.dbTables['users'].update("password='"+escape(newPassword)+"'", "ROWID='"+savedStatus.id+"'", (err)=>{
+            g_constants.dbTables['users'].update("password='"+newPassword+"'", "ROWID='"+savedStatus.id+"'", (err)=>{
                 if (err)
                 {
                     onError(request, responce, 'Error: password is not changed');

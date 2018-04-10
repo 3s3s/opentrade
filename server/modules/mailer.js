@@ -69,7 +69,7 @@ exports.SendPasswordResetConfirmation = function(email, user, url, urlCheck, cal
     {
         let isSent = false;
         sendmail({
-            from: g_constants.NOREPLY_EMAIL,
+            from: 'OpenTrade Mailer <'+g_constants.NOREPLY_EMAIL+'>',
             to: unescape(email),
             subject: subject,
             html: body,
@@ -80,7 +80,7 @@ exports.SendPasswordResetConfirmation = function(email, user, url, urlCheck, cal
             isSent = true;
             if (err)
             {
-                callback({error: true, message: 'sendmail error'});
+                callback({error: true, message: 'Error with your mail server: '+err.message});
                 return;
             }
             callback({error: false, message: ''});
@@ -113,7 +113,7 @@ exports.SendTicket = function(ticket, callback)
             isSent = true;
             if (err)
             {
-                callback({error: true, message: 'sendmail error'});
+                callback({error: true, message: 'Error with your mail server: '+err.message});
                 return;
             }
             callback({error: false, message: ''});
@@ -155,7 +155,7 @@ exports.SendWithdrawConfirmation = function(email, user, url, urlCheck, callback
             isSent = true;
             if (err)
             {
-                callback({error: true, message: 'sendmail error'});
+                callback({error: true, message: 'Error with your mail server: '+err.message});
                 return;
             }
             callback({error: false, message: ''});

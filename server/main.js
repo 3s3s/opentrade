@@ -56,17 +56,31 @@ httpsListener.on('connection', function(socket) {
     });
 });
 
+//httpListener.on('error', () => {});
+//httpsListener.on('error', () => {});
+
 g_constants.WEB_SOCKETS = new WebSocketServer({ server: httpsServer, clientTracking: true });
+
+function noop() {}
+ 
+setInterval(function ping() {
+  g_constants.WEB_SOCKETS.clients.forEach(function each(ws) {
+    if (ws.isAlive === false) return ws.terminate();
+ 
+    ws.isAlive = false;
+    ws.ping(noop);
+  });
+}, 30000);
  
 app.use(express.static('../static_pages'));
 app.set('view engine', 'ejs');
 
 require('./reqHandler.js').handle(app, g_constants.WEB_SOCKETS);
 
-process.on('uncaughtException', function (err) {
+/*process.on('uncaughtException', function (err) {
   console.error(err.stack);
   console.log("Node NOT Exiting...");
-});
+});*/
 
 /*app.use(function (err, req, res, next) {
     res.send(500, 'Something broke!');
@@ -76,3 +90,30 @@ process.on('uncaughtException', function (err) {
 require("./database").Init();
 require("./modules/users/market").Init();
 
+//require("../debug/dump.js").init('/root/marycoin/Trade2/debug');
+var heapdump = require('heapdump');
+/*setInterval(loadDump, 1000*60*5);
+function loadDump()
+{
+    heapdump.writeSnapshot('/root/marycoin/Trade2/debug/' + Date.now() + '.heapsnapshot');
+}*/
+
+setInterval(callGC, 1000*60);
+function callGC()
+{
+    try
+    {
+        if (global.gc) {
+            global.gc();
+            //heapdump.writeSnapshot('/root/marycoin/Trade2/debug/' + Date.now() + '.heapsnapshot');
+            
+        } else {
+            console.log('Garbage collection unavailable.  Pass --expose-gc '
+              + 'when launching node to enable forced garbage collection.');
+        }
+    }
+    catch(e)
+    {
+        
+    }
+}

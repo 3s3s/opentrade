@@ -11,6 +11,8 @@ exports.Init = function()
 
 exports.UpdateMarket = function()
 {
+    if (!g_constants.WEB_SOCKETS || !g_constants.dbTables['coins']) return;
+    
     g_constants.dbTables['coins'].selectAll('ROWID AS id, name, ticker, icon, info', '', 'ORDER BY id', (err, rows) => {
         if (err || !rows || !rows.length)
             return;
@@ -32,9 +34,10 @@ exports.UpdateMarket = function()
         const msg = {coins: data};
         
         // Broadcast to everyone else.
+        const msgString = JSON.stringify({request: 'market', message: msg});
         g_constants.WEB_SOCKETS.clients.forEach( client => {
             if (client.readyState === WebSocket.OPEN) 
-                client.send(JSON.stringify({request: 'market', message: msg}));
+                try {client.send(msgString);} catch(e) {client.terminate();}
         });
     });
 };

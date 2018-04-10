@@ -204,11 +204,11 @@ const modals = {
         $('.modal-footer').hide();
         modals.show(title, body, '', '', callback);
     },
-    OKCancel1 : function(title, body, callback)
+    OKCancel1 : function(title, body, callback, bodyIsObject)
     {
         $('.modal-footer').show();
         $('#id_modal_cancel').hide();
-        modals.show(title, body, 'OK', '', callback);
+        modals.show(title, body, 'OK', '', callback, bodyIsObject);
     },
     OKCancel : function(title, body, callback)
     {
@@ -216,12 +216,17 @@ const modals = {
         $('#id_modal_cancel').show();
         modals.show(title, body, 'Confirm', 'Cancel', callback);
     },
-    show : function(title, body, ok, cancel, callback)
+    show : function(title, body, ok, cancel, callback, bodyIsObject)
     {
         const cb = callback || function(){};
         $('#myModalLabel').text(title);
-        $('.modal-body').html(''); $('.modal-body').append($(body));
         
+        $('.modal-body').html('');
+        if (bodyIsObject == undefined)
+            $('.modal-body').append($(body));
+        else
+            $('.modal-body').append(body);
+
         if (cancel.length)
         {
             $('#id_modal_cancel').html(cancel);

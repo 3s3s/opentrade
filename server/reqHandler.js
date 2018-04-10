@@ -47,6 +47,7 @@ exports.handle = function(app, wss)
     app.post('/admin/getcoinbalance', onAdminGetCoinBalance);
     app.post('/submitorder', onSubmitOrder);
     app.post('/closeorder', onCloseOrder);
+    app.post('/admin/findchatban', onAdminFindBannedChatUser)
     
     app.post('/generateapikey', API1.onGenerateAPIkey);
     app.post('/deleteapikey', API1.onDeleteAPIkey);
@@ -196,8 +197,14 @@ function onConfirmPasswordReset(req, res)
     password.onConfirmReset(req, res);
 }
 
+function heartbeat() {
+  this.isAlive = true;
+}
+
 function onWebSocketConnection(ws, req)
 {
+    ws.isAlive = true;
+    ws.on('pong', heartbeat);
     wsocket.onConnect(ws, req);
 }
 
@@ -224,6 +231,11 @@ function onGetHistory(req, res)
 function onAdminFindUser(req, res)
 {
     admin.onFindUser(req, res);
+}
+function onAdminFindBannedChatUser(req, res)
+{
+    admin.onFindBannedChatUser(req, res);
+    
 }
 function onAdminFindTrades(req, res)
 {

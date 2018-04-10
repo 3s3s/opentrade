@@ -15,10 +15,20 @@ var coinNameToTicker = {};
 
 var chartData = [];
 
+var g_role = 'user';
+
 /*function checkInView(elem, container)
 {
   return container[0].clientHeight + container.offset().top - container[0].offsetTop < 500;
 }*/
+
+function UpdatePageWithRole()
+{
+  if (!g_role || g_role == 'user')
+    return;
+    
+  $('.del_message_button').show();
+}
 
 function IsNeadScroll()
 {
@@ -67,6 +77,7 @@ function ShowLanguageChat()
   }
 
   $('#chat-container_'+g_CurrentLang).show();
+  UpdatePageWithRole();
   
   if (neadScroll)
     $('#chat-flex').animate({scrollTop: $('#chat-container_'+g_CurrentLang).height()}, 0);
@@ -164,6 +175,8 @@ function onOpenSocket()
   socket.send(JSON.stringify({request: 'getchat'}));
   socket.send(JSON.stringify({request: 'getchart', message: [utils.MAIN_COIN, g_CurrentPair]}));
   socket.send(JSON.stringify({request: 'getpair', message: [utils.MAIN_COIN, g_CurrentPair]}));
+  
+  socket.send(JSON.stringify({request: 'getrole'}))
 
   setInterval(()=>{socket.send(JSON.stringify({request: 'getpair', message: [utils.MAIN_COIN, g_CurrentPair]}));}, 5000)
 }
@@ -180,6 +193,12 @@ function onSocketMessage(event)
   if (data.request == 'chat-message')
   {
     AddChatMessage(data.message)
+    return;
+  }
+  if (data.request == 'user-role')
+  {
+    g_role = data.message;
+    UpdatePageWithRole();
     return;
   }
   if (data.request == 'chat-messages')
@@ -301,6 +320,8 @@ function AddChatMessage(message, noscroll, method)
   const text = $('<span class="p-2"></span>').text(message.message.text);
   
   const privMessage = $('<a href="#" style="text-decoration: none">&#9743;&nbsp</a>')
+  const delButton = $('<a href="#" title="Delete message" class="del_message_button" style="text-decoration: none">&#10006;&nbsp</a>').hide();
+  const banButton = $('<a href="#" title="Ban user" class="del_message_button" style="text-decoration: none">&#9760;&nbsp</a>').hide();
   
   if (!message.message.lang)
     return;
@@ -308,7 +329,18 @@ function AddChatMessage(message, noscroll, method)
   privMessage.on('click', e => {
     e.preventDefault();
   });
-    
+  
+  let oldMessage = message;
+  delButton.on('click', e => {
+    e.preventDefault();
+    socket.send(JSON.stringify({request: 'del_chat_message', message: oldMessage}));
+  });
+  banButton.on('click', e => {
+    e.preventDefault();
+    oldMessage['info'] = {endTime: Date.now()+1000*60*60*24*365, comment: {role: g_role, comment: 'User '+oldMessage.user+' banned on 365 days'}};
+    socket.send(JSON.stringify({request: 'ban_chat_user', message: oldMessage}));
+  });
+  
   user.on('click', e => {
     e.preventDefault();
     const old = $('#chat_message').val();
@@ -317,7 +349,12 @@ function AddChatMessage(message, noscroll, method)
     
   const append = method || 'append';
   
-  const row = $('<div class="row chat_row"></div>').append($('<div class="col-md-12"></div>').append(privMessage).append(user).append(text));
+  const row = $('<div class="row chat_row"></div>').append($('<div class="col-md-12"></div>')
+    .append(banButton)
+    .append(delButton)
+    .append(privMessage)
+    .append(user)
+    .append(text));
 
   $('#chat-container_'+message.message.lang)[append](row);
   
@@ -337,8 +374,15 @@ function UpdatePairData(message)
     UpdateTradeHistory(message.data.history);
   if (message.data.historyUser)
     UpdateTradeHistoryUser(message.data.historyUser);
+    
+  let chatHeader = "<span>Chat</span>";
   if (message.data.online != undefined)
-    $('#id_chat_header').html('<span>Online: </span><strong>'+message.data.online+'</strong>')
+    chatHeader = '<span>Online: </span><strong>'+message.data.online+'</strong>';
+    //$('#id_chat_header').html('<span>Online: </span><strong>'+message.data.online+'</strong>')
+  if (message.data.allusers != undefined && message.data.allusers > 0)
+    chatHeader = '<span>Online: </span><strong>'+message.data.online+'</strong>&nbsp&nbsp(Registered: '+ message.data.allusers +')';
+    
+  $('#id_chat_header').html(chatHeader);
 }
 
 function UpdatePairBalance(message)
@@ -596,6 +640,8 @@ function drawChart()
 {
   if (!chartData.length)
     return;
+  if (!google.visualization || !google.visualization['arrayToDataTable'])
+    return;// setTimeout(drawChart, 1000);
   
   SetChartLegend()
     
@@ -671,6 +717,7 @@ function SetChartLegend()
       
     const legend = $(
       '<ul class="nav">'+
+        '<li class="nav-item mr-3"><img src="'+unescape(ret.result.coin_icon_src)+'" width=40 /></li>'+
         '<li class="nav-item mr-3"><h4>'+COIN+' / '+MC+'</h4></li>'+
         '<li class="nav-item mr-2 ml-3">24High: '+ret.result.High+'</li>'+
         '<li class="nav-item mr-2 ml-3">24Low: '+ret.result.Low+'</li>'+

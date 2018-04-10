@@ -17,6 +17,10 @@ pre {
   font-style: italic;  
 }
 
+.apikeys tr {
+  background-color: #ffffff !important;
+}
+
 .form_title_volume {
     font-weight: 400;
     color: #8b929b;
@@ -31,6 +35,8 @@ pre {
 }
 .d-flex-market {
   overflow-x:auto;
+  overflow-y:auto;
+  height: 420px;
 }
 
 .my-info {

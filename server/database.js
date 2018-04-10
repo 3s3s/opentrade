@@ -61,7 +61,7 @@ exports.Init = function(callback)
         try
         {
             g_db.run('DELETE FROM ' + table + ' WHERE ' + where, function(err) {
-                if (callback) callback(err)
+                if (callback) setTimeout(callback, 1, err); //callback(err)
                 if (!err) 
                     return;
                 console.log('DELETE error: ' + err.message);
@@ -70,7 +70,7 @@ exports.Init = function(callback)
         }
         catch(e)
         {
-            if (callback) callback(e);
+            if (callback) setTimeout(callback, 1, e); //callback(e);
             console.log(e.message);
         }
     }
@@ -91,8 +91,7 @@ exports.Init = function(callback)
             if (values.length-1 != tableObject.cols.length ) {
                 console.log('ERROR: Insert to table "'+tableObject.name+'" failed arguments count: ' + (values.length-1));
                 
-                callbackERR(true);
-                return;
+                return setTimeout(callbackERR, 1, true); //callbackERR(true);
             }
             
             var vals = ' (';
@@ -108,12 +107,12 @@ exports.Init = function(callback)
             if (bToMemory)
             {
                 exports.addMemQuery('INSERT INTO ' + tableObject.name + ' VALUES ' + vals);
-                callbackERR(false);
+                setTimeout(callbackERR, 1, false);//callbackERR(false);
             }
             else
             {
                 g_db.run('INSERT INTO ' + tableObject.name + ' VALUES ' + vals, function(err) {
-                    if (callbackERR) callbackERR(err);
+                    if (callbackERR) setTimeout(callbackERR, 1, err); //callbackERR(err);
                     if (err) 
                         console.log('INSERT error: ' + err.message);
                     else
@@ -123,7 +122,7 @@ exports.Init = function(callback)
         }
         catch(e) {
             console.log(e.message);
-            if (callbackERR) callbackERR(e);
+            if (callbackERR) setTimeout(callbackERR, 1, e); //callbackERR(e);
         }
     }
     function SelectAll(cols, table, where, other, callback, param) 
@@ -136,20 +135,18 @@ exports.Init = function(callback)
                  query += " " + other; 
                  
             if (!callback) 
-            {
                 console.log("WARNING: SelectAll callback undefined!!!");
-            }
-                 
+
             g_db.all(query, param, function(err, rows) {
-                if (err)
-                    console.log("SELECT ERROR: query="+query+" message=" + err.message);
+                if (err) console.log("SELECT ERROR: query="+query+" message=" + err.message);
                 
-                if (callback) callback(err, rows);
+                query = null;
+                if (callback) setTimeout(callback, 1, err, rows);
             });        
         }
         catch (e) {
             console.log(e.message);
-            if (callback) callback(e);
+            if (callback) setTimeout(callback, 1, e); //callback(e);
         }
     }
     function Update(tableName, SET, WHERE, callback)
@@ -165,14 +162,13 @@ exports.Init = function(callback)
             
             console.log(query);   
             g_db.run(query, function(err) {
-                if (callback) callback(err);
-                if (err)
-                    console.log("UPDATE error: " + err.message);
+                if (callback) setTimeout(callback, 1, err); //callback(err);
+                if (err) console.log("UPDATE error: " + err.message);
             });
         }
         catch(e) {
             console.log(e.message);
-            if (callback) callback(e);
+            if (callback) setTimeout(callback, 1, e); //callback(e);
         }
     }
     
