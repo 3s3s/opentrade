@@ -33,24 +33,26 @@ exports.send = function(coin, command, params, callback)
                 if (result.success)
                     result.data = JSON.parse(result.data);
                 if (result.data.error && result.data.error.message)
-                    result.message = result.data.error.message+"<br>";
+                    result['message'] = result.data.error.message+"<br>";
                     
-                if (!result.data.error && result.data.result != undefined)
-                    result.data = result.data.result
+                if (!result.data['error'] && result.data['result'] != undefined)
+                    result.data = result.data.result;
                 else
-                    result.success = false; 
+                    result['success'] = false; 
             }
             catch(e) {
                 console.log('rpcPostJSON: '+e.message);
+                result['message'] = 'RPC catch unecpected error';
             }
         }
         else {
-            result.success = false;
+            result['success'] = false;
+            result['message'] = 'coin RPC is not returned data'
         }
 
         const ret = result.success ? 
                     {result: result.success, message: result.message || "", data: result.data} :
-                    {result: result.success, message: 0, data: result.message || ""};
+                    {result: result.success, message: result.message || "", data: result.message || ""};
         
         console.log('rpcPostJSON: result:' + ret.result + " (message: " + (result.message || "")+" )");
         setTimeout(callback, 1, ret); //callback(ret);
@@ -79,16 +81,17 @@ exports.send3 = function(coinID, command, params, callback)
     }
     if (bWaitCoin[coinID] && bWaitCoin[coinID].status && bWaitCoin[coinID].status == true)
     {
-        if (bWaitCoin[coinID].time > Date.now() - 10000)
+        if (bWaitCoin[coinID].time > Date.now() - 6000)
         {
             console.log('Coin '+coinID+' not responce');
-            callback({result: false, message: 'Coin not responce'});
+            setTimeout(callback, 100, {result: false, message: 'Coin RPC is not responded. Try later.'});
             return;
         }
         console.log('Wait coin '+coinID+' RPC queue. ')
         setTimeout(exports.send3, 1000, coinID, command, params, callback);
         return;
     }
+    console.log('Coin '+coinID+' started RPC ')
     bWaitCoin[coinID] = {status: true, time: Date.now()};
     
     try
@@ -102,7 +105,7 @@ exports.send3 = function(coinID, command, params, callback)
             }
             exports.send(rows[0], command, params, ret => {
                 bWaitCoin[coinID] = {status: false, time: Date.now()};
-                callback(ret);
+                setTimeout(callback, 100, ret);
             });
         });
     }

@@ -7,6 +7,13 @@ const http = require('http');
 const https = require('https');
 const url = require('url');
 var fs = require('fs');
+const util = require('util');
+
+const balance_log_file = fs.createWriteStream(__dirname + '/balance_debug.log', {flags : 'w'});
+
+exports.balance_log = function(d) { 
+  balance_log_file(util.format(d) + '\n');
+};
 
 exports.Hash = function(str)
 {
@@ -67,13 +74,13 @@ exports.UpdateSession = function(userid, token, callback)
         if (validSessions[escape(token)])
             delete validSessions[escape(token)];
             
-        callback();
+        setTimeout(callback, 10);
         return;
     }
     
     if (validTokens[escape(token)] && (Date.now() - validTokens[escape(token)].time < 60000))
     {
-        callback();
+        setTimeout(callback, 10);
         return;
     }
     
@@ -83,12 +90,12 @@ exports.UpdateSession = function(userid, token, callback)
         {
             g_constants.dbTables['sessions'].delete('time <'+Date.now()+' - '+g_constants.SESSION_TIME);
             validTokens[escape(token)] = {time: Date.now()};
-            callback();
+            setTimeout(callback, 10);
             return;
         }
         g_constants.dbTables['sessions'].update("time='"+Date.now()+"'", "token='"+escape(token)+"'", err => { 
             validTokens[escape(token)] = {time: Date.now()};
-            callback(); 
+            setTimeout(callback, 10);
         });
     });
 }
@@ -201,26 +208,18 @@ exports.GetSessionStatus = function(req, callback)
     const errMessage = 'Error: invalid session token (please login again)';
     
     req['token'] = exports.parseCookies(req)['token'] || '';
-    if (!req.token || !req.token.length)
-    {
-        callback({active: false, message: errMessage});
-        return;
-    }
-    
+    if (!req.token || !req.token.length || !g_constants.dbTables['sessions'])
+        return setTimeout(callback, 10, {active: false, message: errMessage});
+
     const token = escape(req.token);
     
     if (validSessions[token] && validSessions[token]['data'] && Date.now() - validSessions[token] < 60000)
-    {
-        callback(validSessions[token]['data']);
-        return;
-    }
-    
+        return setTimeout(callback, 10, validSessions[token]['data']);
+        
     g_constants.dbTables['sessions'].selectAll('*', 'token="'+token+'"', '', (err, rows) => {
         if (err || !rows || !rows.length)
-        {
-            callback({active: false, message: errMessage});
-            return;
-        }
+            return setTimeout(callback, 10, {active: false, message: errMessage});
+
         if (Date.now() - rows[0].time > g_constants.SESSION_TIME)
         {
             g_constants.dbTables['sessions'].delete('time < '+Date.now()+' - '+g_constants.SESSION_TIME);
@@ -228,25 +227,38 @@ exports.GetSessionStatus = function(req, callback)
             if (validSessions[token])
                 delete validSessions[token];
                 
-            callback({active: false, message: errMessage});
-            return;
+            return setTimeout(callback, 10, {active: false, message: errMessage});
         }
         
         exports.UpdateSession(rows[0].userid, unescape(token), () => {
             g_constants.dbTables['users'].selectAll("ROWID AS id, *", "ROWID='"+rows[0].userid+"'", "", (error, rows) => {
                 if (err || !rows || !rows.length)
-                {
-                    callback({active: false, message: errMessage});
-                    return;
-                }
-                
+                    return setTimeout(callback, 10, {active: false, message: errMessage});
+
                 validSessions[token] = {time: Date.now()};
                 validSessions[token]['data'] = {active: true, token: token, user: rows[0].login, password: unescape(rows[0].password), email: rows[0].email, id: rows[0].id, info: rows[0].info};
                 
-                callback(validSessions[token]['data']);
+                setTimeout(callback, 10, validSessions[token]['data']);
             });
         });
     });
+}
+
+let allUsersCount = {count: 0, time: Date.now()};
+exports.GetAllUsersCount = function()
+{
+    if (allUsersCount.count && Date.now() - allUsersCount.time < 1000*60)
+        return allUsersCount.count;
+        
+    g_constants.dbTables['users'].selectAll('count(login) AS ret', '', '', (err, rows) => {
+        if (err || !rows.length)
+            return;
+            
+        allUsersCount.time = Date.now();
+        allUsersCount.count = rows[0].ret;
+    });
+    
+    return allUsersCount.count;
 }
 
 let updateKeysTimer = Date.now();
@@ -369,7 +381,7 @@ exports.postString = function(host, port, path, headers, strBody, callback)
 			res_data += chunk;
 		});
 		res.on('end', function() {
-			callback({'success': 'success', 'data': res_data});
+			setTimeout(callback, 10, {'success': 'success', 'data': res_data});
 		});	
     }); 
     
@@ -394,7 +406,7 @@ exports.postString = function(host, port, path, headers, strBody, callback)
             console.log("Timeout occurs");
         }
         console.log('problem with request: ' + (e.message || "")); 
-        callback({'success': false, message: 'problem with request: ' + (e.message || "")});
+        setTimeout(callback, 10, {'success': false, message: 'problem with request: ' + (e.message || "")});
     }); 
     
     // write data to request body 
@@ -480,23 +492,27 @@ exports.ValidateEmail = function(text)
 exports.validateRecaptcha = function(request, callback)
 {
     if (!request.body || !request.body['g-recaptcha-response'])
-    {
-        callback({error: true, message: 'Bad Request'});
-        return;
-    }
-    
+        return setTimeout(callback, 10, {error: true, message: 'Bad Request'});
+
     exports.postHTTP(
         "https://www.google.com/recaptcha/api/siteverify?secret="+g_constants.recaptcha_priv_key+"&response="+request.body['g-recaptcha-response'], 
         {}, 
         (code, data) => {
-            var ret = data ? JSON.parse(data) : {};
-            if (!data)
-                ret['success'] = false;
+            try
+            {
+                var ret = data ? JSON.parse(data) : {};
+                if (!data)
+                    ret['success'] = false;
+                    
+                ret['error'] = !ret.success;
+                ret.message = ret.error ? 'Recaptcha failed' : '';
                 
-            ret['error'] = !ret.success;
-            ret.message = ret.error ? 'Recaptcha failed' : '';
-            
-            callback(ret);
+                setTimeout(callback, 10, ret);
+            }
+            catch(e)
+            {
+                setTimeout(callback, 10, {error: true, success: false, message: 'Recaptcha failed'});
+            }
         }
     );
 }
@@ -542,19 +558,22 @@ exports.CheckCoin = function(coin, callback)
 {
     g_constants.dbTables['coins'].selectAll('*', 'name="'+escape(coin)+'"', '', (err, rows) => {
         if (err || !rows || !rows.length)
-        {
-            callback({result: false, message: err.message || 'Coin "'+coin+'" not found'});
-            return;
-        }
-        
+            return setTimeout(callback, 10, {result: false, message: err.message || 'Coin "'+coin+'" not found'});
+
         try { rows[0].info = JSON.parse(exports.Decrypt(rows[0].info));}
         catch(e) {callback({result: false, message: e.message});}
 
         if (rows[0].info.active != true)
-        {
-            callback({result: false, message: 'Coin "'+coin+'" is not active'});
-            return;
-        }
-        callback({result: true});
+            return setTimeout(callback, 10, {result: false, message: 'Coin "'+coin+'" is not active'});
+ 
+         setTimeout(callback, 10, {result: true});
     });
+}
+
+exports.GetCoinFromTicker = function(ticker, callback)
+{
+    g_constants.dbTables['coins'].selectAll('ROWID AS id, *', 'ticker="'+escape(ticker)+'"', '', (err, rows) => {
+        if (err || !rows || !rows.length) return callback({});
+        callback(rows[0]);
+    })
 }

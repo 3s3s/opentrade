@@ -38,6 +38,16 @@ exports.dbTables = [
         'commands' : 'PRIMARY KEY (login, email)'
    },
    {
+       'name' : 'chatban',
+       'cols' : [
+           ['userID', 'TEXT UNIQUE'],
+           ['startBanTime', 'INTEGER'],
+           ['endBanTime', 'INTEGER'],
+           ['comment', 'TEXT']
+        ],
+        'commands' : 'PRIMARY KEY (userID)'
+   },
+   {
        'name' : 'apikeys',
        'cols' : [
            ['userid', 'INTEGER'],

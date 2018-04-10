@@ -19,7 +19,10 @@
         <a class="nav-link" id="coins-tab" data-toggle="tab" href="#coins" role="tab" aria-controls="coins" aria-selected="false">Coins</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" id="coins-tab" data-toggle="tab" href="#last_trades" role="tab" aria-controls="last_trades" aria-selected="false">Last Trades</a>
+        <a class="nav-link" id="last-trades" data-toggle="tab" href="#last_trades" role="tab" aria-controls="last_trades" aria-selected="false">Last Trades</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="chat-admin" data-toggle="tab" href="#chat_admin" role="tab" aria-controls="chat_admin" aria-selected="false">Chat admin</a>
       </li>
     </ul>
     <div class="tab-content p-4" id="adminTabsContent">
@@ -125,6 +128,10 @@
                       <label class="col-form-label" for="coin-hold">Minimal balance</label>
                       <input class="textinput textInput form-control" id="coin-hold" maxlength="10" name="hold" type="text" placeholder="0.002" required>
                   </div>
+                  <div class="form-group">
+                      <label class="col-form-label" for="coin-hold">Coin Page</label>
+                      <input class="textinput textInput form-control" id="coin-page" maxlength="1000" name="infopage" type="text" placeholder="http://bitcointalk.org" required>
+                  </div>
                   <div class="form-group form-check">
                       <label class="form-check-label">
                         <input id="coin-visible" type="checkbox" class="form-check-input">
@@ -160,7 +167,7 @@
           </div>
         </div>
       </div>
-      <div class="tab-pane fade" id="last_trades" role="tabpanel" aria-labelledby="support-tab">
+      <div class="tab-pane fade" id="last_trades" role="tabpanel" aria-labelledby="last-trades">
         <form id="id_findtrades" class="form-inline">
           <div class="form-group row">
             <label for="inputUser" class="col-sm-2 col-form-label">User</label>
@@ -212,6 +219,40 @@
             </tr>
           </thead>
           <tbody id='table_trades'>
+          </tbody>
+        </table>
+      </div>
+      <div class="tab-pane fade" id="chat_admin" role="tabpanel" aria-labelledby="chat-admin">
+        <form id="id_find_chat_user" class="form-inline">
+          <div class="form-group row">
+            <label for="inputChatUser" class="col-sm-2 col-form-label">User</label>
+            <div class="col-sm-10">
+              <input type="text" name='user' class="form-control" id="inputChatUser" placeholder="*">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">Find</button>
+        </form>  
+        <table class="table m-2">
+          <thead>
+            <tr>
+              <th>
+                userID
+              </th>
+              <th>
+                Ban Start
+              </th>
+              <th>
+                Ban End
+              </th>
+              <th>
+                Comment
+              </th>
+              <th>
+                
+              </th>
+            </tr>
+          </thead>
+          <tbody id='table_ban_users'>
           </tbody>
         </table>
       </div>

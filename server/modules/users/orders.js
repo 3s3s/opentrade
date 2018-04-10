@@ -150,6 +150,11 @@ exports.GetReservedBalance = function(userID, coinName, callback)
         g_constants.dbTables['orders'].selectAll('SUM(amount) AS result', 'userID="'+userID+'" AND coin="'+coinName+'" '+'AND buysell="sell"', '', (err, rows) => {
             if (err || !rows) return callback({result: 'fail', message: err.message || 'Database error'});
 
+/*if (userID == 2 && coinName == "Dogecoin")
+{
+    var i = 1;
+}*/
+
             callback({result: 'success', data: rows.length ? rows[0].result*1 : 0.0});
         });
         return;
@@ -196,6 +201,7 @@ exports.GetUserOrders = function(userID, coins, callback)
     });
 }
 
+let g_GetAllOrders_start = false;
 exports.GetAllOrders = function(coinsOrigin, callback)
 {
     let coins = [coinsOrigin[0], coinsOrigin[1]];
@@ -216,15 +222,26 @@ exports.GetAllOrders = function(coinsOrigin, callback)
     }
     if (allOrders[coin0]) delete allOrders[coin0];
     
+    //callback({result: true, data: {}}); return;
+    //setTimeout(callback, 1, {result: true, data: {}}); return;
+    if (g_GetAllOrders_start)
+    {
+        return callback({result: true, data: {}});
+    }
+    g_GetAllOrders_start = true;
+
     g_constants.dbTables['orders'].selectAll('SUM(amount) AS amount, coin, price, time', 'coin="'+escape(coin0)+'" AND buysell="buy" AND amount*1>0', 'GROUP BY price*1000000 ORDER BY price*1000000 DESC LIMIT 30', (err, rows) => {
         g_constants.dbTables['orders'].selectAll('SUM(amount) AS amount, coin, price, time', 'coin="'+escape(coin0)+'" AND buysell="sell" AND amount*1>0', 'GROUP BY price*1000000 ORDER BY price*1000000 LIMIT 30', (err2, rows2) => {
             g_constants.dbTables['orders'].selectAll('SUM(amount*1) AS sum_amount, SUM(amount*price) AS sum_amount_price', 'coin="'+escape(coin0)+'"', 'GROUP BY buysell', (err3, rows3) => {
+                g_GetAllOrders_start = false;
+                //setTimeout(callback, 1, {result: true, data: {}}); return;
+                
                 const data = {buy: rows || [], sell: rows2 || [], volumes: rows3 || []};
+
+                allOrders[coin0] = {time: Date.now(), data: data, };
+                callback({result: true, data: data});
                 
-                allOrders[coin0] = {time: Date.now(), data: JSON.parse(JSON.stringify(data)+"")};
-                callback({result: true, data: allOrders[coin0].data});
-                
-                ProcessExchange(allOrders[coin0].data);
+                ProcessExchange(data);
             })
         });
     });
@@ -446,12 +463,10 @@ function ProcessExchange(data)
                                 delete userOrders[buyOrder.userID];
                                 
                             // Broadcast to everyone else.
+                            const msgString = JSON.stringify({request: 'exchange-updated', message: {coin: buyOrder.coin}});
                             g_constants.WEB_SOCKETS.clients.forEach( client => {
                                 if (client.readyState === WebSocket.OPEN) 
-                                {
-                                    try {client.send(JSON.stringify({request: 'exchange-updated', message: {coin: buyOrder.coin}}));}
-                                    catch(e) {client.terminate();}
-                                }
+                                    try {client.send(msgString);} catch(e) {client.terminate();}
                             });
                         });
                     });

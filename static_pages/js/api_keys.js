@@ -19,8 +19,13 @@ function ShowAPIKeys()
     {
       if (!data.result[i].key) 
         continue;
-        
+
       const key = data.result[i].key;
+      
+      var info = {};
+      try {info = JSON.parse(unescape(data.result[i].info));} catch(e) {}
+      const privKey = info.privKey || "";
+      
       const keyTableID = (Math.random()*100000).toFixed(0);
       
       const buttonDelete = $('<button class="btn btn-primary" >Delete</button>').on('click', e => {
@@ -46,8 +51,9 @@ function ShowAPIKeys()
         .prop('checked', data.result[i].withdraw || false)
         .change(() => {UpdateKey(key, keyTableID);});
       
+      const keys = $('<table class="table apikeys"><tr><td>apikey='+key+'</td></tr><tr><td>apisecret='+privKey+'</td></tr></table>')
       const tr = $('<tr id="'+keyTableID+'"></tr>')
-          .append($('<td></td>').text(key))
+          .append($('<td></td>').append(keys))
           .append($('<td></td>').append(buttonRead))
           .append($('<td></td>').append(buttonWrite))
           .append($('<td></td>').append(buttonWithdraw))
@@ -85,10 +91,12 @@ $('#btn_add_key').on('click', e => {
   $('#loader').show();
   $.post( "/generateapikey", {data: 0}, data => {
     $('#loader').hide();
-    if (!data || !data.result)
+    if (!data || !data.result || !data.result.pub)
       return;
     
-    const key = data.result;
+    ShowAPIKeys();
+   /* const keyPub = data.result.pub;
+    const keyPriv = data.result.priv;
     const keyTableID = (Math.random()*100000).toFixed(0);
     
     const buttonDelete = $('<button class="btn btn-primary" >Delete</button>').on('click', e => {
@@ -103,15 +111,23 @@ $('#btn_add_key').on('click', e => {
         $('#'+keyTableID).remove();
       });
     });
-    
+
+    const keys = $('<table class="table apikeys"><tr><td>apikey='+keyPub+'</td></tr><tr><td>apisecret='+keyPriv+'</td></tr></table>')
     const tr = $('<tr id="'+keyTableID+'"></tr>')
-        .append($('<td></td>').text(key))
+          .append($('<td></td>').append(keys))
+          .append($('<td></td>').append(buttonRead))
+          .append($('<td></td>').append(buttonWrite))
+          .append($('<td></td>').append(buttonWithdraw))
+          .append($('<td></td>').append(buttonDelete))
+    
+    /*const tr = $('<tr id="'+keyTableID+'"></tr>')
+        .append($('<td></td>').text(keyPub))
         .append($('<td></td>').append($('<input type="checkbox">')))
         .append($('<td></td>').append($('<input type="checkbox">')))
         .append($('<td></td>').append($('<input type="checkbox">')))
-        .append($('<td></td>').append(buttonDelete))
+        .append($('<td></td>').append(buttonDelete))*/
         
-    $('#table_api_keys').append(tr);
+   // $('#table_api_keys').append(tr);
   });
     
 });

@@ -34,12 +34,10 @@ exports.UpdateMarket = function()
         const msg = {coins: data};
         
         // Broadcast to everyone else.
+        const msgString = JSON.stringify({request: 'market', message: msg});
         g_constants.WEB_SOCKETS.clients.forEach( client => {
             if (client.readyState === WebSocket.OPEN) 
-            {
-                try {client.send(JSON.stringify({request: 'market', message: msg}));}
-                catch(e) {client.terminate();}
-            }
+                try {client.send(msgString);} catch(e) {client.terminate();}
         });
     });
 };

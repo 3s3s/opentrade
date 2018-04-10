@@ -13,8 +13,8 @@ const log_file = require("fs").createWriteStream(__dirname + '/debug.log', {flag
 const log_stdout = process.stdout;
 
 console.log = function(d) { 
-//  log_file.write(util.format(d) + '\n');
-//  log_stdout.write(util.format(d) + '\n');
+  log_file.write(util.format(d) + '\n');
+  log_stdout.write(util.format(d) + '\n');
 };
 
 const app = express();
@@ -98,14 +98,14 @@ function loadDump()
     heapdump.writeSnapshot('/root/marycoin/Trade2/debug/' + Date.now() + '.heapsnapshot');
 }*/
 
-/*setInterval(callGC, 1000*60*5);
+setInterval(callGC, 1000*60);
 function callGC()
 {
     try
     {
         if (global.gc) {
             global.gc();
-            heapdump.writeSnapshot('/root/marycoin/Trade2/debug/' + Date.now() + '.heapsnapshot');
+            //heapdump.writeSnapshot('/root/marycoin/Trade2/debug/' + Date.now() + '.heapsnapshot');
             
         } else {
             console.log('Garbage collection unavailable.  Pass --expose-gc '
@@ -116,4 +116,4 @@ function callGC()
     {
         
     }
-}*/
+}

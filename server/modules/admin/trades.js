@@ -20,6 +20,18 @@ exports.onDelTrade = function(ws, req, data)
     });
 };
 
+exports.onQueryRole = function(ws, req, data)
+{
+    utils.GetSessionStatus(req, status => {
+        if (status.id == 1)
+        {
+            if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({request: 'user-role', message: 'root'}));
+            return;
+        }
+        if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({request: 'user-role', message: 'user'}));
+    });
+}
+
 function DeleteTrade(data, callback)
 {
     g_constants.dbTables['history'].selectAll('ROWID AS id, *', 'id='+data.id, '', (err, rows) => {

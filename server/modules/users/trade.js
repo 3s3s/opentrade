@@ -13,7 +13,7 @@ let chartData = {};
 exports.onGetChart = function(ws, req, data)
 {
     GetChartData(data, ret => {
-        const chart = JSON.parse(JSON.stringify(ret.data || {})+"");
+        const chart = ret.data || {};
                         
         if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({
             request: 'chartdata', 
@@ -21,66 +21,52 @@ exports.onGetChart = function(ws, req, data)
     });
 }
 
+let g_onGetPair_counter = 0;
 exports.onGetPair = function(ws, req, data)
 {
-    /*utils.GetSessionStatus(req, status => {
-        GetBalance(ws, status, data);
-        exports.GetAllOrders(data, ret => {
-            const orders = ret.data || {};
-            GetUserOrders(status, data, ret => {
-                const userOrders = ret.data || [];
-                GetUserTradeHistory(status, data, ret => {
-                    const historyUser = ret.data || [];
-                    GetTradeHistory(data, ret => {
-                        const history = ret.data || [];
-                        
-                        const online = utils.GetValidSessionsCount();
-
-                        if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({
-                            request: 'pairdata', 
-                            message: {result: true, data: {online: online, orders: orders, userOrders: userOrders, historyUser: historyUser, history: history}}}));
-                    });    
-                });
-            });
-        });
-    });*/
-
-    let retMessage = {
-        request: 'pairdata',
-        message: {result: true, data: {online: utils.GetValidSessionsCount(), orders: '', userOrders: '', historyUser: '', history: ''}}
-    };
-
-    utils.GetSessionStatus(req, status => {
-        GetBalance(ws, status, data);
-        exports.GetAllOrders(data, ret => {
-            retMessage.message.data.orders = JSON.parse(JSON.stringify(ret.data || {})+"");
-            GetUserOrders(status, data, ret => {
-                retMessage.message.data.userOrders = JSON.parse(JSON.stringify(ret.data || {})+"");
-                GetUserTradeHistory(status, data, ret => {
-                    retMessage.message.data.historyUser = JSON.parse(JSON.stringify(ret.data || {})+"");
-                    if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(retMessage));
-                    GetTradeHistory(data, ret => {
-                        retMessage.message.data.history = JSON.parse(JSON.stringify(ret.data || {})+"");
-                        
-                        //const online = utils.GetValidSessionsCount();
-                        
-                        //retMessage.message.data.history = history;
-                        //retMessage.message.data.orders = orders;
-                        //retMessage.message.data.userOrders = userOrders;
-                        //retMessage.message.data.historyUser = historyUser;
-                        //retMessage.message.data.online = online;
-
-                        //if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({
-                        //    request: 'pairdata', 
-                        //    message: {result: true, data: {online: online, orders: orders, userOrders: userOrders, historyUser: historyUser, history: history}}}));
-                        if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(retMessage));
-                        delete retMessage['message'];
-                    });    
-                });
-            });
-        });
-    });
+    if (g_onGetPair_counter > 8)
+    {
+        return;
+    }
+    g_onGetPair_counter++;
     
+    try
+    {
+        let retMessage = {
+            request: 'pairdata',
+            message: {result: true, data: {online: utils.GetValidSessionsCount(), allusers: utils.GetAllUsersCount(), orders: '', userOrders: '', historyUser: '', history: ''}}
+        };
+        utils.GetSessionStatus(req, status => {
+            GetBalance(ws, status, data);
+            //if (ws.readyState === WebSocket.OPEN) try{ws.send(JSON.stringify(retMessage));}catch(e){ws.terminate();}
+            //    return;
+            exports.GetAllOrders(data, ret => {
+                retMessage.message.data.orders = ret.data || {};
+                //if (ws.readyState === WebSocket.OPEN) try{ws.send(JSON.stringify(retMessage));}catch(e){ws.terminate();}
+                //return;
+                GetUserOrders(status, data, ret => {
+                    retMessage.message.data.userOrders = ret.data || {};
+                    
+                    GetUserTradeHistory(status, data, ret => {
+                        retMessage.message.data.historyUser = ret.data || {};
+                        //if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(retMessage));
+                        GetTradeHistory(data, ret => {
+                            retMessage.message.data.history = ret.data || {};
+                            
+                            if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(retMessage));
+                            delete retMessage['message'];
+                            g_onGetPair_counter--;
+                        });   
+                    });
+                });
+            });
+        });
+    }
+    catch(e)
+    {
+        g_onGetPair_counter--;
+    }
+
 }
 
 exports.GetLastCoinHistory = function(coin)
@@ -103,30 +89,43 @@ exports.onGetBalance= function(ws, req, data)
 {
 }
 
+let g_CoinsInfo = {}
 function GetCoins(coin1, coin2, callback)
 {
     const WHERE = "(name='"+escape(coin1)+"' OR name='"+escape(coin2)+"') OR (ticker='"+escape(coin1)+"' OR ticker='"+escape(coin2)+"')";
+    if (g_CoinsInfo[WHERE] && Date.now()-g_CoinsInfo[WHERE].time < 1000*60*3600)
+        return callback({result: true, data: g_CoinsInfo[WHERE].data});
+
+    if (g_CoinsInfo[WHERE])
+        g_CoinsInfo[WHERE].time = Date.now();
     
-    g_constants.dbTables['coins'].selectAll("ROWID AS id, name, ticker, icon, info", WHERE, "", (err, rows) => {
-        if (err || !rows || !rows.length || rows.length != 2)
-        {
-            callback({result: false, message: 'Pair not found'});
-            return;
-        }
-        
-        for (var i=0; i<rows.length; i++)
-        {
-            try { 
-                rows[i].info = JSON.parse(utils.Decrypt(rows[i].info));
-                if (rows[i].info.active != true) throw 'Coin is not active'
+    console.log('GetCoins '+coin1+' - '+coin2)
+    try
+    {
+        g_constants.dbTables['coins'].selectAll("ROWID AS id, name, ticker, icon, info", WHERE, "", (err, rows) => {
+            if (err || !rows || !rows.length || rows.length != 2)
+                return callback({result: false, message: 'Pair not found'});
+    
+            for (var i=0; i<rows.length; i++)
+            {
+                try { 
+                    rows[i].info = JSON.parse(utils.Decrypt(rows[i].info));
+                    if (rows[i].info.active != true) throw 'Coin is not active'
+                }
+                catch(e) {
+                    callback({result: false, message: e.message});
+                    continue;
+                }
             }
-            catch(e) {
-                callback({result: false, message: e.message});
-                continue;
-            }
-        }
-        callback({result: true, data: JSON.parse(JSON.stringify(rows)+"")});
-    });
+            
+            g_CoinsInfo[WHERE] = {time: Date.now(), data: rows};
+            callback({result: true, data: g_CoinsInfo[WHERE].data});
+        });
+    }
+    catch(e)
+    {
+        return callback({result: false, message: e.message});
+    }
 }
 
 function GetBalance(socket, status, data)
@@ -145,13 +144,14 @@ function GetBalance(socket, status, data)
         }
         
         for (var i=0; i<err.data.length; i++)
-            setTimeout(wallet.GetCoinWallet, 1, socket, status.id, JSON.parse(JSON.stringify(err.data[i])+""));
+            setTimeout(wallet.GetCoinWallet, 1, socket, status.id, err.data[i]);
     });
 
 }
 
 exports.GetAllOrders = function(data, callback)
 {
+   // callback({result: true, data: {}}); return;
     if (!data || !data.length || data.length != 2)
     {
         callback({result: false, message: 'Bad Request'});
@@ -161,7 +161,7 @@ exports.GetAllOrders = function(data, callback)
     GetCoins(data[0], data[1], err => {
         if (!err || !err.result || !err.data || err.data.length != 2)
         {
-            callback({result: false, message: err.message || 'Unknown message'});
+            callback({result: false, message: err ? err.message || 'Unknown message error' : 'Unknown message'});
             return;
         }
         
@@ -241,7 +241,7 @@ function GetTradeHistory(data, callback)
             tradeHistory[data[1]] = {};
             
         tradeHistory[data[1]]['time'] = Date.now();
-        tradeHistory[data[1]]['data'] = JSON.parse(JSON.stringify(rows)+"");
+        tradeHistory[data[1]]['data'] = rows;
         
         if (tradeHistory[data[1]].data.length > 1)
         {
@@ -261,18 +261,25 @@ function GetChartData(data, callback)
         
     if (Date.now() - chartData[data[1]].time < 3600000) return callback({result: true, data: chartData[data[1]].data});
 
-    //g_constants.dbTables['history'].selectAll('fromSellerToBuyer AS volume, AVG(price*1000000) AS avg_10min, (time/360000) AS t10min', 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'"', 'GROUP BY t10min ORDER BY t10min DESC LIMIT 60', (err, rows) => {
-    g_constants.dbTables['history'].selectAll('fromSellerToBuyer AS volume, AVG((fromBuyerToSeller/fromSellerToBuyer)*1000000) AS avg_10min, (time/360000) AS t10min', 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'"', 'GROUP BY t10min ORDER BY t10min DESC LIMIT 60', (err, rows) => {
-        if (err || !rows) callback({result: false, data: []});
-        
-        if (chartData[data[1]]) delete chartData[data[1]];
+    try
+    {
+        //g_constants.dbTables['history'].selectAll('fromSellerToBuyer AS volume, AVG(price*1000000) AS avg_10min, (time/360000) AS t10min', 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'"', 'GROUP BY t10min ORDER BY t10min DESC LIMIT 60', (err, rows) => {
+        g_constants.dbTables['history'].selectAll('fromSellerToBuyer AS volume, AVG((fromBuyerToSeller/fromSellerToBuyer)*1000000) AS avg_10min, (time/360000) AS t10min', 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'"', 'GROUP BY t10min ORDER BY t10min DESC LIMIT 60', (err, rows) => {
+            if (err || !rows) callback({result: false, data: []});
             
-        chartData[data[1]] = {time: 0, data: []};
-        
-        chartData[data[1]].time = Date.now();
-        chartData[data[1]].data = JSON.parse(JSON.stringify(rows)+"");
-        
-        callback({result: true, data: chartData[data[1]].data});
-    });
-    
+            if (chartData[data[1]]) delete chartData[data[1]];
+                
+            chartData[data[1]] = {time: 0, data: []};
+            
+            chartData[data[1]].time = Date.now();
+            chartData[data[1]].data = rows;
+            
+            callback({result: true, data: chartData[data[1]].data});
+        });
+    }
+    catch(e)
+    {
+        callback({result: false, data: [], message: e.message});
+    }
+
 }

@@ -87,6 +87,16 @@ $('#coin-hold').change(function(){
     $('#coin-info').val(JSON.stringify(info));
 });
 
+$('#coin-page').change(function(){ 
+    var info = {};
+    try {info = JSON.parse($('#coin-info').val())}catch(e){}
+    
+    info['page'] = $('#coin-page').val();
+    
+    $('#coin-info').val(JSON.stringify(info));
+});
+
+
 $('#coin-minconf').change(function(){ 
     if (!isInt($('#coin-minconf').val()))
         return;
@@ -136,6 +146,48 @@ $('#form-edit-coin').submit(e => {
         }
     }));
     
+});
+
+$('#id_find_chat_user').submit(e => {
+    e.preventDefault();
+
+    $('#table_ban_users').empty();
+    $('#loader').show();
+    $.post( "/admin/findchatban", $( '#id_find_chat_user' ).serialize(), function( data ) {
+        $('#loader').hide();
+
+        if (data.result != true)
+        {
+            utils.alert_fail(data.message);
+            return;
+        }
+        const users = data.data.users;
+        
+        for (var i=0; i<users.length; i++)
+        {
+            const userID = users[i].userID;
+            const delButton = $('<button id=delBan_"'+userID+'" class="btn btn-default">X</button>');
+            delButton.on('click', e => {
+                DeleteBan(userID);
+            });
+
+            const tr = $('<tr></tr>')
+                .append($('<td>'+userID+'</td>'))
+                .append($('<td>'+utils.timeConverter(users[i].startBanTime)+'</td>'))
+                .append($('<td>'+utils.timeConverter(users[i].endBanTime)+'</td>'))
+                .append($('<td>'+users[i].comment+'</td>'))
+                .append($('<td></td>').append(delButton))
+            $('#table_ban_users').append(tr);
+        }
+    });
+    
+    function DeleteBan(userID)
+    {
+        socket.send(JSON.stringify({
+            request: 'deleteBan', 
+            message: {userID: userID}
+        }));
+    }
 });
 
 $('#id_finduser').submit(e => {
@@ -252,6 +304,11 @@ function StartAddingCoin()
     }));
 }
 
+function ShowSocketMessage(message)
+{
+    alert(message);
+}
+
 function onSocketMessage(event)
 {
   var data = {};
@@ -269,6 +326,11 @@ function onSocketMessage(event)
   if (data.request == 'last_trade')
   {
     UpdateLastTrade(data.message);
+    return;
+  }
+  if (data.request == 'answer')
+  {
+    ShowSocketMessage(data.message);
     return;
   }
   if (data.request == 'rpc_responce')

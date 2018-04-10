@@ -53,6 +53,26 @@ function SendResponce(ws, req, client)
         trade.onGetChart(ws, req, client.message);
         return;
     }
+    if (client.request == 'getrole')
+    {
+        tradeAdmin.onQueryRole(ws, req, client.message);
+        return;
+    }
+    if (client.request == 'del_chat_message')
+    {
+        chat.onDeleteMessage(ws, req, client.message);
+        return;
+    }
+    if (client.request == 'ban_chat_user')
+    {
+        chat.onBanUser(ws, req, client.message);
+        return;
+    }
+    if (client.request == 'deleteBan')
+    {
+        chat.onDeleteBanUser(ws, req, client.message.userID);
+        return;
+    }
     if (client.request == 'postchat')
     {
         chat.onNewMessage(ws, req, client.message);

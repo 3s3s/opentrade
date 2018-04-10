@@ -141,8 +141,7 @@ exports.Init = function(callback)
                 if (err) console.log("SELECT ERROR: query="+query+" message=" + err.message);
                 
                 query = null;
-                const ret = JSON.parse(JSON.stringify(rows)+"");
-                if (callback) setTimeout(callback, 1, err, ret);
+                if (callback) setTimeout(callback, 1, err, rows);
             });        
         }
         catch (e) {
