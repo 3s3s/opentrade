@@ -5,6 +5,8 @@ const utils = require("../../utils.js");
 const g_constants = require("../../constants.js");
 const RPC = require("../rpc.js");
 const WebSocket = require('ws');
+const admin_utils = require('./utils.js');
+const apiV1 = require("../api/v1.js")
 
 exports.onTestRPC = function(ws, req, data)
 {
@@ -50,6 +52,56 @@ exports.onDelCoin = function(ws, req, data)
         });
     });
 };
+
+exports.onSupport = function(ws, req, data)
+{
+    utils.GetSessionStatus(req, status => {
+        if (!status.active)
+            return;
+        
+        admin_utils.GetUserRole(status.id, info => {
+            if (!info.role || info.role != 'Support')
+                return;
+                
+            g_constants.dbTables['coins'].selectAll('ROWID AS id, *', 'name="'+escape(data.coin)+'"', '', (err, rows) => {
+                if (err || !rows || !rows.length)
+                    return;
+                
+                rows[0].info = JSON.parse(utils.Decrypt(unescape(rows[0].info)));
+                SupportCoin(rows[0], ws, data.action);
+            });
+        });    
+    });
+    
+    function SupportCoin(coin, ws, action)
+    {
+        //stop_withdraw, start_withdraw, stop_orders, start_orders, stop_all (info.withdraw, info.orders)
+        if (!coin.info.withdraw) coin.info['withdraw'] = 'Enabled';
+        if (!coin.info.orders) coin.info['orders'] = 'Enabled';
+        
+        if (action == 'start_withdraw')
+            coin.info['withdraw'] = 'Enabled';
+        if (action == 'start_orders')
+            coin.info['orders'] = 'Enabled';
+        if (action == 'stop_withdraw')
+            coin.info['withdraw'] = 'Disabled';
+        if (action == 'stop_orders')
+            coin.info['orders'] = 'Disabled';
+        
+        if (action == 'disable_all')
+            g_constants.tradeEnabled = false;
+        if (action == 'enable_all')
+            g_constants.tradeEnabled = true;
+            
+        g_constants.dbTables['coins'].update('info="'+escape(utils.Encrypt(JSON.stringify(coin.info) || '{}'))+'"', 'ROWID='+coin.id, err => {
+            if (!err)
+                apiV1.ResetCache('GetMarkets');
+                
+            if (ws.readyState === WebSocket.OPEN) 
+                ws.send(JSON.stringify({request: 'coininfo_updated', message: {coin: coin.name, info: coin.info, trading: g_constants.tradeEnabled}}));
+        });    
+    }
+}
 
 function SendAllCoinsData(ws)
 {

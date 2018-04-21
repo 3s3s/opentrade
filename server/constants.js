@@ -19,6 +19,8 @@ exports.SESSION_TIME = 3600*1000; //one hour
 
 exports.dbName = './database/sqlite.db';
 
+exports.tradeEnabled = true;
+
 exports.dbTables = [
    {
       'name' : 'KeyValue',
@@ -110,7 +112,8 @@ exports.dbTables = [
           ['price', 'TEXT'],
           ['price_pair', 'TEXT'],
           ['time', 'TEXT'],
-          ['info', 'TEXT']
+          ['info', 'TEXT'],
+          ['uuid', 'TEXT UNIQUE PRIMARY KEY']
         ],
         'commands' : 'FOREIGN KEY(coin) REFERENCES coins(name)'
    },
@@ -166,6 +169,8 @@ exports.dbIndexes = [
 exports.DEBUG_MODE = process.env.PORT ? true : false;
 exports.WEB_SOCKETS = null;
 exports.ExchangeBalanceAccountID = 0;
+
+exports.Roles = ['Administrator', 'Support', 'User'];
 
 ////////////////////////////////////////////////////////////////////////////////////
 // Private constants

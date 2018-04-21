@@ -24,7 +24,7 @@ exports.onGetChart = function(ws, req, data)
 let g_onGetPair_counter = 0;
 exports.onGetPair = function(ws, req, data)
 {
-    if (g_onGetPair_counter > 8)
+    if (g_onGetPair_counter > 40)
     {
         return;
     }

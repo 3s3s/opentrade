@@ -2,6 +2,7 @@
 
 const url = require('url');
 const utils = require("../../utils.js");
+const admin_utils = require('./utils.js');
 const g_constants = require("../../constants.js");
 const RPC = require("../rpc.js");
 const WebSocket = require('ws');
@@ -20,6 +21,49 @@ exports.onDelTrade = function(ws, req, data)
     });
 };
 
+exports.onChangeRole = function(ws, req, data)
+{
+    utils.GetSessionStatus(req, status => {
+        if (!status.active || status.id != 1)
+        {
+            if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({request: 'user-role-change', message: 'Error: bad status'}));
+            return;
+        }
+        
+        if (!data.userID || !data.role)  
+        {
+            if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({request: 'user-role-change', message: 'Error: bad request'}));
+            return;
+        }
+        
+        let bIsRoleValid = false;
+        for (var i=0; i<g_constants.Roles.length; i++)    
+            if (data.role == g_constants.Roles[i])  bIsRoleValid = true;
+            
+        if (!bIsRoleValid)
+        {
+            if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({request: 'user-role-change', message: 'Error: bad new role'}));
+            return;
+        }
+            
+        admin_utils.GetUserRole(data.userID, info => {
+            if (!info.role || info.role == data.role)
+            {
+                if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({request: 'user-role-change', message: 'Error: same new role'}));
+                return;
+            }
+            
+            info.role = data.role;
+            g_constants.dbTables['users'].update('info="'+escape(JSON.stringify(info))+'"', 'ROWID='+data.userID, err => {
+                if (ws.readyState === WebSocket.OPEN) 
+                {
+                    ws.send(JSON.stringify({request: 'user-role-change', message: err ? err.message || 'Update DB error' : 'success', info: info}));
+                }
+            });
+        });
+    });
+}
+
 exports.onQueryRole = function(ws, req, data)
 {
     utils.GetSessionStatus(req, status => {
@@ -28,7 +72,9 @@ exports.onQueryRole = function(ws, req, data)
             if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({request: 'user-role', message: 'root'}));
             return;
         }
-        if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({request: 'user-role', message: 'user'}));
+        admin_utils.GetUserRole(status.id, info => {
+            if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({request: 'user-role', message: info.role || 'User'}));
+        });
     });
 }
 

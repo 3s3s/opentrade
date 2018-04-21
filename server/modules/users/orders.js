@@ -11,35 +11,33 @@ let allOrders = {};
 
 function onError(req, res, message)
 {
+    if (!res && req.callback)
+        return req.callback({result: false, message: message});
+        
     utils.renderJSON(req, res, {result: false, message: message});
 }
 function onSuccess(req, res, data)
 {
+    if (!res && req.callback)
+        return req.callback({result: true, data: data});
+
     utils.renderJSON(req, res, {result: true, data: data});
 }
 
 exports.CloseOrder = function(req, res)
 {
     if (!req || !req.body || !req.body.orderID)
-    {
-        onError(req, res, req.message || 'Bad request');
-        return;
-    }
+        return onError(req, res, req.message || 'Bad request');
     
     utils.GetSessionStatus(req, status => {
         if (!status.active)
-        {
-            onError(req, res, 'User not logged');
-            return;
-        }
-        
+            return onError(req, res, 'User not logged');
+
         const WHERE_ORDER = 'userID="'+status.id+'" AND ROWID="'+escape(req.body.orderID)+'"';
         g_constants.dbTables['orders'].selectAll('ROWID AS id, *', WHERE_ORDER, '', (err, rows) => {
             if (err || !rows || !rows.length)
-            {
-                onError(req, res, err ? err.message || 'Order not found' : 'Order not found');
-                return;
-            }
+                return onError(req, res, err ? err.message || 'Order not found' : 'Order not found');
+
             const order = rows[0];
             const fullAmount = order.buysell == 'buy' ?
                     (order.amount*order.price+g_constants.TRADE_COMISSION*order.amount*order.price).toFixed(7)*1 :
@@ -50,11 +48,8 @@ exports.CloseOrder = function(req, res)
             const WHERE_BALANCE = 'userID="'+status.id+'" AND coin="'+coinBalance+'"';
             g_constants.dbTables['balance'].selectAll('*', WHERE_BALANCE, '', (err, rows) => {
                 if (err || !rows || !rows.length)
-                {
-                    onError(req, res, err.message || 'Balance not found');
-                    return;
-                }
-                
+                    return onError(req, res, err.message || 'Balance not found');
+
                 const newBalance = (rows[0].balance*1 + fullAmount).toFixed(7)*1;
                 
                 if (!utils.isNumeric(newBalance)) return onError(req, res, 'Balance is not numeric ('+newBalance+')');
@@ -66,16 +61,14 @@ exports.CloseOrder = function(req, res)
                         if (err)
                         {
                             database.RollbackTransaction();
-                            onError(req, res, err.message || 'Database Delete error');
-                            return;
+                            return onError(req, res, err.message || 'Database Delete error');
                         }
                         
                         g_constants.dbTables['balance'].update('balance="'+newBalance+'"', WHERE_BALANCE, err => {
                             if (err)
                             {
                                 database.RollbackTransaction();
-                                onError(req, res, err.message || 'Database Update error');
-                                return;
+                                return onError(req, res, err.message || 'Database Update error');
                             }
                             database.EndTransaction();
                             //database.RollbackTransaction();
@@ -89,7 +82,6 @@ exports.CloseOrder = function(req, res)
                         });
                     });
                 });
-                
             })
         });
     });    
@@ -100,7 +92,7 @@ exports.SubmitOrder = function(req, res)
     utils.GetSessionStatus(req, status => {
         if (!status.active) return onError(req, res, 'User not logged');
 
-        if (!ValidateOrderRequest(req)) return onError(req, res, req.message || 'Bad request');
+        if (!ValidateOrderRequest(req)) return onError(req, res, req.message || 'Bad request. Invalid.');
 
         utils.CheckCoin(unescape(req.body.coin), err => {
             if (err && err.result == false) return onError(req, res, err.message);
@@ -109,8 +101,6 @@ exports.SubmitOrder = function(req, res)
                 'coin="'+escape(g_constants.TRADE_MAIN_COIN)+'" AND userID="'+status.id+'"' :
                 'coin="'+escape(req.body.coin)+'" AND userID="'+status.id+'"';
             
-            //const coin = req.body.order == 'buy' ? escape(g_constants.TRADE_MAIN_COIN) : escape(req.body.coin)
-            //wallet.GetCoinWallet(false, status.id, )
             g_constants.dbTables['balance'].selectAll('*', WHERE, '', (err, rows) => {
                 if (err || !rows || !rows.length) return onError(req, res, (err && err.message) ? err.message : 'User balance not found');
 
@@ -182,21 +172,10 @@ exports.GetUserOrders = function(userID, coins, callback)
             WHERE += " ) ";
     }
     
-    /*if (userOrders[userID] && userOrders[userID][WHERE] && Date.now() - userOrders[userID][WHERE].time < 120000)
-    {
-        callback({result: true, data: userOrders[userID][WHERE].data});
-        return;
-    }*/
-    
     g_constants.dbTables['orders'].selectAll('ROWID AS id, *', WHERE, 'ORDER BY time DESC LIMIT 20', (err, rows) => {
-        //userOrders[userID] = {};
-        //userOrders[userID][WHERE] = {time: Date.now()};
         if (err)
-        {
-            callback({result: false, message: err.message || 'Unknown database error'});
-            return;
-        }
-        //userOrders[userID][WHERE]['data'] = rows;
+            return callback({result: false, message: err.message || 'Unknown database error'});
+
         callback({result: true, data: rows});
     });
 }
@@ -210,24 +189,16 @@ exports.GetAllOrders = function(coinsOrigin, callback)
     
     const coin0 = unescape(coins[0].name);
     if (coins.length != 2)
-    {
-        callback({result: false, message: 'Coins error'});
-        return;
-    }
-    
+        return callback({result: false, message: 'Coins error'});
+
     if (allOrders[coin0] && Date.now() - allOrders[coin0].time < 5000)
-    {
-        callback({result: true, data: allOrders[coin0].data});
-        return;
-    }
+        return callback({result: true, data: allOrders[coin0].data});
+
     if (allOrders[coin0]) delete allOrders[coin0];
     
-    //callback({result: true, data: {}}); return;
-    //setTimeout(callback, 1, {result: true, data: {}}); return;
     if (g_GetAllOrders_start)
-    {
         return callback({result: true, data: {}});
-    }
+
     g_GetAllOrders_start = true;
 
     g_constants.dbTables['orders'].selectAll('SUM(amount) AS amount, coin, price, time', 'coin="'+escape(coin0)+'" AND buysell="buy" AND amount*1>0', 'GROUP BY price*1000000 ORDER BY price*1000000 DESC LIMIT 30', (err, rows) => {
@@ -300,6 +271,8 @@ function AddOrder(status, WHERE, newBalance, req, res)
             if (amount < 0 || price < 0) return onError(req, res, 'Bad (negative) amount or price');
             if (!utils.isNumeric(balance)) return onError(req, res, 'Bad balance ('+balance+')');
     
+            const uuid = Date.now()+"-"+status.id+"-"+Math.random();
+            
             g_constants.dbTables['orders'].insert(
                 status.id,
                 req.body.coin,
@@ -309,6 +282,7 @@ function AddOrder(status, WHERE, newBalance, req, res)
                 g_constants.TRADE_MAIN_COIN,
                 Date.now(),
                 JSON.stringify({}),
+                uuid,
                 err => {
                     if (err)
                     {
@@ -331,7 +305,7 @@ function AddOrder(status, WHERE, newBalance, req, res)
                         if (userOrders[status.id])
                             delete userOrders[status.id];
                         
-                        onSuccess(req, res, {});
+                        onSuccess(req, res, {uuid: uuid});
                     });
                 }
             );

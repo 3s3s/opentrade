@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+    
+    <% include ../../partials/head %>
+  <body>
+
+    <% include ../../partials/header %>
+
+    <% include ../../partials/alerts %>
+    
+    <ul class="nav nav-tabs" id="adminTabs" role="tablist">
+      <li class="nav-item">
+        <a class="nav-link active" id="coins-tab" data-toggle="tab" href="#coins" role="tab" aria-controls="coins" aria-selected="true">Coins</a>
+      </li>
+    </ul>
+    <div class="tab-content p-4" id="adminTabsContent">
+      <div class="tab-pane fade show active" id="coins" role="tabpanel" aria-labelledby="coins-tab">
+        <div class='container'>
+          <div class='row'>
+            <div class='col-md-12'>
+
+              <form id='form-support-coin'>
+                <div class="form-group row p-3">
+                  <label class="col-auto col-form-label" for="coins-select">Coins</label>
+                  <div class="form-group col-md-3">
+                    <select class="form-control" id="coins-select">
+                    </select>
+                  </div>
+                  <div class="col-auto">
+                    <button id='stop_w_coin' type="submit" class="btn btn-primary">Stop withdraw</button>
+                    <button id='start_w_coin' type="submit" class="btn btn-default">Enable withdraw</button>
+                    <button id='stop_o_coin' type="submit" class="btn btn-primary">Stop orders</button>
+                    <button id='start_o_coin' type="submit" class="btn btn-default">Enable orders</button>
+                  </div>
+                </div>
+                  <p class='pl-3'>Withdraw: <span id='coin_withdraw'></span></p>
+                  <p class='pl-3'>Orders: <span id='coin_orders'></span></p>
+                <div class="form-group row p-4">
+                  <button id='disable_all' type="submit" class="btn btn-danger">Disable all</button>
+                  <button id='enable_all' type="submit" class="ml-2 btn btn-success">Enable all</button>
+                </div>
+                <p class='pl-3'>Trading: <span id='trading_status'></span></p>
+              </form>
+      
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+
+    <% include ../../partials/footer %>
+    <script src='/private_js/staff.js'></script>
+  </body>
+</html>

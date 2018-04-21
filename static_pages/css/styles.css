@@ -12,6 +12,10 @@ pre {
     border-radius: 4px;
 }
 
+.staff_area {
+  display: none;
+}
+
 .api-doc h5 {
   color: #696d73;
   font-style: italic;  

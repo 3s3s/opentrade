@@ -9,6 +9,8 @@ const url = require('url');
 var fs = require('fs');
 const util = require('util');
 
+const admin_utils = require("./modules/admin/utils.js");
+
 const balance_log_file = fs.createWriteStream(__dirname + '/balance_debug.log', {flags : 'w'});
 
 exports.balance_log = function(d) { 
@@ -205,6 +207,9 @@ exports.ForEachSync = function(array, func, cbEndAll, cbEndOne)
 
 exports.GetSessionStatus = function(req, callback)
 {
+    if (req['session_status'])
+        return callback(req['session_status']);
+        
     const errMessage = 'Error: invalid session token (please login again)';
     
     req['token'] = exports.parseCookies(req)['token'] || '';
@@ -322,6 +327,8 @@ exports.render = function(responce, page, info)
     render_info['MAIN_COIN'] = g_constants.TRADE_MAIN_COIN;
     render_info['DEFAULT_PAIR'] = g_constants.TRADE_DEFAULT_PAIR;
     render_info['portSSL'] = g_constants.my_portSSL;
+    
+    render_info['tradeEnabled'] = g_constants.tradeEnabled;
 
     responce.render(page, render_info);
 }
@@ -539,14 +546,15 @@ exports.LoadPrivateJS = function(req, res, path)
 {
     try {
         exports.GetSessionStatus(req, status => {
-            if (status.id != 1)
-            {
+            if (status.id == 1)
+                return responseFile('./views/pages'+path, res);
+            
+            admin_utils.GetUserRole(status.id, info => {
+                if (info.role == 'Support' && path.indexOf('staff.js') > 0)
+                    return responseFile('./views/pages'+path, res);
+
                 responseFile('./views/pages/private_js/empty.js'+path, res);
-                //exports.render(res, 'pages/private_js/empty.js', {path : url.parse(req.url, true).path, status : status});
-                return;
-            }
-            responseFile('./views/pages'+path, res);
-            //exports.render(res, 'pages'+path, {path : url.parse(req.url, true).path, status : status});
+            })
         });
     } 
     catch(e) {
@@ -566,7 +574,13 @@ exports.CheckCoin = function(coin, callback)
         if (rows[0].info.active != true)
             return setTimeout(callback, 10, {result: false, message: 'Coin "'+coin+'" is not active'});
  
-         setTimeout(callback, 10, {result: true});
+        if (rows[0].info.orders == 'Disabled')
+            return setTimeout(callback, 10, {result: false, message: 'Coin "'+coin+'" orders is temporarily disabled'});
+        
+        if (g_constants.tradeEnabled == false)
+            return setTimeout(callback, 10, {result: false, message: 'Trading is temporarily disabled'});
+
+        setTimeout(callback, 10, {result: true});
     });
 }
 

@@ -1,7 +1,14 @@
 'use strict';
 
+try
+{
 google.charts.load('current', {packages: ['corechart']});
 google.charts.setOnLoadCallback(drawChart);
+}
+catch(e)
+{
+  
+}
 
 var g_CurrentPair = utils.DEFAULT_PAIR;
 var g_CurrentLang = 'ru';
@@ -15,7 +22,7 @@ var coinNameToTicker = {};
 
 var chartData = [];
 
-var g_role = 'user';
+var g_role = 'User';
 
 /*function checkInView(elem, container)
 {
@@ -24,10 +31,13 @@ var g_role = 'user';
 
 function UpdatePageWithRole()
 {
-  if (!g_role || g_role == 'user')
+  if (!g_role || g_role == 'User')
     return;
-    
-  $('.del_message_button').show();
+  
+  if (g_role == 'root')
+    $('.del_message_button').show();
+  if (g_role == 'Support')
+    $('.staff_area').show();
 }
 
 function IsNeadScroll()
@@ -61,8 +71,19 @@ $(() => {
   
   setInterval(IsNeadScroll, 5000);
 
-  
+  $('.staff_area').hide();
 });
+
+function AddCoinInfo(info)
+{
+  if (!info.result || !info.result.coin_info || !info.result.coin_info.page)
+    return;
+    
+  $('#coin_legend').text(g_CurrentPair);
+  
+  const p1 = $('<p><strong>Forum</strong> ANN: <a target="_blank" href="'+(info.result.coin_info.page || "")+'">'+g_CurrentPair+' @ bitcointalk</a></p>');
+  $('#coin_info').append(p1);
+}
 
 function ShowLanguageChat()
 {
@@ -296,6 +317,7 @@ function UpdateMarket(message)
       .append($('<td>'+price+'</td>'))
       .append($('<td>'+vol+'</td>'))
       .append($('<td><span class="'+chColor+'">'+(ch*1).toFixed(8)*1+'</span></td>'))
+      .css( 'cursor', 'pointer' )
       .on('click', e => {
         if (coinName == g_CurrentPair)
           return;
@@ -638,65 +660,73 @@ function UpdateSellComission()
 
 function drawChart()
 {
-  if (!chartData.length)
-    return;
-  if (!google.visualization || !google.visualization['arrayToDataTable'])
-    return;// setTimeout(drawChart, 1000);
-  
-  SetChartLegend()
-    
-  var tmp = [];
-  for (var j=chartData.length-1; j>=0; j--)
-    tmp.push(chartData[j]);
-    
-  chartData = tmp;
-  
-  var table = [];
-  for (var i=0; i<chartData.length; i++)  
+  try
   {
-    const time = utils.timeConverter(chartData[i].t10min*360000, true);
-    //const time = new Date(chartData[i].t10min*360000);
-    const timeStart = chartData[i].t10min;
+    if (!chartData.length)
+      return;
+    if (!google.visualization || !google.visualization['arrayToDataTable'])
+      return;// setTimeout(drawChart, 1000);
     
-    var min = chartData[i].avg_10min;
-    var init = chartData[i].avg_10min;
-    var final = chartData[i].avg_10min;
-    var max = chartData[i].avg_10min;
-    
-    for (var j=i+1; j<chartData.length; j++)
-    {
-      if (chartData[j].t10min*1 > timeStart*1+10)
-        break;
+    SetChartLegend()
       
-      if (chartData[j].avg_10min*1 < min)
-        min = chartData[j].avg_10min;
-      if (chartData[j].avg_10min*1 > max)
-        max = chartData[j].avg_10min;
+    var tmp = [];
+    for (var j=chartData.length-1; j>=0; j--)
+      tmp.push(chartData[j]);
+      
+    chartData = tmp;
+    
+    var table = [];
+    for (var i=0; i<chartData.length; i++)  
+    {
+      const time = utils.timeConverter(chartData[i].t10min*360000, true);
+      //const time = new Date(chartData[i].t10min*360000);
+      const timeStart = chartData[i].t10min;
+      
+      var min = chartData[i].avg_10min;
+      var init = chartData[i].avg_10min;
+      var final = chartData[i].avg_10min;
+      var max = chartData[i].avg_10min;
+      
+      for (var j=i+1; j<chartData.length; j++)
+      {
+        if (chartData[j].t10min*1 > timeStart*1+10)
+          break;
         
-      final = chartData[j].avg_10min;
-      i++;
+        if (chartData[j].avg_10min*1 < min)
+          min = chartData[j].avg_10min;
+        if (chartData[j].avg_10min*1 > max)
+          max = chartData[j].avg_10min;
+          
+        final = chartData[j].avg_10min;
+        i++;
+      }
+      
+      table.push([time, min/1000000, init/1000000, final/1000000, max/1000000]);
     }
     
-    table.push([time, min/1000000, init/1000000, final/1000000, max/1000000]);
-  }
-  
-  if (!table.length)
-    return;
+    if (!table.length)
+      return;
+      
+    var data = google.visualization.arrayToDataTable(table, true);
+    var options = {
+        //title: g_CurrentPair,
+        /*hAxis: {
+          minValue: 0,
+          maxValue: 24,
+          ticks: [0, 4, 8, 12, 16, 20, 24]
+        },*/
+        //width: 800,
+        legend: 'none'
+    };
     
-  var data = google.visualization.arrayToDataTable(table, true);
-  var options = {
-      //title: g_CurrentPair,
-      /*hAxis: {
-        minValue: 0,
-        maxValue: 24,
-        ticks: [0, 4, 8, 12, 16, 20, 24]
-      },*/
-      //width: 800,
-      legend: 'none'
-  };
-  
-  var chart = new google.visualization.CandlestickChart(document.getElementById('chart_div'));
-  chart.draw(data, options);
+    var chart = new google.visualization.CandlestickChart(document.getElementById('chart_div'));
+    chart.draw(data, options);
+    
+  }
+  catch(e)
+  {
+    
+  }
 }
 
 function SetChartLegend()
@@ -714,7 +744,9 @@ function SetChartLegend()
   $.getJSON( "/api/v1/public/getmarketsummary?market="+MC+"-"+COIN, ret => {
     if (!ret || !ret.success || ret.success != true || MC != coinNameToTicker[utils.MAIN_COIN].ticker || COIN != coinNameToTicker[g_CurrentPair].ticker) 
       return;
-      
+    
+    AddCoinInfo(ret);
+    
     const legend = $(
       '<ul class="nav">'+
         '<li class="nav-item mr-3"><img src="'+unescape(ret.result.coin_icon_src)+'" width=40 /></li>'+
