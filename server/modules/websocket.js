@@ -16,23 +16,18 @@ exports.onConnect = function(ws, req)
     const request = req;
     ws.on('message', data => {
         if (!data || !data.length)
-        {
-            SendError(ws, 'Error: empty message');
-            return;
-        }
+            return SendError(ws, 'Error: empty message');
+
         let client = {};
         try {
             client = JSON.parse(data);
         } catch(e) {
-            SendError(ws, 'Error: '+e.message);    
-            return;
+            return SendError(ws, 'Error: '+e.message);    
         }
         
         if (!client.request)
-        {
-            SendError(ws, 'Error: request not found');
-            return;
-        }
+            return SendError(ws, 'Error: request not found');
+
         SendResponce(ws, request, client);
     });
 }
@@ -54,70 +49,50 @@ function SendResponce(ws, req, client)
         return;
     }
     if (client.request == 'getrole')
-    {
-        tradeAdmin.onQueryRole(ws, req, client.message);
-        return;
-    }
+        return tradeAdmin.onQueryRole(ws, req, client.message);
+
     if (client.request == 'del_chat_message')
-    {
-        chat.onDeleteMessage(ws, req, client.message);
-        return;
-    }
+        return chat.onDeleteMessage(ws, req, client.message);
+
     if (client.request == 'ban_chat_user')
-    {
-        chat.onBanUser(ws, req, client.message);
-        return;
-    }
+        return chat.onBanUser(ws, req, client.message);
+
     if (client.request == 'deleteBan')
-    {
-        chat.onDeleteBanUser(ws, req, client.message.userID);
-        return;
-    }
+        return chat.onDeleteBanUser(ws, req, client.message.userID);
+
     if (client.request == 'postchat')
-    {
-        chat.onNewMessage(ws, req, client.message);
-        return;
-    }
+        return chat.onNewMessage(ws, req, client.message);
+
     if (client.request == 'admincoins')
-    {
-        coins.onGetCoins(ws, req);
-        return;
-    }
+        return coins.onGetCoins(ws, req);
+
     if (client.request == 'newcoin')
-    {
-        coins.onNewCoin(ws, req, client.message);
-        return;
-    }
+        return coins.onNewCoin(ws, req, client.message);
+
     if (client.request == 'delcoin')
-    {
-        coins.onDelCoin(ws, req, client.message);
-        return;
-    }
+        return coins.onDelCoin(ws, req, client.message);
+
     if (client.request == 'delete_trade')
-    {
-        tradeAdmin.onDelTrade(ws, req, client.message);
-        return;
-    }
+        return tradeAdmin.onDelTrade(ws, req, client.message);
+
     if (client.request == "rpc_test")
-    {
-        coins.onTestRPC(ws, req, client.message);
-        return;
-    }
+        return coins.onTestRPC(ws, req, client.message);
+
     if (client.request == "getwallet")
-    {
-        wallet.onGetWallet(ws, req);
-        return;
-    }
+        return wallet.onGetWallet(ws, req);
+
     if (client.request == "getpair")
-    {
-        trade.onGetPair(ws, req, client.message);
-        return;
-    }
+        return trade.onGetPair(ws, req, client.message);
+
     if (client.request == "getpairbalance")
-    {
-        trade.onGetBalance(ws, req, client.message);
-        return;
-    }
+        return trade.onGetBalance(ws, req, client.message);
+
+    if (client.request == "change_user_role")
+        return tradeAdmin.onChangeRole(ws, req, client.message);
+        
+    if (client.request == 'support_coin')
+        return coins.onSupport(ws, req, client.message);
+        
     SendError(ws, 'Error: invalid request');
 }
 

@@ -27,6 +27,7 @@ sudo npm install ws
 sudo npm install sendmail
 sudo npm install sqlite3
 sudo npm install ejs
+sudo npm install cors
 mkdir ~/opentrade/server/database
 >> ~/opentrade/server/modules/private_constants.js
 >> /root/privkey.pem
@@ -104,6 +105,39 @@ You will see OpenTrade.
 The first registered user will be exchange administrator. 
 
 # Add trade pairs
+
+For each coin you should create *.conf file
+This is common example for "some_coin.conf"
+
+```
+rpcuser=long_random_string_one
+rpcpassword=long_random_string_two
+rpcport=12345
+rpcclienttimeout=10
+rpcallowip=127.0.0.1
+server=1
+daemon=1
+upnp=0
+rpcworkqueue=1000
+enableaccounts=1
+litemode=1
+staking=0
+addnode=1.2.3.4
+addnode=5.6.7.8
+
+```
+
+Also you must encrypt wallet.dat by the command
+
+```
+./bitcoind encryptwallet random_long_string_SAME_AS_IN_FILE_private_constants.js
+
+```
+
+*If coin is not supported encryption (like ZerroCash and it forks) then coin could not be added to the OpenTrade*
+
+
+When coin daemons will be configured and started
 
 1. Register on exchange. The first registered user will be exchange administrator.
 2. Go to "Admin Area" -> "Coins" -> "Add coin"

@@ -1,6 +1,7 @@
             <% var root = false; try{ root = status.id==1;}catch(e){}%>
             <% var adminArea = ""; if (root) adminArea = "<li class='nav-item'><a class='nav-link' href='/admin'>Admin Area</a></li>"%>
             <%- adminArea %>
+            <li class='nav-item staff_area'><a class='nav-link' href='/staff'>Staff Area</a></li>
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                   <span ><%=unescape(status.user)%></span>

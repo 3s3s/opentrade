@@ -13,6 +13,31 @@ function onSuccess(req, res, data)
     utils.renderJSON(req, res, {result: true, data: data});
 }
 
+exports.GetUserRole = function(user, callback)
+{
+    try
+    {
+        g_constants.dbTables['users'].selectAll('ROWID AS id, info', 'id='+escape(user), '', (err, rows) => {
+            if (err || !rows || !rows.length) 
+            {
+                return callback({role: 'User'});
+            }
+            
+            let oldInfo = JSON.parse(unescape(rows[0].info));
+            if (!oldInfo.role)
+                oldInfo['role'] = 'User';
+                
+            return callback(oldInfo); 
+        });
+        
+    }
+    catch(e)
+    {
+        console.log(e.message);
+        return callback({role: 'User'});
+    }
+}
+
 
 exports.ShowMainAdminPage = function(req, res)
 {
@@ -29,6 +54,26 @@ exports.ShowMainAdminPage = function(req, res)
     catch(e) {
         console.log(e.message);
     }
+}
+
+exports.ShowMainStaffPage = function(req, res)
+{
+    try {
+        utils.GetSessionStatus(req, status => {
+            exports.GetUserRole(status.id, info => {
+                if (info.role != 'Support')
+                {
+                    utils.render(res, 'pages/index', {path : url.parse(req.url, true).path, status : status});
+                    return;
+                }
+                utils.render(res, 'pages/admin/staff', {path : url.parse(req.url, true).path, status : status});
+            });
+        });
+    } 
+    catch(e) {
+        console.log(e.message);
+    }
+    
 }
 
 exports.onGetCoinBalance = function(req, res)

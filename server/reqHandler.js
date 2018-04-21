@@ -12,33 +12,50 @@ const wsocket = require("./modules/websocket");
 const admin = require("./modules/admin/utils");
 const wallet = require("./modules/users/wallet");
 const orders = require("./modules/users/orders");
-const API1 = require("./modules/api/v1")
+const API1 = require("./modules/api/v1");
+const cors = require('cors');
 
 exports.handle = function(app, wss)
 {
     app.get('/', onMain);
+    app.get('/market/*', onMain);
     app.get('/index.html', onMain);
     
     app.get('/admin', onAdminMain);
+    app.get('/staff', onAdminStaff);
     app.get('/private_js/admin.js', onAdminJS);
+    app.get('/private_js/staff.js', onAdminJS);
     
     app.get('/fees', onShowFeesPage);
     app.get('/API', onShowAPI);
     
-    app.get('/api/v1/public/getmarkets', API1.onGetMarkets);
-    app.get('/api/v1/public/getorderbook', API1.onGetOrderbook);
-    app.get('/api/v1/public/getmarketsummary', API1.onGetMarketSummary);
-    app.get('/api/v1/public/getmarkethistory', API1.onGetMarketHistory);
+    app.get('/api/v1/public/getmarkets', cors(), API1.onGetMarkets);
+    app.get('/api/v1/public/getorderbook', cors(), API1.onGetOrderbook);
+    app.get('/api/v1/public/getmarketsummary', cors(), API1.onGetMarketSummary);
+    app.get('/api/v1/public/getmarkethistory', cors(), API1.onGetMarketHistory);
     
-    app.get('/api/v1/market/buylimit', API1.onMarketBuylimit);
-    app.get('/api/v1/market/buylimit', API1.onMarketSelllimit);
-    app.get('/api/v1/market/cancel', API1.onMarketCancel);
-    app.get('/api/v1/market/getopenorders', API1.onMarketGetOpenOrders);
+    app.get('/api/v1/market/buylimit', cors(), API1.onMarketBuylimit);
+    app.get('/api/v1/market/selllimit', cors(), API1.onMarketSelllimit);
+    app.get('/api/v1/market/cancel', cors(), API1.onMarketCancel);
+    app.get('/api/v1/market/getopenorders', cors(), API1.onMarketGetOpenOrders);
 
-    app.get('/api/v1/account/getbalance', API1.onAccountGetBalance);
-    app.get('/api/v1/account/getdepositaddress', API1.onAccountGetDepositAddress);
-    app.get('/api/v1/account/getorder', API1.onAccountGetOrder);
-    app.get('/api/v1/account/getorderhistory', API1.onAccountGetOrderHistory);
+    app.get('/api/v1/account/getbalance', cors(), API1.onAccountGetBalance);
+    app.get('/api/v1/account/getdepositaddress', cors(), API1.onAccountGetDepositAddress);
+    app.get('/api/v1/account/getorder', cors(), API1.onAccountGetOrder);
+    app.get('/api/v1/account/getorderhistory', cors(), API1.onAccountGetOrderHistory);
+    
+//////////////////
+    app.post('/api/v1/market/buylimit', cors(), API1.onMarketBuylimit);
+    app.post('/api/v1/market/selllimit', cors(), API1.onMarketSelllimit);
+    app.post('/api/v1/market/cancel', cors(), API1.onMarketCancel);
+    app.post('/api/v1/market/getopenorders', cors(), API1.onMarketGetOpenOrders);
+
+    app.post('/api/v1/account/getbalance', cors(), API1.onAccountGetBalance);
+    app.post('/api/v1/account/getdepositaddress', cors(), API1.onAccountGetDepositAddress);
+    app.post('/api/v1/account/getorder', cors(), API1.onAccountGetOrder);
+    app.post('/api/v1/account/getorderhistory', cors(), API1.onAccountGetOrderHistory);
+
+//////////////////
     
     app.get('/api_keys', onGetAPIKeys);
 
@@ -125,6 +142,10 @@ function onShowFeesPage(req, res)
 function onAdminMain(req, res)
 {
     admin.ShowMainAdminPage(req, res);
+}
+function onAdminStaff(req, res)
+{
+    admin.ShowMainStaffPage(req, res);
 }
 function onAdminJS(req, res)
 {

@@ -19,6 +19,7 @@ exports.Init = function(callback)
     g_db = new sqlite3.Database(g_constants.dbName);
     
     //g_db.run('DROP TABLE history');
+    //g_db.run('ALTER TABLE orders ADD COLUMN uuid TEXT UNIQUE')
     
     RunDBTransaction();
     setInterval(RunDBTransaction, 5000);

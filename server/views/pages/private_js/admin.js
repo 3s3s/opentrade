@@ -212,17 +212,48 @@ $('#id_finduser').submit(e => {
                 .append($('<td>'+users[i].account+'</td>'))
                 .append($('<td>'+users[i].login+'</td>'))
                 .append($('<td>'+users[i].email+'</td>'))
-                .append($('<td></td>').append(GetRole(users[i].info)))
-                .append($('<td></td>').text(unescape(users[i].info)))
+                .append($('<td></td>').append(GetRole(users[i].id, users[i].info)))
+                //.append($('<td></td>').text(unescape(users[i].info)))
             $('#table_users').append(tr);
         }
     });
 
-    function GetRole(info)
+    function GetRole(userID, info)
     {
-        return $('<span></span>').text(JSON.stringify({}));
+        let currRole = 'User';    
+        try {currRole = JSON.parse(unescape(info)).role;}
+        catch(e){}
+        
+        const roles = {
+            admin: $('<option value="Administrator">Administrator</option>'),
+            support: $('<option value="Support">Support</option>'),
+            user: $('<option selected value="User">User</option>')
+        };
+        
+        for (var key in roles)
+        {
+            if (roles[key].val() != currRole) continue;
+            roles['user'].prop('selected', false);
+            roles[key].prop('selected', true);
+            break;
+        }
+
+        return $('<select class="form-control" id="users_role"></select>')
+            .append(roles.admin)
+            .append(roles.support)
+            .append(roles.user)
+            .change(() => {
+                socket.send(JSON.stringify({
+                    request: 'change_user_role', 
+                    message: {
+                        userID: userID,
+                        role: $( "#users_role option:selected" ).val()
+                    }
+                }));
+            });
     }
 });
+
 
 $('#del_coin').click(e => {    
     e.preventDefault();
@@ -333,6 +364,11 @@ function onSocketMessage(event)
     ShowSocketMessage(data.message);
     return;
   }
+  if (data.request == 'user-role-change')
+  {
+      data.message == 'success' ? utils.alert_success('User role changed!') : utils.alert_fail(data.message);
+      return;
+  }
   if (data.request == 'rpc_responce')
   {
       if (data.message.result != "success")
@@ -396,6 +432,7 @@ function UpdateAdminCoins(data, client_request)
         if (info['active']) $('#coin-visible').prop( "checked", true );
         $('#coin-minconf').val(info['minconf'] || "");
         $('#coin-hold').val(info['hold'] || "");
+        $('#coin-page').val(info['page'] || "");
     }
 
     $("#coins-select option[value='"+currentCoin+"']").prop('selected', true);
