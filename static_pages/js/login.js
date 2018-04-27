@@ -11,8 +11,12 @@ $(() => {
 
 function onSubmit()
 {
+    $('#loader').show();
     $.post( "/login", $( '.login-form' ).serialize(), function( data ) {
-        grecaptcha.reset();
+        if (grecaptcha) grecaptcha.reset();
+        
+        $('#loader').hide();
+        
         if (data.result != true)
         {
             //$('#alert-fail').html(data.message);

@@ -453,7 +453,7 @@ exports.onConfirmWithdraw = function(req, res)
             if (rows[0].info.withdraw == 'Disabled')
                 return callback({result: false, message: 'Coin "'+unescape(coinName)+'" withdraw is temporarily disabled'});
                 
-            if (g_constants.tradeEnabled == false)
+            if (g_constants.share.tradeEnabled == false)
                 return callback({result: false, message: 'Trading is temporarily disabled'});
 
             const coin = rows[0];

@@ -84,7 +84,7 @@ function ShowDepositAddress(coin)
   $.post( "/getdepositaddress", {coin: coin}, data => {
     $('#loader').hide();
     if (!data || !data.result || !data.data || !data.data.length)
-      return;
+      return utils.alert_fail(data && data.message ? data.message : 'Unknown error/ Please try later');
     
     var message = '<div><b>To load your account please send the coins to your address :</b><br>'+data.data[data.data.length-1]+'</div>';
     

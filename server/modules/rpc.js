@@ -75,16 +75,16 @@ exports.send3 = function(coinID, command, params, callback)
 
     if (bWaitCoin[coinID] && bWaitCoin[coinID].status && bWaitCoin[coinID].status == true)
     {
-        if (bWaitCoin[coinID].time > Date.now() - 30000)
+        if (bWaitCoin[coinID].time > Date.now() + 30000)
         {
-            console.log('Coin '+coinID+' not responce');
-            return setTimeout(callback, 1, {result: false, message: 'Coin RPC is not responded. Try later.'});
+            console.log('Coin '+coinID+' not responce. delta='+(bWaitCoin[coinID].time - (Date.now()+30000))/1000 +' last_command='+bWaitCoin[coinID].last_command);
+            return setTimeout(callback, 1, {result: false, message: 'Coin RPC is not responded. Try later.'+ ' '+ 'Coin '+coinID+' not responce. delta='+(bWaitCoin[coinID].time - (Date.now()+30000))/1000+' last_command='+bWaitCoin[coinID].last_command});
         }
         console.log('Wait coin '+coinID+' RPC queue. ')
         return setTimeout(exports.send3, 1000, coinID, command, params, callback);
     }
     console.log('Coin '+coinID+' started RPC ')
-    bWaitCoin[coinID] = {status: true, time: Date.now()};
+    bWaitCoin[coinID] = {status: true, time: Date.now(), last_command: command};
     
     try
     {
