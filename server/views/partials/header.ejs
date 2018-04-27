@@ -26,6 +26,9 @@
             <li class="nav-item active">
               <a class="nav-link" href="/API">API</a>
             </li>
+            <li class="nav-item active">
+              <a class="nav-link" href="/add_coin">Add coin</a>
+            </li>
         </ul>
         <ul class="navbar-nav ml-auto">
             <% var key = ''; try{if (status.active) key = status.token || '';}catch(e){}%>
@@ -49,25 +52,8 @@
     <div id="loader" style="display:none;"></div>
     <input id='id_lang' type='hidden' <% var value = 'value="en"'; try{if (lang) value = "value='"+lang+"'"}catch(e){} %> <%- value %>>
 
-    <!--<div class="container pt-2">
-        <div id='alert-fail' class="alert alert-danger alert-dismissible col-md-12" role="alert" >
-          <div id='fail-message'>Technical work is carried out. Please be patient</div>
-          <button id='close_fail' type="button" class="close"  aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>          
-        </div>
-    </div>-->
-    <!--<div class="container pt-2">
-        <div id='alert-fail' class="alert alert-danger alert-dismissible col-md-12" role="alert" >
-          <div id='fail-message'>CMOS will delisted shortly. Please close your orders and withdraw CMOS from OpenTrade</div>
-          <button id='close_fail' type="button" class="close"  aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>          
-        </div>
-    </div>-->
-    
     <% var message = ""; 
-        if (!tradeEnabled) {
+        if (!share.tradeEnabled) {
           message = 
             '<div class="container pt-2">'+
               '<div id="alert-fail" class="alert alert-danger alert-dismissible col-md-12" role="alert" >'+

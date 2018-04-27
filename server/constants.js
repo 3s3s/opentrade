@@ -7,8 +7,6 @@ exports.TRADE_MAIN_COIN_TICKER = "MC";
 exports.TRADE_DEFAULT_PAIR = "Litecoin";
 exports.TRADE_COMISSION = 0.001;
 
-exports.recaptcha_pub_key = "6LeX5SQUAAAAAKTieM68Sz4MECO6kJXsSR7_sGP1";
-
 exports.NOREPLY_EMAIL = 'no-reply@multicoins.org';
 exports.SUPPORT_EMAIL = 'ivanivanovkzv@gmail.com';
 exports.my_portSSL = 40443;
@@ -19,7 +17,14 @@ exports.SESSION_TIME = 3600*1000; //one hour
 
 exports.dbName = './database/sqlite.db';
 
+exports.share = {
+   tradeEnabled: true,
+   recaptchaEnabled: false
+};
 exports.tradeEnabled = true;
+exports.recaptchaEnabled = false;
+
+exports.recaptcha_pub_key = "6LeX5SQUAAAAAKTieM68Sz4MECO6kJXsSR7_sGP1";
 
 exports.dbTables = [
    {

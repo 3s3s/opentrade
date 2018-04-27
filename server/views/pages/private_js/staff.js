@@ -6,8 +6,7 @@ $(() => {
     utils.CreateSocket(onSocketMessage, onOpenSocket);
     
     $('#table_coin_balance').empty();
-    UpdateCoins({trading: TRADE_ENABLED});
-});
+    UpdateCoins({trading: SHARE.tradeEnabled});
 
 function UpdateCoins(message)
 {

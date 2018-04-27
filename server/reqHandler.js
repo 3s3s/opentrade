@@ -28,6 +28,7 @@ exports.handle = function(app, wss)
     
     app.get('/fees', onShowFeesPage);
     app.get('/API', onShowAPI);
+    app.get('/add_coin', onHelpAddCoin);
     
     app.get('/api/v1/public/getmarkets', cors(), API1.onGetMarkets);
     app.get('/api/v1/public/getorderbook', cors(), API1.onGetOrderbook);
@@ -137,6 +138,11 @@ function onShowAPI(req, res)
 function onShowFeesPage(req, res)
 {
     CommonRender(req, res, 'pages/fees');
+}
+
+function onHelpAddCoin(req, res)
+{
+    CommonRender(req, res, 'pages/list_coin');
 }
 
 function onAdminMain(req, res)

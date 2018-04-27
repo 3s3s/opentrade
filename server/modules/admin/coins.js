@@ -89,16 +89,16 @@ exports.onSupport = function(ws, req, data)
             coin.info['orders'] = 'Disabled';
         
         if (action == 'disable_all')
-            g_constants.tradeEnabled = false;
+            g_constants.share.tradeEnabled = false;
         if (action == 'enable_all')
-            g_constants.tradeEnabled = true;
+            g_constants.share.tradeEnabled = true;
             
         g_constants.dbTables['coins'].update('info="'+escape(utils.Encrypt(JSON.stringify(coin.info) || '{}'))+'"', 'ROWID='+coin.id, err => {
             if (!err)
                 apiV1.ResetCache('GetMarkets');
                 
             if (ws.readyState === WebSocket.OPEN) 
-                ws.send(JSON.stringify({request: 'coininfo_updated', message: {coin: coin.name, info: coin.info, trading: g_constants.tradeEnabled}}));
+                ws.send(JSON.stringify({request: 'coininfo_updated', message: {coin: coin.name, info: coin.info, trading: g_constants.share.tradeEnabled}}));
         });    
     }
 }

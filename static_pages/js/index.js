@@ -716,7 +716,12 @@ function drawChart()
           ticks: [0, 4, 8, 12, 16, 20, 24]
         },*/
         //width: 800,
-        legend: 'none'
+        legend: 'none',
+        explorer: {
+                axis: 'horizontal',
+                keepInBounds: true,
+                maxZoomIn: 4.0
+        }
     };
     
     var chart = new google.visualization.CandlestickChart(document.getElementById('chart_div'));

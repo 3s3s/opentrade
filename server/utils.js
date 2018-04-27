@@ -328,7 +328,7 @@ exports.render = function(responce, page, info)
     render_info['DEFAULT_PAIR'] = g_constants.TRADE_DEFAULT_PAIR;
     render_info['portSSL'] = g_constants.my_portSSL;
     
-    render_info['tradeEnabled'] = g_constants.tradeEnabled;
+    render_info['share'] = g_constants.share;
 
     responce.render(page, render_info);
 }
@@ -496,8 +496,12 @@ exports.ValidateEmail = function(text)
     return text.match(mailformat);
 }
 
+let g_validateRecaptcha = 0;
 exports.validateRecaptcha = function(request, callback)
 {
+    if (g_constants.share.recaptchaEnabled == false)
+        return setTimeout(callback, 5000, {error: false, message: 'Recapcha disabled'});
+
     if (!request.body || !request.body['g-recaptcha-response'])
         return setTimeout(callback, 10, {error: true, message: 'Bad Request'});
 
@@ -577,7 +581,7 @@ exports.CheckCoin = function(coin, callback)
         if (rows[0].info.orders == 'Disabled')
             return setTimeout(callback, 10, {result: false, message: 'Coin "'+coin+'" orders is temporarily disabled'});
         
-        if (g_constants.tradeEnabled == false)
+        if (g_constants.share.tradeEnabled == false)
             return setTimeout(callback, 10, {result: false, message: 'Trading is temporarily disabled'});
 
         setTimeout(callback, 10, {result: true});
