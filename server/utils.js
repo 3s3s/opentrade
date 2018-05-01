@@ -14,7 +14,7 @@ const admin_utils = require("./modules/admin/utils.js");
 const balance_log_file = fs.createWriteStream(__dirname + '/balance_debug.log', {flags : 'w'});
 
 exports.balance_log = function(d) { 
-  balance_log_file(util.format(d) + '\n');
+  balance_log_file.write(util.format(d) + '\n');
 };
 
 exports.Hash = function(str)

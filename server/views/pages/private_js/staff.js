@@ -7,6 +7,7 @@ $(() => {
     
     $('#table_coin_balance').empty();
     UpdateCoins({trading: SHARE.tradeEnabled});
+});
 
 function UpdateCoins(message)
 {

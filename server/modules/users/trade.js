@@ -194,15 +194,6 @@ function GetUserTradeHistory(status, data, callback)
     if (!status.active)
         return callback({result: true, data: []});
 
-    /*if (!tradeHistoryUser[status.id]) 
-        tradeHistoryUser[status.id] = {};
-        
-    if (!tradeHistoryUser[status.id][data[1]])
-        tradeHistoryUser[status.id][data[1]] = {time: 0, data: []};
-        
-    if (Date.now() - tradeHistoryUser[status.id][data[1]].time < 5000) 
-        return callback({result: true, data: tradeHistoryUser[status.id][data[1]].data});*/
-
     const WHERE = 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'" AND (buyUserID='+status.id+' OR sellUserID='+status.id+')';
     g_constants.dbTables['history'].selectAll('buyUserID, sellUserID, fromSellerToBuyer AS volume, fromBuyerToSeller, price, buysell, time', WHERE, 'ORDER BY time DESC LIMIT 200', (err, rows) => {
         if (err || !rows) callback({result: false, data: []});

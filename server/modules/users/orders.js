@@ -56,31 +56,41 @@ exports.CloseOrder = function(req, res)
                 
                 database.BeginTransaction(err => {
                     if (err) return onError(req, res, err.message || 'Database transaction error');
-
-                    g_constants.dbTables['orders'].delete(WHERE_ORDER, err => {
-                        if (err)
-                        {
-                            database.RollbackTransaction();
-                            return onError(req, res, err.message || 'Database Delete error');
-                        }
-                        
-                        g_constants.dbTables['balance'].update('balance="'+newBalance+'"', WHERE_BALANCE, err => {
+                    
+                    try
+                    {
+                        g_constants.dbTables['orders'].delete(WHERE_ORDER, err => {
                             if (err)
                             {
                                 database.RollbackTransaction();
-                                return onError(req, res, err.message || 'Database Update error');
+                                return onError(req, res, err.message || 'Database Delete error');
                             }
-                            database.EndTransaction();
-                            //database.RollbackTransaction();
                             
-                            wallet.ResetBalanceCache(status.id);
-                            allOrders = {};
-                            if (userOrders[status.id])
-                                delete userOrders[status.id];
-                            
-                            onSuccess(req, res, {});
+                            g_constants.dbTables['balance'].update('balance="'+newBalance+'"', WHERE_BALANCE, err => {
+                                if (err)
+                                {
+                                    database.RollbackTransaction();
+                                    return onError(req, res, err.message || 'Database Update error');
+                                }
+                                database.EndTransaction();
+                                //database.RollbackTransaction();
+                                
+                                wallet.ResetBalanceCache(status.id);
+                                allOrders = {};
+                                if (userOrders[status.id])
+                                    delete userOrders[status.id];
+                                
+                                onSuccess(req, res, {});
+                            });
                         });
-                    });
+                        
+                    }
+                    catch(e)
+                    {
+                        database.RollbackTransaction();
+                        return onError(req, res, e.message);
+                    }
+
                 });
             })
         });
@@ -286,7 +296,7 @@ function AddOrder(status, WHERE, newBalance, req, res)
                 err => {
                     if (err)
                     {
-                        database.EndTransaction();
+                        database.RollbackTransaction();
                         onError(req, res, err.message || 'Database Insert error');
                         return;
                     }
