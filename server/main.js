@@ -77,10 +77,10 @@ app.set('view engine', 'ejs');
 
 require('./reqHandler.js').handle(app, g_constants.WEB_SOCKETS);
 
-/*process.on('uncaughtException', function (err) {
+process.on('uncaughtException', function (err) {
   console.error(err.stack);
   console.log("Node NOT Exiting...");
-});*/
+});
 
 app.use(function (err, req, res, next) {
     res.send(500, 'Something broke!');
