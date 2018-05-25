@@ -29,7 +29,7 @@ function onSubmit()
     $.post( "/support", $( '#support-form' ).serialize(), function( data ) {
         $('#loader').hide();
 
-        grecaptcha.reset();
+        if (grecaptcha) grecaptcha.reset();
         if (data.result != true)
         {
             //$('#alert-fail').text(data.message);

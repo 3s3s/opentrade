@@ -13,8 +13,8 @@ const log_file = require("fs").createWriteStream(__dirname + '/debug.log', {flag
 const log_stdout = process.stdout;
 
 console.log = function(d) { 
-  log_file.write(util.format(d) + '\n');
-  log_stdout.write(util.format(d) + '\n');
+//  log_file.write(util.format(d) + '\n');
+//  log_stdout.write(util.format(d) + '\n');
 };
 
 const app = express();
