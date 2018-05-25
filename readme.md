@@ -11,10 +11,10 @@ Step-by-step install instructions:
 
 ```
 sudo apt-get update
-sudo apt-get install build-essential libssl-dev -y
+sudo apt-get install build-essential libssl-dev curl -y
 curl -sL https://raw.githubusercontent.com/creationix/nvm/v0.31.0/install.sh -o install_nvm.sh
 bash install_nvm.sh
-reboot
+sudo reboot
 
 nvm install 6.0.0
 
