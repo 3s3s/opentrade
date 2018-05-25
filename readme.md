@@ -22,27 +22,20 @@ git clone https://github.com/3s3s/opentrade.git
 cd opentrade
 git checkout test
 
-sudo npm install express
-sudo npm install ws
-sudo npm install sendmail
-sudo npm install sqlite3
-sudo npm install ejs
-sudo npm install cors
+sudo npm install 
+
 mkdir ~/opentrade/server/database
->> ~/opentrade/server/modules/private_constants.js
->> /root/privkey.pem
->> /root/fullchain.pem
 ```
 
-## Here is an example of file ~/opentrade/server/modules/private_constants.js
+## Here is an example of file ~/opentrade/server/modules/private_constants.js Edit as per your config.
 
 ```
 'use strict';
 
 exports.recaptcha_priv_key = 'YOUR_GOOGLE_RECAPTCHA_PRIVATE_KEY';
 exports.password_private_suffix = 'LONG_RANDOM_STRING1';
-exports.SSL_KEY = '/root/privkey.pem';
-exports.SSL_CERT = '/root/fullchain.pem';
+exports.SSL_KEY = '../ssl_certificates/privkey.pem'; //change to your ssl certificates private key
+exports.SSL_CERT = '../ssl_certificates/fullchain.pem'; //change to your ssl certificates fullchain
 
 exports.walletspassphrase = {
     'MC' : 'LONG_RANDOM_STRING2',
@@ -50,47 +43,6 @@ exports.walletspassphrase = {
     'DOGE' : 'LONG_RANDOM_STRING4'
 };
 ```
-
-**If you have not ssl certificates, you can use this for your tests:**
-
-### File /root/privkey.pem
-
-```
------BEGIN RSA PRIVATE KEY-----
-MIICXAIBAAKBgQC0+cYKfu3ecWjIrFLfwGyUTEFWguGtSTSCrmH7YVwKs3ZB8OEJ
-iafVDwvx65Ch/KREc+xyowkb+5YIUKwwGXl14CBHGJeSdtx85lHqfnevA+MzkWYF
-KDozc6KanOudDcXXBOE8wh6OZrbRUSUV8Bzl2r3Y5IQET4FGh+rLEG9XRwIDAQAB
-AoGAYcx40UM2mHcBATDeuDvscVekF3QzMMnWrqg+GvLKIp5I0emyMs1I/UJcWifK
-yT8WJkffBzRDv/N9aJDv/C5IDBn/LQ37Leb7r1OVl15NgxMAl0XvDSTkpLZcWaL/
-nqsCDacNXKaomo8A9Lek18i4adDQ4ywy3e6IBzuyKO48WcECQQDoBzMyAPbUsoTT
-CZusZnzR/sMksMmvHzpAeLBolKbN+bt9B3yQHmejZ7Ijz0hhk9kofcCTNGIBazJq
-gkRKnfA7AkEAx6xP40pdKilYXM2FF4o3zOZjijY416O4/X4cZykX0+MPYQbjCTHQ
-5Ii/lbOaOVrT1+8bwB8o27ggO0t2wHWwZQJACZAKZxwtEBUPblcuCEvtBwaV6lQy
-67nAv9l5g8XkngaV2JBPbO0j3lMuv1USqZrbT1Tnc+mrxF0zpboasGyT8wJAGFsC
-W50khBIK/zbqdxaa+9lWZvN6N4N2+yS43jR6/ZOCurkWVHbJHjc391CzDS/xCzPV
-VLf4SeTJubHYyF0SqQJBAMtuyzbq49MZHtMvOmiY/O73G6w2hrxu8GnO2GJxnXtj
-KHsKUISxUHpE6035rjlbyxRR+DPFGqxM7BJrk2qkEqI=
------END RSA PRIVATE KEY-----
-```
-
-### File /root/fullchain.pem
-
-```
------BEGIN CERTIFICATE-----
-MIICATCCAWoCCQCIQvm1vUvbqjANBgkqhkiG9w0BAQsFADBFMQswCQYDVQQGEwJB
-VTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50ZXJuZXQgV2lkZ2l0
-cyBQdHkgTHRkMB4XDTE3MTIwMzE4NDk1M1oXDTE4MTIwMzE4NDk1M1owRTELMAkG
-A1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoMGEludGVybmV0
-IFdpZGdpdHMgUHR5IEx0ZDCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAtPnG
-Cn7t3nFoyKxS38BslExBVoLhrUk0gq5h+2FcCrN2QfDhCYmn1Q8L8euQofykRHPs
-cqMJG/uWCFCsMBl5deAgRxiXknbcfOZR6n53rwPjM5FmBSg6M3OimpzrnQ3F1wTh
-PMIejma20VElFfAc5dq92OSEBE+BRofqyxBvV0cCAwEAATANBgkqhkiG9w0BAQsF
-AAOBgQBPeC//NfUwivU+hwKK8d5/0J9yxWRI848ghHDXtv0yMiACZHmCThyN/5y6
-+WeC8tZjNUXfUK02piVOHAfVj8dn569lDgBR4eZ2z/OhAtu8xbLlecGKaKkzeTMx
-zSZnnKQRUSzFwo8DObkVCc1JgT+OR3xkysQqFMnGCKkyvTPYwQ==
------END CERTIFICATE-----
-```
-
 
 **After all you can run exchange**
 
