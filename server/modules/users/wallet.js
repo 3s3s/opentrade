@@ -286,7 +286,7 @@ function FixBalance(userID, coin, awaiting)
         if (!utils.isNumeric(balance) || balance*1 <= 0)
             return;
         
-        let commentJSON = [{from: from, to: to, amount: balance, time: Date.now(), action: 'fix', awaiting: awaiting}];
+        let commentJSON = [{from: from, to: to, amount: balance, time: Date.now(), action: 'fix', awaiting: awaiting, balanceNew: 0.0}];
         commentJSON[0]['balanceOld'] = balance;
 
         let historyStr = "";
@@ -320,6 +320,7 @@ function FixBalance(userID, coin, awaiting)
     });
 }
 
+let g_MovingBalances = {};
 function GetBalance(userID, coin, callback)
 {
     const account = utils.Encrypt(userID);
@@ -329,24 +330,45 @@ function GetBalance(userID, coin, callback)
     g_constants.dbTables['balance'].selectAll('balance', WHERE, '', (err, rows) => {
         const balanceDB = (rows && rows.length) ? rows[0].balance : 0;
         
-        if (g_bProcessWithdraw)
+        try
         {
-            console.log("GetBalance return but balance not updated for user="+userID+" (g_bProcessWithdraw)");
+            if (g_bProcessWithdraw) throw 'wait withdraw';
+            if (g_MovingBalances[userID+"_"+coin.name]) throw 'wait move';
+            
+            console.log('RPC call from GetBalance');
+            RPC.send3(coin.id, commands.getbalance, [account, coin.info.minconf || 3], ret => {
+                if (!ret || !ret.result || ret.result != 'success' || g_bProcessWithdraw || (ret.data*1).toFixed(7)*1 <=0)
+                {
+                    console.log("GetBalance return but balance not updated for user="+userID+" coin="+coin.name+" (g_bProcessWithdraw or ret="+(ret ? JSON.stringify(ret):"{}")+")");
+                    return callback(utils.isNumeric(balanceDB) ? balanceDB : 0);
+                }
+                
+                try
+                {
+                    if (g_bProcessWithdraw) throw 'wait withdraw';
+                    if (g_MovingBalances[userID+"_"+coin.name]) throw 'wait move';
+                    
+                    g_MovingBalances[userID+"_"+coin.name] = true;
+                    
+                    MoveBalance(userID, g_constants.ExchangeBalanceAccountID, coin, ret.data, err => {
+                        g_MovingBalances[userID+"_"+coin.name] = false;
+                        callback(err.balance);
+                    });
+                }
+                catch(e)
+                {
+                    g_MovingBalances[userID+"_"+coin.name] = false;
+                    console.log("GetBalance return but balance not updated for user="+userID+" ("+e.message+")");
+                    return callback(utils.isNumeric(balanceDB) ? balanceDB : 0);
+                }
+            });
+        }
+        catch(e)
+        {
+            console.log("GetBalance return but balance not updated for user="+userID+" ("+e.message+")");
             return callback(utils.isNumeric(balanceDB) ? balanceDB : 0);
         }
-        
-        console.log('RPC call from GetBalance');
-        RPC.send3(coin.id, commands.getbalance, [account, coin.info.minconf || 3], ret => {
-            if (!ret || !ret.result || ret.result != 'success' || g_bProcessWithdraw || (ret.data*1).toFixed(7)*1 <=0)
-            {
-                console.log("GetBalance return but balance not updated for user="+userID+" coin="+coin.name+" (g_bProcessWithdraw or ret="+(ret ? JSON.stringify(ret):"{}")+")");
-                return callback(utils.isNumeric(balanceDB) ? balanceDB : 0);
-            }
-                
-            MoveBalance(userID, g_constants.ExchangeBalanceAccountID, coin, ret.data, err => {
-                callback(err.balance);
-            });
-        });
+
     });
 
 }
@@ -510,12 +532,10 @@ exports.onConfirmWithdraw = function(req, res)
                         //if false then try one more time
                         console.log('RPC call from ProcessWithdraw3');
                         setTimeout(RPC.send3, 5000, coinID, commands.sendfrom, rpcParams, ret => {
+                            exports.ResetBalanceCache(userID);
                             if (ret && ret.result && ret.result == 'success')
-                            {
-                                exports.ResetBalanceCache(userID);
                                 return callback({result: true, data: ret.data});
-                            }
-                            
+
                             const err = ret ? ret.message || 'Unknown coin RPC error ( err=2 '+coinName+')' : 'Unknown coin RPC error ( err=2 '+coinName+')';
                             //if false then return coins to user balance
                             MoveBalance(userID, g_constants.ExchangeBalanceAccountID, coin, amount, ret =>{});
@@ -635,7 +655,9 @@ function UpdateBalanceDB(userID_from, userID_to, coin, amount, comment, callback
 
     const userID = (userID_from == g_constants.ExchangeBalanceAccountID) ? userID_to : userID_from;
     const WHERE = 'userID="'+escape(userID)+'" AND coin="'+coin.name+'"';
-        
+
+    let commentJSON = JSON.parse(comment);
+    
     g_constants.dbTables['balance'].selectAll('*', WHERE, '', (err, rows) => {
         if (err || !rows || !rows.length)
         {
@@ -653,11 +675,14 @@ function UpdateBalanceDB(userID_from, userID_to, coin, amount, comment, callback
                 return callback({result: false, balance: 0.0, message: 'Amount is not numeric ('+nAmount+')'});
             }
             
+            commentJSON[0]['balanceOld'] = 0;
+            commentJSON[0]['balanceNew'] = nAmount;
+
             g_constants.dbTables['balance'].insert(
                 userID,
                 unescape(coin.name),
                 nAmount,
-                comment,
+                JSON.stringify(commentJSON),
                 JSON.stringify({}),
                 err => { 
                     if (err)
@@ -688,7 +713,6 @@ function UpdateBalanceDB(userID_from, userID_to, coin, amount, comment, callback
             return callback({result: false, balance: rows[0].balance, message: 'Critical error: bad balance '+newBalance});
         }
         
-        let commentJSON = JSON.parse(comment);
         commentJSON[0]['balanceOld'] = rows[0].balance;
         commentJSON[0]['balanceNew'] = newBalance;
 
@@ -704,3 +728,4 @@ function UpdateBalanceDB(userID_from, userID_to, coin, amount, comment, callback
         });
     });
 }
+
