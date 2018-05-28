@@ -508,8 +508,7 @@ exports.onConfirmWithdraw = function(req, res)
                 const comment = JSON.stringify([{from: userAccount, to: address, amount: amount, time: Date.now()}]);
                 
                 console.log('RPC call from ProcessWithdraw1');
-        if (g_constants.walletpassphrase(coin.ticker)) {
-            walletPassPhrase = g_constants.walletpassphrase(coin.ticker);
+          if (g_constants.walletpassphrase(coin.ticker)) {
                 walletPassphrase = g_constants.walletpassphrase(coin.ticker);
                 RPC.send3(coinID, commands.walletpassphrase, [walletPassphrase, 60], ret => {
                     if ((!ret || !ret.result || ret.result != 'success') && ret.data && ret.data.length) {
