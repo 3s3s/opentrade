@@ -478,77 +478,78 @@ exports.onConfirmWithdraw = function(req, res)
 
     });
     
-    function ProcessWithdraw(userID, address, amount, coinName, callback)
-    {
-        const userAccount = utils.Encrypt(userID);
-        
-        g_constants.dbTables['coins'].selectAll('ROWID AS id, *', 'name="'+coinName+'"', '', (err, rows) => {
-            if (err || !rows || !rows.length)
-                return callback({result: false, message: 'Coin "'+unescape(coinName)+'" not found'});
-
-            try { rows[0].info = JSON.parse(utils.Decrypt(rows[0].info));}
-            catch(e) {}
-            
-            if (!rows[0].info || !rows[0].info.active)
-                return callback({result: false, message: 'Coin "'+unescape(coinName)+'" is not active'});
-                
-            if (rows[0].info.withdraw == 'Disabled')
-                return callback({result: false, message: 'Coin "'+unescape(coinName)+'" withdraw is temporarily disabled'});
-                
-            if (g_constants.share.tradeEnabled == false)
-                return callback({result: false, message: 'Trading is temporarily disabled'});
-
-            const coin = rows[0];
-            const coinID = rows[0].id;
-            
-            MoveBalance(g_constants.ExchangeBalanceAccountID, userID, coin, (amount*1+(rows[0].info.hold || 0.002)).toFixed(7)*1, ret => {
-                if (!ret || !ret.result)
-                    return callback({result: false, message: '<b>Withdraw error (1):</b> '+ ret.message});
-
-                const comment = JSON.stringify([{from: userAccount, to: address, amount: amount, time: Date.now()}]);
-                const walletPassphrase = g_constants.walletpassphrase(coin.ticker);
-                
-                console.log('RPC call from ProcessWithdraw1');
-                RPC.send3(coinID, commands.walletpassphrase, [walletPassphrase, 60], ret => {
-                    if ((!ret || !ret.result || ret.result != 'success') && ret.data && ret.data.length)
-                    {
-                        const err = ret.data;
-                        //if false then return coins to user balance
-                        MoveBalance(userID, g_constants.ExchangeBalanceAccountID, coin, amount, ret =>{});
-                        return callback({result: false, message: '<b>Withdraw error (2):</b> '+ err});
-                    }    
-                    
-                    const rpcParams = (coin.ticker == 'WAVI' || coin.ticker == 'DASH') ? 
-                        [userAccount, address, (amount*1).toFixed(7)*1, coin.info.minconf || 3, false, comment] :
-                        [userAccount, address, (amount*1).toFixed(7)*1, coin.info.minconf || 3, comment];
-                    
-                    console.log('RPC call from ProcessWithdraw2');
-                    RPC.send3(coinID, commands.sendfrom, rpcParams, ret => {
-                        if (ret && ret.result && ret.result == 'success')
-                        {
-                            exports.ResetBalanceCache(userID);
-                            return callback({result: true, data: ret.data});
-                        }
-                        //if false then try one more time
-                        console.log('RPC call from ProcessWithdraw3');
-                        setTimeout(RPC.send3, 5000, coinID, commands.sendfrom, rpcParams, ret => {
-                            exports.ResetBalanceCache(userID);
-                            if (ret && ret.result && ret.result == 'success')
-                                return callback({result: true, data: ret.data});
-
-                            const err = ret ? ret.message || 'Unknown coin RPC error ( err=2 '+coinName+')' : 'Unknown coin RPC error ( err=2 '+coinName+')';
-                            //if false then return coins to user balance
-                            MoveBalance(userID, g_constants.ExchangeBalanceAccountID, coin, amount, ret =>{});
-                            callback({result: false, message: '<b>Withdraw error (3):</b> '+ err});
-                        });
-                        
-                    });
-                });
-            });
-        });
-    }
 }
 
+function ProcessWithdraw(userID, address, amount, coinName, callback) {
+    const userAccount = utils.Encrypt(userID);
+
+    g_constants.dbTables['coins'].selectAll('ROWID AS id, *', 'name="' + coinName + '"', '', (err, rows) => {
+        if (err || !rows || !rows.length)
+            return callback({ result: false, message: 'Coin "' + unescape(coinName) + '" not found' });
+
+        try { rows[0].info = JSON.parse(utils.Decrypt(rows[0].info)); }
+        catch (e) { }
+
+        if (!rows[0].info || !rows[0].info.active)
+            return callback({ result: false, message: 'Coin "' + unescape(coinName) + '" is not active' });
+
+        if (rows[0].info.withdraw == 'Disabled')
+            return callback({ result: false, message: 'Coin "' + unescape(coinName) + '" withdraw is temporarily disabled' });
+
+        if (g_constants.share.tradeEnabled == false)
+            return callback({ result: false, message: 'Trading is temporarily disabled' });
+
+        const coin = rows[0];
+        const coinID = rows[0].id;
+
+        MoveBalance(g_constants.ExchangeBalanceAccountID, userID, coin, (amount * 1 + (rows[0].info.hold || 0.002)).toFixed(7) * 1, ret => {
+            if (!ret || !ret.result)
+                return callback({ result: false, message: '<b>Withdraw error (1):</b> ' + ret.message });
+
+            const comment = JSON.stringify([{ from: userAccount, to: address, amount: amount, time: Date.now() }]);
+
+
+            console.log('RPC call from ProcessWithdraw1');
+            if (g_constants.walletpassphrase(coin.ticker)) {
+                walletPassphrase = g_constants.walletpassphrase(coin.ticker);
+                RPC.send3(coinID, commands.walletpassphrase, [walletPassphrase, 60], ret => {
+                    if ((!ret || !ret.result || ret.result != 'success') && ret.data && ret.data.length) {
+                        const err = ret.data;
+                        //if false then return coins to user balance
+                        MoveBalance(userID, g_constants.ExchangeBalanceAccountID, coin, amount, ret => { });
+                        return callback({ result: false, message: '<b>Withdraw error (2):</b> ' + err });
+                    };
+                });
+            }
+
+            const rpcParams = (coin.ticker == 'WAVI' || coin.ticker == 'DASH') ?
+                [userAccount, address, (amount * 1).toFixed(7) * 1, coin.info.minconf || 3, false, comment] :
+                [userAccount, address, (amount * 1).toFixed(7) * 1, coin.info.minconf || 3, comment];
+
+            console.log('RPC call from ProcessWithdraw2');
+            RPC.send3(coinID, commands.sendfrom, rpcParams, ret => {
+                if (ret && ret.result && ret.result == 'success') {
+                    exports.ResetBalanceCache(userID);
+                    return callback({ result: true, data: ret.data });
+                }
+                //if false then try one more time
+                console.log('RPC call from ProcessWithdraw3');
+                setTimeout(RPC.send3, 5000, coinID, commands.sendfrom, rpcParams, ret => {
+                    exports.ResetBalanceCache(userID);
+                    if (ret && ret.result && ret.result == 'success')
+                        return callback({ result: true, data: ret.data });
+
+                    const err = ret ? ret.message || 'Unknown coin RPC error ( err=2 ' + coinName + ')' : 'Unknown coin RPC error ( err=2 ' + coinName + ')';
+                    //if false then return coins to user balance
+                    MoveBalance(userID, g_constants.ExchangeBalanceAccountID, coin, amount, ret => { });
+                    callback({ result: false, message: '<b>Withdraw error (3):</b> ' + err });
+                });
+
+            });
+            });
+        });
+    };
+    
 exports.ResetBalanceCache = function(userID)
 {
     g_CachedBalance = {};
