@@ -115,7 +115,7 @@ exports.SubmitOrder = function(req, res)
             if (err && err.result == false) return onError(req, res, err.message);
 
             const WHERE = req.body.order == 'buy' ? 
-                'coin="'+escape(g_constants.TRADE_MAIN_COIN)+'" AND userID="'+status.id+'"' :
+                'coin="'+escape(g_constants.share.TRADE_MAIN_COIN)+'" AND userID="'+status.id+'"' :
                 'coin="'+escape(req.body.coin)+'" AND userID="'+status.id+'"';
             
             g_constants.dbTables['balance'].selectAll('*', WHERE, '', (err, rows) => {
@@ -154,7 +154,7 @@ function IsValidBalance(balance)
 
 exports.GetReservedBalance = function(userID, coinName, callback)
 {
-    if (coinName != g_constants.TRADE_MAIN_COIN)
+    if (coinName != g_constants.share.TRADE_MAIN_COIN)
     {
         g_constants.dbTables['orders'].selectAll('SUM(amount) AS result', 'userID="'+userID+'" AND coin="'+coinName+'" '+'AND buysell="sell"', '', (err, rows) => {
             if (err || !rows) return callback({result: 'fail', message: err.message || 'Database error'});
@@ -203,7 +203,7 @@ let g_GetAllOrders_start = false;
 exports.GetAllOrders = function(coinsOrigin, callback)
 {
     let coins = [coinsOrigin[0], coinsOrigin[1]];
-    if (unescape(coins[0].name) == g_constants.TRADE_MAIN_COIN)
+    if (unescape(coins[0].name) == g_constants.share.TRADE_MAIN_COIN)
         coins = [coinsOrigin[1], coinsOrigin[0]];
     
     const coin0 = unescape(coins[0].name);
@@ -298,7 +298,7 @@ function AddOrder(status, WHERE, newBalance, req, res)
                 req.body.order,
                 amount.toFixed(8),
                 price.toFixed(8),
-                g_constants.TRADE_MAIN_COIN,
+                g_constants.share.TRADE_MAIN_COIN,
                 Date.now(),
                 JSON.stringify({}),
                 uuid,

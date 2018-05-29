@@ -24,13 +24,15 @@
     
     <script>
       'use strict';
-      const MAIN_COIN = "<%-MAIN_COIN%>";
-      const DEFAULT_PAIR = "<%-DEFAULT_PAIR%>";
-      const PORT_SSL = <%-portSSL%>;
+    
       const SHARE = JSON.parse('<%-JSON.stringify(share)%>');
       
       var grecaptcha;
       if (!SHARE.recaptchaEnabled) grecaptcha = null;
+      
+      const PORT_SSL = SHARE.my_portSSL;
+      const MAIN_COIN = SHARE.TRADE_MAIN_COIN;
+      const DEFAULT_PAIR = SHARE.TRADE_DEFAULT_PAIR;
     </script>
     <script src='/js/utils.js'></script>
 

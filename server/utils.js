@@ -324,10 +324,6 @@ exports.render = function(responce, page, info)
     render_info['debug'] = g_constants.DEBUG_MODE;
     render_info['lang'] = lang;
     
-    render_info['MAIN_COIN'] = g_constants.TRADE_MAIN_COIN;
-    render_info['DEFAULT_PAIR'] = g_constants.TRADE_DEFAULT_PAIR;
-    render_info['portSSL'] = g_constants.my_portSSL;
-    
     render_info['share'] = g_constants.share;
 
     responce.render(page, render_info);

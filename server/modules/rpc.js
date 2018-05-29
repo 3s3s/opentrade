@@ -4,7 +4,7 @@ const utils = require("../utils.js");
 const g_constants = require("../constants.js");
 const url = require('url');
 
-exports.send = function(coin, command, params, callback)
+function send(coin, command, params, callback)
 {
     if (command == 'dumpprivkey' || command == 'dumpwallet' || command == 'backupwallet')
         return callback({result: false, message: 'Forbidden command'});
@@ -57,18 +57,18 @@ exports.send = function(coin, command, params, callback)
     });
 }
 
-exports.send2 = function(coin, command, params, callback)
+exports.send2 = function(userID, coin, command, params, callback)
 {
     g_constants.dbTables['coins'].selectAll('ROWID AS id', 'name="'+coin+'"', '', (err, rows) => {
         if (err || !rows || !rows.length)
             return callback({result: false, message: 'Coin not found'});
 
-        exports.send3(rows[0].id, command, params, callback);
+        exports.send3(userID, rows[0].id, command, params, callback);
     });
 }
 
 let bWaitCoin = {};
-exports.send3 = function(coinID, command, params, callback, counter)
+exports.send3 = function(userID, coinID, command, params, callback, counter)
 {
     if (command == 'move' && params[2]*1 <= 0)
         return callback({result: false, message: 'Invalid move amount'});
@@ -90,9 +90,9 @@ exports.send3 = function(coinID, command, params, callback, counter)
         }
         if (count == 0) console.log('Wait coin '+coinID+' RPC queue. command='+command)
         
-        return setTimeout(exports.send3, 1000, coinID, command, params, callback, count+1);
+        return setTimeout(exports.send3, 1000, userID, coinID, command, params, callback, count+1);
     }
-    console.log('Coin '+coinID+' started RPC command='+command)
+    console.log('Coin '+coinID+' started RPC command='+command+" user="+userID);
     bWaitCoin[coinID] = {status: true, time: Date.now(), last_command: command};
     
     try
@@ -103,7 +103,7 @@ exports.send3 = function(coinID, command, params, callback, counter)
                 bWaitCoin[coinID] = {status: false, time: Date.now()};
                 return callback({result: false, message: 'Coin not found'});
             }
-            exports.send(rows[0], command, params, ret => {
+            send(rows[0], command, params, ret => {
                 bWaitCoin[coinID] = {status: false, time: Date.now()};
                 return setTimeout(callback, 100, ret);
             });
