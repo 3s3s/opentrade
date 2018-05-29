@@ -93,7 +93,7 @@ exports.onGetCoinBalance = function(req, res)
         
         g_constants.dbTables['balance'].selectAll('SUM(balance) AS sum_balance', 'coin="'+escape(coin)+'" AND balance>0', '', (err, rows) => {
             if (err || !rows || !rows.length) rows = [{sum_balance : 0}];
-            if (coin == g_constants.TRADE_MAIN_COIN)
+            if (coin == g_constants.share.TRADE_MAIN_COIN)
             {
                 g_constants.dbTables['orders'].selectAll('SUM(amount*price) AS blocked', 'buysell="buy"', '', (err2, rows2) => {
                     if (err2 || !rows2 || !rows2.length) rows2 = [{blocked : 0}];

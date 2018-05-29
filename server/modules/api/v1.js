@@ -83,29 +83,14 @@ exports.onGetMarkets = function(req, res)
             for (var i=0; i<rows.length; i++)
             {
                 rows[i].info = JSON.parse(utils.Decrypt(rows[i].info));
-                /*if (rows[i].ticker == g_constants.TRADE_MAIN_COIN_TICKER || rows[i].info.active != true)
-                {
-                    data.push({
-                        MarketCurrency: unescape(rows[i].ticker),
-                        "BaseCurrency": g_constants.TRADE_MAIN_COIN_TICKER,
-                        MarketCurrencyLong: unescape(rows[i].name),
-                        "BaseCurrencyLong": g_constants.TRADE_MAIN_COIN,
-                        "MinTradeSize": 0,
-                        "MarketName": g_constants.TRADE_MAIN_COIN_TICKER+"-"+unescape(rows[i].ticker),
-                        "IsActive": true,
-                        "Created": "2014-02-13T00:00:00",
-                        "info": rows[i].info,
-                    });
-                    continue;
-                }*/
-                    
+
                 data.push({
                     MarketCurrency: unescape(rows[i].ticker),
-                    "BaseCurrency": g_constants.TRADE_MAIN_COIN_TICKER,
+                    "BaseCurrency": g_constants.share.TRADE_MAIN_COIN_TICKER,
                     MarketCurrencyLong: unescape(rows[i].name),
-                    "BaseCurrencyLong": g_constants.TRADE_MAIN_COIN,
+                    "BaseCurrencyLong": g_constants.share.TRADE_MAIN_COIN,
                     "MinTradeSize": 0,
-                    "MarketName": g_constants.TRADE_MAIN_COIN_TICKER+"-"+unescape(rows[i].ticker),
+                    "MarketName": g_constants.share.TRADE_MAIN_COIN_TICKER+"-"+unescape(rows[i].ticker),
                     "IsActive": true,
                     "Created": "2014-02-13T00:00:00",
                     "info": rows[i].info,

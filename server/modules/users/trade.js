@@ -71,7 +71,7 @@ exports.onGetPair = function(ws, req, data)
 
 exports.GetLastCoinHistory = function(coin)
 {
-    if (!tradeHistory[coin.name] || !tradeHistory[coin.name].data) return GetTradeHistory([g_constants.TRADE_MAIN_COIN, coin.name], () => {});
+    if (!tradeHistory[coin.name] || !tradeHistory[coin.name].data) return GetTradeHistory([g_constants.share.TRADE_MAIN_COIN, coin.name], () => {});
     
     if (!tradeHistory[coin.name].data.length) 
         tradeHistory[coin.name].data.push({volume: 0.0, price: 0.0, fromBuyerToSeller: 0.0, prev_frombuyertoseller: 0.0, buysell: 'buy', prev_price: 0.0, prev_buysell: 'buy'});

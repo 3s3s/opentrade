@@ -58,7 +58,7 @@ exports.GetHistory = function(req, res)
         const account = utils.Encrypt(status.id);
         
         console.log('RPC call from GetHistory');
-        RPC.send3(escape(req.query.coinID), commands.listtransactions, [account, 100], ret => {
+        RPC.send3(status.id, escape(req.query.coinID), commands.listtransactions, [account, 100], ret => {
             if (!ret || !ret.result)
             {
                 onError(req, res, ret.message);
@@ -79,7 +79,7 @@ exports.GetAccountAddress = function(userID, coinName, callback)
     const account = utils.Encrypt(userID);
     
     console.log('RPC call from GetAccountAddress');        
-    RPC.send2(coinName, commands.getaccountaddress, [account], callback);
+    RPC.send2(userID, coinName, commands.getaccountaddress, [account], callback);
 }
 
 exports.onGetAddress = function(req, res)
@@ -174,7 +174,7 @@ exports.GetCoinWallet = function(socket, userID, coin, callback)
         coinsBalance[coin.id].time = TIME_NOW;
         
         console.log('RPC call from GetCoinWallet1');
-        RPC.send3(coin.id, commands.getbalance, ["*", 0], ret => {
+        RPC.send3(userID, coin.id, commands.getbalance, ["*", 0], ret => {
             if (!ret || !ret.result || ret.result != 'success') return;
                 
             coinsBalance[coin.id].balance = (ret.data*1).toFixed(7)*1;
@@ -195,7 +195,7 @@ exports.GetCoinWallet = function(socket, userID, coin, callback)
         if (socket  && (socket.readyState === WebSocket.OPEN)) socket.send(JSON.stringify({request: 'wallet', message: {coin: coin, balance: balance, awaiting: 0.0, hold: 0.0} }));
         
         console.log('RPC call from GetCoinWallet2');   
-        RPC.send3(coin.id, commands.getbalance, [account, 0], ret => {
+        RPC.send3(userID, coin.id, commands.getbalance, [account, 0], ret => {
             const awaiting0 = (!ret || !ret.result || ret.result != 'success') ? 0 : (ret.data*1).toFixed(7)*1;
             
             //const balance = (awaiting0 < 0) ? (balance0*1).toFixed(7)*1+awaiting0 : (balance0*1).toFixed(7)*1;
@@ -302,7 +302,7 @@ function FixBalance(userID, coin, awaiting)
                         return database.RollbackTransaction();
                     
                     console.log('RPC call from FixBalance');
-                    RPC.send3(coin.id, commands.move, [from, to, (balance*1).toFixed(7)*1, 0, JSON.stringify(commentJSON)], ret => {
+                    RPC.send3(userID, coin.id, commands.move, [from, to, (balance*1).toFixed(7)*1, 0, JSON.stringify(commentJSON)], ret => {
                         if (!ret || !ret.result || ret.result != 'success') 
                             return database.RollbackTransaction();
     
@@ -336,7 +336,7 @@ function GetBalance(userID, coin, callback)
             if (g_MovingBalances[userID+"_"+coin.name]) throw 'wait move';
             
             console.log('RPC call from GetBalance');
-            RPC.send3(coin.id, commands.getbalance, [account, coin.info.minconf || 3], ret => {
+            RPC.send3(userID, coin.id, commands.getbalance, [account, coin.info.minconf || 3], ret => {
                 if (!ret || !ret.result || ret.result != 'success' || g_bProcessWithdraw || (ret.data*1).toFixed(7)*1 <=0)
                 {
                     console.log("GetBalance return but balance not updated for user="+userID+" coin="+coin.name+" (g_bProcessWithdraw or ret="+(ret ? JSON.stringify(ret):"{}")+")");
@@ -509,8 +509,8 @@ exports.onConfirmWithdraw = function(req, res)
                 const walletPassphrase = g_constants.walletpassphrase(coin.ticker);
                 
                 console.log('RPC call from ProcessWithdraw1');
-                RPC.send3(coinID, commands.walletpassphrase, [walletPassphrase, 60], ret => {
-                    if ((!ret || !ret.result || ret.result != 'success') && ret.data && ret.data.length)
+                RPC.send3(userID, coinID, commands.walletpassphrase, [walletPassphrase, 60], ret => {
+                    if (walletPassphrase.length && (!ret || !ret.result || ret.result != 'success') && ret.data && ret.data.length)
                     {
                         const err = ret.data;
                         //if false then return coins to user balance
@@ -518,12 +518,12 @@ exports.onConfirmWithdraw = function(req, res)
                         return callback({result: false, message: '<b>Withdraw error (2):</b> '+ err});
                     }    
                     
-                    const rpcParams = (coin.ticker == 'WAVI' || coin.ticker == 'DASH') ? 
+                    const rpcParams = g_constants.IsDashFork(coin.ticker) ? 
                         [userAccount, address, (amount*1).toFixed(7)*1, coin.info.minconf || 3, false, comment] :
                         [userAccount, address, (amount*1).toFixed(7)*1, coin.info.minconf || 3, comment];
                     
                     console.log('RPC call from ProcessWithdraw2');
-                    RPC.send3(coinID, commands.sendfrom, rpcParams, ret => {
+                    RPC.send3(userID, coinID, commands.sendfrom, rpcParams, ret => {
                         if (ret && ret.result && ret.result == 'success')
                         {
                             exports.ResetBalanceCache(userID);
@@ -531,7 +531,7 @@ exports.onConfirmWithdraw = function(req, res)
                         }
                         //if false then try one more time
                         console.log('RPC call from ProcessWithdraw3');
-                        setTimeout(RPC.send3, 5000, coinID, commands.sendfrom, rpcParams, ret => {
+                        setTimeout(RPC.send3, 5000, userID, coinID, commands.sendfrom, rpcParams, ret => {
                             exports.ResetBalanceCache(userID);
                             if (ret && ret.result && ret.result == 'success')
                                 return callback({result: true, data: ret.data});
@@ -609,7 +609,7 @@ function MoveBalance(userID_from, userID_to, coin, amount, callback)
         }
         
         console.log('RPC call from MoveBalance userID='+userID+' coin='+coin.name+' move='+(amount*1).toFixed(7)*1);
-        RPC.send3(coin.id, commands.move, [from, to, (amount*1).toFixed(7)*1, coin.info.minconf || 3, JSON.stringify(commentJSON)], ret => {
+        RPC.send3(userID, coin.id, commands.move, [from, to, (amount*1).toFixed(7)*1, coin.info.minconf || 3, JSON.stringify(commentJSON)], ret => {
             console.log('return RPC call from MoveBalance userID='+userID+' coin='+coin.name+' move='+(amount*1).toFixed(7)*1);
             if (!ret || !ret.result || ret.result != 'success')
             {
