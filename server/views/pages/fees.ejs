@@ -20,28 +20,21 @@
                 <p class="card-text">All cryptocurrencies have a 0.0% commission.</p>
                 <hr>
                 <h3>Withdraw Commission</h3>
-                <p class="card-text">The commission is appointed by the coin wallet. To ensure withdraw we are freeze the minimum balance</p>
+                <p class="card-text">The commission is appointed by the coin blockchain. To ensure withdraw we are freeze the minimum balance</p>
                 <div class="container">
                     <div class='row'>
                         <div class='col-md-6'>
                             <table class='table w-30'>
                                 <thead>
                                     <tr>
+                                        <th></th>
                                         <th>Coin</th>
                                         <th>Min. balance</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>Dogecoin</td>
-                                        <td>2 DOGE</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Other</td>
-                                        <td>0.002</td>
-                                    </tr>
+                                <tbody id='id_fees'>
                                 </tbody>
-                            <table>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -54,6 +47,6 @@
 
 
     <% include ../partials/footer %>
-    <script src='/js/support.js'></script>
+    <script src='/js/fees.js'></script>
   </body>
 </html>

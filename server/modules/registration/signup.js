@@ -112,12 +112,9 @@ function Signup(req, res)
 function InsertNewUser(user, email, password, res)
 {
     const info = JSON.stringify({});
-    g_constants.dbTables['users'].insert(user, email, password, info, function(err) {
+    g_constants.dbTables['users'].insert(user, email, password, info, err => {
         if (err)
-        {
-            utils.render(res, 'pages/registration/signup_confirm', {error: true, message: 'Something wrong (( Please try again.'});
-            return;
-        }
+            return utils.render(res, 'pages/registration/signup_confirm', {error: true, message: 'Something wrong (( Please try again. ('+(err.message || JSON.stringify(err))+')'});
     });
     utils.render(res, 'pages/registration/signup_confirm', {error: false, message: 'Success. Registration confirmed!'});
 }

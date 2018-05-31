@@ -154,16 +154,19 @@ function SaveCoin(data, callback)
 
 function SendRPC(coin, command, params, callback)
 {
-    g_constants.dbTables['coins'].selectAll("*", "name='"+escape(coin)+"'", "", (err, rows) => {
+    g_constants.dbTables['coins'].selectAll("ROWID AS id, *", "name='"+escape(coin)+"'", "", (err, rows) => {
         if (err || !rows || !rows.length)
-        {
-            callback({result: false, data: {}});
-            return;
+            return callback({result: false, data: {}});
+
+        try {
+            if (command == 'getbalance' || command == 'getinfo' || command == 'getblockchaininfo')
+                RPC.send3(1, rows[0].id, command, params, callback);
+            else
+                callback({result: false, data: {}});
+        } 
+        catch(e) {
+            console.log(e.message, 1);
         }
-        if (command == 'getbalance' || command == 'getinfo' || command == 'getblockchaininfo')
-            RPC.send(rows[0], command, params, callback);
-        else
-            callback({result: false, data: {}});
     });
 }
 

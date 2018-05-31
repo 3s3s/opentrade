@@ -39,6 +39,7 @@ function validate()
 function onSubmit()
 {
     $('#loader').show();
+    $("html, body").animate({ scrollTop: 0 }, "slow");
     $.post( "/profile", $( '#profile-form' ).serialize(), function( data ) {
         $('#loader').hide();
         if (data.result != true)

@@ -12,12 +12,15 @@ const WebSocketServer = require('ws').Server;
 const log_file = require("fs").createWriteStream(__dirname + '/debug.log', {flags : 'w'});
 const log_stdout = process.stdout;
 
-console.log = function(d) { 
+console.log = function(d, userID) { 
     if (!g_constants.DEBUG_LOG)
         return;
 
   log_file.write(util.format(d) + '\n');
   log_stdout.write(util.format(d) + '\n');
+  
+  if (userID)
+    require("./utils").log_user(userID, d);
 };
 
 const app = express();

@@ -12,6 +12,7 @@ $(() => {
 function onSubmit()
 {
     $('#loader').show();
+    $("html, body").animate({ scrollTop: 0 }, "slow");
     $.post( "/login", $( '.login-form' ).serialize(), function( data ) {
         if (grecaptcha) grecaptcha.reset();
         

@@ -9,6 +9,7 @@ function ShowAPIKeys()
   $('#table_api_keys').empty();
   
   $('#loader').show();
+  $("html, body").animate({ scrollTop: 0 }, "slow");
   
   $.post( "/listapikeys", {data: 0}, data => {
     $('#loader').hide();
@@ -73,6 +74,7 @@ function UpdateKey(key, keyTableID)
   if ($('#'+keyTableID+'_withdraw').is(':checked')) param.withdraw = 1;
 
   $('#loader').show();
+  $("html, body").animate({ scrollTop: 0 }, "slow");
   
   $.post( "/editapikey", param, data => {
     $('#loader').hide();
@@ -95,39 +97,6 @@ $('#btn_add_key').on('click', e => {
       return;
     
     ShowAPIKeys();
-   /* const keyPub = data.result.pub;
-    const keyPriv = data.result.priv;
-    const keyTableID = (Math.random()*100000).toFixed(0);
-    
-    const buttonDelete = $('<button class="btn btn-primary" >Delete</button>').on('click', e => {
-      e.preventDefault();
-        
-      $('#alert-fail').hide();
-      $('#alert-success').hide();
-      $('#loader').show();
-      $.post( "/deleteapikey", {key: key}, data => {
-        $('#loader').hide();
-
-        $('#'+keyTableID).remove();
-      });
-    });
-
-    const keys = $('<table class="table apikeys"><tr><td>apikey='+keyPub+'</td></tr><tr><td>apisecret='+keyPriv+'</td></tr></table>')
-    const tr = $('<tr id="'+keyTableID+'"></tr>')
-          .append($('<td></td>').append(keys))
-          .append($('<td></td>').append(buttonRead))
-          .append($('<td></td>').append(buttonWrite))
-          .append($('<td></td>').append(buttonWithdraw))
-          .append($('<td></td>').append(buttonDelete))
-    
-    /*const tr = $('<tr id="'+keyTableID+'"></tr>')
-        .append($('<td></td>').text(keyPub))
-        .append($('<td></td>').append($('<input type="checkbox">')))
-        .append($('<td></td>').append($('<input type="checkbox">')))
-        .append($('<td></td>').append($('<input type="checkbox">')))
-        .append($('<td></td>').append(buttonDelete))*/
-        
-   // $('#table_api_keys').append(tr);
   });
     
 });
