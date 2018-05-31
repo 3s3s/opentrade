@@ -12,10 +12,17 @@ const util = require('util');
 const admin_utils = require("./modules/admin/utils.js");
 
 const balance_log_file = fs.createWriteStream(__dirname + '/balance_debug.log', {flags : 'w'});
+const log_file_user = require("fs").createWriteStream(__dirname + '/debug_user.log', {flags : 'w'});
 
 exports.balance_log = function(d) { 
   balance_log_file.write(util.format(d) + '\n');
 };
+exports.log_user = function(user, d) {
+    if (user != 1)
+        return;
+    
+    log_file_user.write(util.format(d) + '\n');
+}
 
 exports.Hash = function(str)
 {

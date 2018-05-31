@@ -72,6 +72,18 @@ $(() => {
   setInterval(IsNeadScroll, 5000);
 
   $('.staff_area').hide();
+  
+  const token = $('#id_token').val();
+  if (!token || !token.length)
+  {
+    $('#id_balance_spiner1').hide();
+    $('#id_balance_spiner2').hide();
+    $('#id_sell_balance').text("0");
+    $('#id_buy_balance').text("0");
+  }
+  
+  $('#id_buy_coin').text(utils.MAIN_COIN);
+  $('#id_sell_coin').text(g_CurrentPair);
 });
 
 function AddCoinInfo(info)
@@ -171,6 +183,7 @@ function AddOrder(order)
       return;
       
     $('#loader').show();
+    $("html, body").animate({ scrollTop: 0 }, "slow");
     $.post( "/submitorder", order, function( data ) {
         $('#loader').hide();
         if (data.result != true)
@@ -308,7 +321,7 @@ function UpdateMarket(message)
 //    const price = (message.coins[i].price*1).toFixed(8)*1;
     const price = (message.coins[i].fromBuyerToSeller/(message.coins[i].volume == 0 ? 1 : message.coins[i].volume)).toFixed(8)*1;
     const vol = (message.coins[i].volume*1).toFixed(8)*1;
-    const ch = message.coins[i].prev_frombuyertoseller ? (price - message.coins[i].prev_frombuyertoseller*1) : price;
+    const ch = message.coins[i].prev_frombuyertoseller ? ((price - message.coins[i].prev_frombuyertoseller*1) / (price != 0 ? price : 1))*100 : 100;
     
     const chColor = ch*1 < 0 ? "text-danger" : "text-success";
     
@@ -316,7 +329,7 @@ function UpdateMarket(message)
       .append($('<td>'+message.coins[i].ticker+'</td>'))
       .append($('<td>'+price+'</td>'))
       .append($('<td>'+vol+'</td>'))
-      .append($('<td><span class="'+chColor+'">'+(ch*1).toFixed(8)*1+'</span></td>'))
+      .append($('<td><span class="'+chColor+'">'+(ch*1).toFixed(2)+'</span></td>'))
       .css( 'cursor', 'pointer' )
       .on('click', e => {
         if (coinName == g_CurrentPair)
@@ -564,6 +577,7 @@ function UpdateUserOrders(userOrders)
     
     const close = $('<button type="button" class="btn btn-primary btn-sm">Close</button>').on('click', e => {
       $('#loader').show();
+      $("html, body").animate({ scrollTop: 0 }, "slow");
       $.post( "/closeorder", {orderID: orderID}, function( data ) {
         $('#loader').hide();
         if (data.result != true)
@@ -597,19 +611,21 @@ function UpdateBalance(message)
   {
     if (unescape(message.coin.name) == utils.MAIN_COIN)
     {
+      $('#id_balance_spiner1').hide();
       $('#id_buy_balance').empty();
       buyBalance = (message.balance*1.0).toFixed(8)*1;
       if (buyBalance < 0) buyBalance = 0.0;
       $('#id_buy_balance').text(buyBalance);
-      $('#id_buy_coin').text(utils.MAIN_COIN);
+      //$('#id_buy_coin').text(utils.MAIN_COIN);
     }
     if (unescape(message.coin.name) == g_CurrentPair)
     {
+      $('#id_balance_spiner2').hide();
       $('#id_sell_balance').empty();
       sellBalance = (message.balance*1.0).toFixed(8)*1;
       if (sellBalance < 0) sellBalance = 0.0;
       $('#id_sell_balance').text(sellBalance);
-      $('#id_sell_coin').text(g_CurrentPair);
+      //$('#id_sell_coin').text(g_CurrentPair);
     }
   }
 }
@@ -645,7 +661,6 @@ function UpdateSellComission()
 {
   const amount = $('#inputSellAmount').val() || 0;
   const price = $('#inputSellPrice').val() || 0;
-  const balance = $('#id_sell_balance').text() || 0;
   try 
   {
     const comission = utils.COMISSION*amount*price;

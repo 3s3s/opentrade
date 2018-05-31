@@ -14,9 +14,9 @@
             <p>You can <a href='/login'>login</a> to OpenTrade now.
         </div>
       </div>
-      <div class="row" <% var fail = ''; if (!error) fail = 'style="display:none;"'%> <%- fail %>>
+      <div class="row" <% var fail = ''; var errMessage = message || "(unknown)"; if (!error) fail = 'style="display:none;"'%> <%- fail %>>
         <div class="offset2 col-md-6">
-            <h2>Something wrong ((</h2>
+            <h2>Something wrong (( <%- errMessage%></h2>
             <p>Please try <a href='/signup'>Sign up</a> again.
         </div>
       </div>

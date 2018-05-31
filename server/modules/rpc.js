@@ -4,7 +4,7 @@ const utils = require("../utils.js");
 const g_constants = require("../constants.js");
 const url = require('url');
 
-function send(coin, command, params, callback)
+function send(userID, coin, command, params, callback)
 {
     if (command == 'dumpprivkey' || command == 'dumpwallet' || command == 'backupwallet')
         return callback({result: false, message: 'Forbidden command'});
@@ -23,7 +23,7 @@ function send(coin, command, params, callback)
     
     const parsed = url.parse(address, true);
     
-    console.log('rpcPostJSON ' + strJSON);
+    console.log('rpcPostJSON ' + strJSON, userID);
     utils.postString(parsed.hostname, {'nPort' : parsed.port, 'name' : parsed.protocol}, "/", headers, strJSON, result =>
     {
         if (result.data) {
@@ -52,7 +52,7 @@ function send(coin, command, params, callback)
                     {result: result.success, message: result.message || "", data: result.data} :
                     {result: result.success, message: result.message || "", data: result.message || ""};
         
-        console.log('rpcPostJSON: result:' + ret.result + " (message: " + (result.message || "")+" )");
+        console.log('rpcPostJSON: result:' + ret.result + " (message: " + (result.message || "")+" )", userID);
         return setTimeout(callback, 1, ret);
     });
 }
@@ -67,32 +67,46 @@ exports.send2 = function(userID, coin, command, params, callback)
     });
 }
 
+let mapUsersToRPC = {};
 let bWaitCoin = {};
 exports.send3 = function(userID, coinID, command, params, callback, counter)
 {
     if (command == 'move' && params[2]*1 <= 0)
         return callback({result: false, message: 'Invalid move amount'});
-    
+        
     const count = counter || 0;
-    
     if (count > 10)
     {
-        console.log('Coin '+coinID+' not responce. (counter > 10 sec) command='+command);
+        console.log('Coin '+coinID+' not responce. (counter > 10 sec) command='+command, userID);
         return setTimeout(callback, 1, {result: false, message: 'Coin RPC is not responded after 10 sec. Try later. '});
     }
-    
+
     if (bWaitCoin[coinID] && bWaitCoin[coinID].status && bWaitCoin[coinID].status == true)
     {
         if (bWaitCoin[coinID].time > Date.now() + 5000)
         {
-            console.log('Coin '+coinID+' not responce. delta='+(bWaitCoin[coinID].time - (Date.now()+5000))/1000 +' last_command='+bWaitCoin[coinID].last_command);
+            console.log('Coin '+coinID+' not responce. delta='+(bWaitCoin[coinID].time - (Date.now()+5000))/1000 +' last_command='+bWaitCoin[coinID].last_command, userID);
             return setTimeout(callback, 1, {result: false, message: 'Coin RPC is not responded. Try later.'+ ' '+ 'Coin '+coinID+' not responce. delta='+(bWaitCoin[coinID].time - (Date.now()+5000))/1000+' last_command='+bWaitCoin[coinID].last_command});
         }
-        if (count == 0) console.log('Wait coin '+coinID+' RPC queue. command='+command)
+        if (count == 0) console.log('Wait coin '+coinID+' RPC queue. command='+command, userID)
         
         return setTimeout(exports.send3, 1000, userID, coinID, command, params, callback, count+1);
     }
-    console.log('Coin '+coinID+' started RPC command='+command+" user="+userID);
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+////// Prevent to call same RPC more than once per 5 sec (for one user and one coin)
+    if (!mapUsersToRPC[userID]) mapUsersToRPC[userID] = {};
+    if (!mapUsersToRPC[userID][coinID]) mapUsersToRPC[userID][coinID] = {};
+    if (!mapUsersToRPC[userID][coinID][command]) mapUsersToRPC[userID][coinID][command] = {lastTime: 0};
+        
+    if (Date.now() - mapUsersToRPC[userID][coinID][command]['lastTime'] < 4500)
+    {
+        console.log('user='+userID+' is called command '+command+' less than once per 5 sec', userID);
+        return setTimeout(exports.send3, 5000, userID, coinID, command, params, callback, count+1);
+    }
+    mapUsersToRPC[userID][coinID][command]['lastTime'] = Date.now();
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    console.log('Coin '+coinID+' started RPC command='+command+" user="+userID, userID);
     bWaitCoin[coinID] = {status: true, time: Date.now(), last_command: command};
     
     try
@@ -103,7 +117,7 @@ exports.send3 = function(userID, coinID, command, params, callback, counter)
                 bWaitCoin[coinID] = {status: false, time: Date.now()};
                 return callback({result: false, message: 'Coin not found'});
             }
-            send(rows[0], command, params, ret => {
+            send(userID, rows[0], command, params, ret => {
                 bWaitCoin[coinID] = {status: false, time: Date.now()};
                 return setTimeout(callback, 100, ret);
             });

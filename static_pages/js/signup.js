@@ -38,6 +38,7 @@ function onSubmit()
 {
     $('#first-step').hide();
     $('#loader').show();
+    $("html, body").animate({ scrollTop: 0 }, "slow");
     $.post( "/signup", $( '#signup-form' ).serialize(), function( data ) {
         $('#loader').hide();
         $('#second-step').show();

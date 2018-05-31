@@ -1,5 +1,8 @@
 'use strict';
 
+let mapCoinBalance = {};
+let coinsCount = 10000;
+
 $(() => {
   utils.CreateSocket(onSocketMessage, onOpenSocket);
   
@@ -12,6 +15,13 @@ $(() => {
     utils.alert_success(unescape(messageSuccess));
   if (messageFail.length)
     utils.alert_fail(unescape(messageFail));
+    
+  $.getJSON('/api/v1/public/getmarkets', ret => {
+    if (ret.success != true || !ret.result.length)
+      return;
+            
+    coinsCount = ret.result.length;
+  });
 });
 
 function onSocketMessage(event)
@@ -42,6 +52,8 @@ function UpdateWallet(data)
     const id_awaiting = coin+"_awaiting";
     const id_onhold = coin+"_onhold";
     
+    mapCoinBalance[data.coin.ticker] = data.balance;
+    
     if ($('#'+escape(coin).replace('%', '_')).length)
     {
       $('#'+id_balance).text(data.balance+" "+data.coin.ticker);
@@ -60,6 +72,9 @@ function UpdateWallet(data)
     
     $('#id_wallet_body').append(
       $('<tr id="'+escape(coin).replace('%', '_')+'"></tr>').append(tdCoin).append(tdBalance).append(tdAwaiting).append(tdHold).append(tdDeposit));
+      
+    if (Object.keys(mapCoinBalance).length >= coinsCount)
+      $('#ballsWaveG').hide();
 }
 
 function CreateDepositArea(data)
@@ -69,7 +84,7 @@ function CreateDepositArea(data)
   const btnDeposit = $('<button class="btn btn-secondary m-1 align-middle" type="button">Deposit</button>')
     .on('click', e => { ShowDepositAddress(coin) });
   const btnWithdraw = $('<button class="btn btn-secondary m-1 align-middle" type="button">Withdraw</button>')
-    .on('click', e => { ShowWithdrawDialog(coin, data.coin.id) });
+    .on('click', e => { ShowWithdrawDialog(coin, data.coin.id, data.coin.ticker) });
   const btnHistory = $('<button class="btn btn-secondary m-1 align-middle" type="button">History</button>')
     .on('click', e => { ShowHistoryDialog(coin, data.coin.id) });
 
@@ -81,6 +96,7 @@ function ShowDepositAddress(coin)
   $('#alert-fail').hide();
   $('#alert-success').hide();
   $('#loader').show();
+  $("html, body").animate({ scrollTop: 0 }, "slow");
   $.post( "/getdepositaddress", {coin: coin}, data => {
     $('#loader').hide();
     if (!data || !data.result || !data.data || !data.data.length)
@@ -101,57 +117,70 @@ function ShowDepositAddress(coin)
   });
 }
 
-function ShowWithdrawDialog(coin, coinID)
+function ShowWithdrawDialog(coin, coinID, coinTicker)
 {
   $('#alert-fail').hide();
   $('#alert-success').hide();
   
   var message = "";
   if (coin == '---TTC---')
-  {
       message = '<div class="p-3 mb-2 bg-danger text-white">WARNING!!! ---TTC--- IS NOT TittieCoin !!!</div>';
-  }
-  
-  modals.OKCancel(
-      'Withdraw your '+coin, 
-      '<div>'+
-        message +
-        '<form id="withdraw-form" class="paper-form" action="/withdraw" method="post" >'+
-          '<input type="hidden" name="coin", value="'+coin+'">'+
-          '<div class="form-group">'+
-            '<label for="id_address" class="control-label  requiredField">Your address<span class="asteriskField">*</span> </label>'+
-            '<input class="textinput textInput form-control" id="id_address" maxlength="100" name="address" type="text" required>'+
-            '<div class="invalid-feedback">This field is required.</div>'+
-          '</div>'+
-          '<div class="form-group">'+
-            '<label for="id_amount" class="control-label  requiredField">Amount<span class="asteriskField">*</span> </label>'+
-            '<input class="textinput textInput form-control" id="id_amount" maxlength="15" name="amount" type="number" step="0.0001" min="0.0001" required>'+
-            '<div class="invalid-feedback">This field is required.</div>'+
-          '</div>'+
-          '<div class="form-group">'+
-            '<label for="id_password" class="control-label  requiredField">Password<span class="asteriskField">*</span> </label>'+
-            '<input class="textinput textInput form-control" id="id_password" maxlength="100" name="password" type="password" required>'+
-            '<div class="invalid-feedback">This field is required.</div>'+
-          '</div>'+
-        '</form>'+
-      '</div>', 
-      result => {
-        if (result == 'cancel')
-          return;
-          
-        $('#loader').show();
-        
-        $.post( "/withdraw", $( '#withdraw-form' ).serialize(), function( data ) {
-          $('#loader').hide();
-          if (data.result != true)
-          {
-            utils.alert_fail(data.message);
+
+  $.getJSON( "/api/v1/public/getmarketsummary?market="+utils.MAIN_COIN+"-"+coinTicker, ret => {
+    
+    const hold = (ret && ret.success && ret.result && ret.result.coin_info && ret.result.coin_info.hold) ?
+      ret.result.coin_info.hold : 0;
+      
+    const available = (mapCoinBalance[coinTicker] || 0)*1 - hold*1;
+    const txtColor = available < 0 ? "text-danger" : "text-success";
+    
+    modals.OKCancel(
+        'Withdraw your '+coin, 
+        '<div>'+
+          message +
+          '<form id="withdraw-form" class="paper-form" action="/withdraw" method="post" >'+
+            '<input type="hidden" name="coin", value="'+coin+'">'+
+            '<div class="form-group">'+
+              '<label for="id_address" class="control-label  requiredField">Your address<span class="asteriskField">*</span> </label>'+
+              '<input class="textinput textInput form-control" id="id_address" maxlength="100" name="address" type="text" required>'+
+              '<div class="invalid-feedback">This field is required.</div>'+
+            '</div>'+
+            '<div class="form-group">'+
+              '<label for="id_amount" class="control-label  requiredField">Amount<span class="asteriskField">*</span> </label>'+
+              '<input class="textinput textInput form-control" aria-describedby="amountHelp" id="id_amount" maxlength="15" name="amount" type="number" step="0.0001" min="0.0001" required>'+
+              '<small id="amountHelp" class="form-text text-muted">Available for withdraw <strong class="'+txtColor+'">'+(available.toFixed(7))*1+'</strong> '+coinTicker+'</small>' +
+              '<div class="invalid-feedback">This field is required.</div>'+
+            '</div>'+
+            '<div class="form-group">'+
+              '<label for="id_password" class="control-label  requiredField">Password<span class="asteriskField">*</span> </label>'+
+              '<input class="textinput textInput form-control" id="id_password" maxlength="100" name="password" type="password" required>'+
+              '<div class="invalid-feedback">This field is required.</div>'+
+            '</div>'+
+          '</form>'+
+        '</div>', 
+        result => {
+          if (result == 'cancel')
             return;
-          }
-          utils.alert_success("<b>Withdraw almost done!</b> Check your email for the further instructions.");
-          //modals.OKCancel('Warning', "<div><h3>Almost done!</h3> Check your email for the further instructions.</div>", () => {$('#loader').hide();});
-        }, "json" );
-      });
+            
+          const withdraw = $('#id_amount').val()*1;
+          if (available <= 0 || !withdraw || withdraw > available)
+            return utils.alert_fail('Insufficient funds');
+            
+          $('#loader').show();
+          $("html, body").animate({ scrollTop: 0 }, "slow");
+          
+          $.post( "/withdraw", $( '#withdraw-form' ).serialize(), function( data ) {
+            $('#loader').hide();
+            if (data.result != true)
+              return utils.alert_fail(data.message);
+
+            utils.alert_success("<b>Withdraw almost done!</b> Check your email for the further instructions.");
+            //modals.OKCancel('Warning', "<div><h3>Almost done!</h3> Check your email for the further instructions.</div>", () => {$('#loader').hide();});
+          }, "json" );
+        });
+
+  });
+  
 }
 
 function ShowHistoryDialog(coin, coinID)
@@ -160,6 +189,7 @@ function ShowHistoryDialog(coin, coinID)
   $('#alert-success').hide();
 
   $('#loader').show();
+  $("html, body").animate({ scrollTop: 0 }, "slow");
   $.getJSON( "/history", {coinID: coinID}, ret => {
     $('#loader').hide();
     if (ret.result != true)

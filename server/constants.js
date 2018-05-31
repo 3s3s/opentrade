@@ -1,6 +1,6 @@
 'use strict';
 
-exports.DEBUG_LOG = false;
+exports.DEBUG_LOG = true;
 
 exports.share = {
    tradeEnabled: false,
@@ -141,15 +141,20 @@ exports.dbTables = [
         ],
         'commands' : 'FOREIGN KEY(coin, coin_pair) REFERENCES coins(name, name)'
    },
-/*   {
-       'name' : 'tx_journal',
+   {
+       'name' : 'referals',
        'cols' : [
-           ['from_to', 'TEXT UNIQUE PRIMARY KEY'],
-           ['amount', 'TEXT'],
-           ['status', 'TEXT'],
-           ['comment', 'TEXT']
-        ]
-   }*/
+           ['userFrom', 'TEXT'],
+           ['pageFrom', 'TEXT'],
+           ['IP', 'TEXT'],
+           ['timeIn', 'TEXT'],
+           ['timeReg', 'TEXT'],
+           ['userRegID', 'TEXT UNIQUE'],
+           ['history', 'TEXT'],
+           ['uid', 'TEXT UNIQUE']
+        ],
+        'commands': 'PRIMARY KEY (userRegID, uid)'
+   }
 ];
 
 exports.dbIndexes = [
