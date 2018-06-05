@@ -98,10 +98,11 @@ exports.send3 = function(userID, coinID, command, params, callback, counter)
     if (!mapUsersToRPC[userID][coinID]) mapUsersToRPC[userID][coinID] = {};
     if (!mapUsersToRPC[userID][coinID][command]) mapUsersToRPC[userID][coinID][command] = {lastTime: 0};
         
-    if (Date.now() - mapUsersToRPC[userID][coinID][command]['lastTime'] < 4500)
+    if (Date.now() - mapUsersToRPC[userID][coinID][command]['lastTime'] < 5000 && command == 'getbalance')
     {
         console.log('user='+userID+' is called command '+command+' less than once per 5 sec', userID);
-        return setTimeout(exports.send3, 5000, userID, coinID, command, params, callback, count+1);
+        //return setTimeout(exports.send3, 5000, userID, coinID, command, params, callback, count+1);
+        return setTimeout(callback, 1, {result: false, message: 'Coin RPC is called less than 5 sec. Try later. '});
     }
     mapUsersToRPC[userID][coinID][command]['lastTime'] = Date.now();
 //////////////////////////////////////////////////////////////////////////////////////////////////////

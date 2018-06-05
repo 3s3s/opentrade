@@ -460,3 +460,10 @@ pre {
 	}
 }
 /**************************************************/
+
+.currency {
+    position: absolute;
+    right: 20px;
+    top: 7px;
+    color: #9aa8b9;
+}

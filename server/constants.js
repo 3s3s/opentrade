@@ -1,5 +1,7 @@
 'use strict';
 
+const DashForks = ['DASH', 'WAVI'];
+
 exports.DEBUG_LOG = true;
 
 exports.share = {
@@ -22,9 +24,8 @@ exports.my_port = process.env.PORT || 40080;
 
 exports.SESSION_TIME = 3600*1000; //one hour
 
-const DashForks = ['DASH', 'WAVI'];
-
 exports.recaptcha_pub_key = "6LeX5SQUAAAAAKTieM68Sz4MECO6kJXsSR7_sGP1";
+const MAX_IP_CONNECTIONS = 100;
 
 exports.dbTables = [
    {
@@ -214,4 +215,27 @@ exports.IsDashFork = function(name)
         if (name == DashForks[i])
             return true;
     return false;
+}
+
+let g_IP_connections = {};
+exports.IsAllowedAddress = function(addr)
+{
+    if (PRIVATE.IsUnlimitedAddress && PRIVATE.IsUnlimitedAddress(addr))
+        return true;
+        
+    if (!g_IP_connections[addr]) g_IP_connections[addr] = {n: 0};
+    if (g_IP_connections[addr].n < 0) g_IP_connections[addr].n = 0;
+    if (g_IP_connections[addr].n > MAX_IP_CONNECTIONS)
+        return false;
+    
+    g_IP_connections[addr].n++;
+    return true;
+}
+exports.ReleaseAddress = function(addr)
+{
+    if (PRIVATE.IsUnlimitedAddress && PRIVATE.IsUnlimitedAddress(addr))
+        return;
+        
+    if (g_IP_connections[addr] && g_IP_connections[addr].n > 0) 
+        g_IP_connections[addr].n--;
 }

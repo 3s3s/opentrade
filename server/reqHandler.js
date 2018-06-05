@@ -93,6 +93,8 @@ exports.handle = function(app, wss)
     app.get('/confirmwithdraw/*', onConfirmWithdraw);
     
     app.get('/history', onGetHistory);
+    
+    app.get('/bitcoinaverage/ticker-all-currencies/', onLocalBitcoinsProxyAPI);
 
 
     wss.on('connection', onWebSocketConnection);
@@ -281,4 +283,16 @@ function onSubmitOrder(req, res)
 function onCloseOrder(req, res)
 {
     orders.CloseOrder(req, res);
+}
+
+let g_LB_data = {time: 0, data: {}};
+function onLocalBitcoinsProxyAPI(req, res)
+{
+    if (Date.now() - g_LB_data.time < 30000)
+        return utils.renderJSON(req, res, g_LB_data.data);
+    utils.getJSON('https://localbitcoins.com/bitcoinaverage/ticker-all-currencies/', (status, data) => {
+        g_LB_data.time = Date.now();
+        g_LB_data.data = data;
+        utils.renderJSON(req, res, data);
+    });
 }

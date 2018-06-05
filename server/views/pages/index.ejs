@@ -40,6 +40,13 @@
           <div class='container'>
             <div class='row'>
               <div class='col-md-12'>
+                <nav aria-label="breadcrumb">
+                  <ol id='id_MC_info' class="breadcrumb"></ol>
+                </nav>
+              </div>
+            </div>
+            <div class='row'>
+              <div class='col-md-12'>
                 <div id='chart_legend'></div>
                 <div id="chart_div" style="height:400"></div>
               </div>
@@ -133,25 +140,29 @@
                 <div class="form-group row">
                   <label for="inputBuyAmount" class="col-md-4 col-form-label form-control-sm">Amount:</label>
                   <div class="col-md-8">
-                    <input type="text" class="form-control" id="inputBuyAmount" placeholder="0.0" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode == 46 || event.charCode == 0 ">
+                    <input type="text" class="form-control" id="inputBuyAmount" placeholder="0.0" aria-describedby="id_amount_buy" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode == 46 || event.charCode == 0 ">
+                    <span class="currency" id="id_amount_buy"></span>
                   </div>
                 </div>
                 <div class="form-group row">
                   <label for="inputBuyPrice" class="col-md-4 col-form-label form-control-sm">Price:</label>
                   <div class="col-md-8">
                     <input type="text" class="form-control" id="inputBuyPrice" placeholder="0.0" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode == 46 || event.charCode == 0 ">
+                    <span class="currency" id="id_price_buy"></span>
                   </div>
                 </div>
                 <div class="form-group row">
                   <label for="inputBuyComission" class="col-md-4 col-form-label form-control-sm">Comission:</label>
                   <div class="col-md-8">
                     <input type="text" class="form-control" id="inputBuyComission" readonly placeholder="0.0">
+                    <span class="currency" id="id_comission_buy"></span>
                   </div>
                 </div>
                 <div class="form-group row">
                   <label for="inputBuyTotal" class="col-md-4 col-form-label form-control-sm">Total:</label>
                   <div class="col-md-8">
                     <input type="text" class="form-control" id="inputBuyTotal" readonly placeholder="0.0">
+                    <span class="currency" id="id_total_buy"></span>
                   </div>
                 </div>
                 <button type="submit" class="btn btn-primary"><%-__('Buy')%></button>
@@ -213,24 +224,28 @@
                           <label for="inputSellAmount" class="col-md-4 col-form-label form-control-sm">Amount:</label>
                           <div class="col-md-8">
                             <input type="text" class="form-control" id="inputSellAmount" placeholder="0.0" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode == 46 || event.charCode == 0 ">
+                            <span class="currency" id="id_amount_sell"></span>
                           </div>
                         </div>
                         <div class="form-group row">
                           <label for="inputSellPrice" class="col-md-4 col-form-label form-control-sm">Price:</label>
                           <div class="col-md-8">
                             <input type="text" class="form-control" id="inputSellPrice" placeholder="0.0" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode == 46 || event.charCode == 0 ">
+                            <span class="currency" id="id_price_sell"></span>
                           </div>
                         </div>
                         <div class="form-group row">
                           <label for="inputSEllComission" class="col-md-4 col-form-label form-control-sm">Comission:</label>
                           <div class="col-md-8">
                             <input type="text" class="form-control" id="inputSellComission" readonly placeholder="0.0">
+                            <span class="currency" id="id_comission_sell"></span>
                           </div>
                         </div>
                         <div class="form-group row">
                           <label for="inputSellTotal" class="col-md-4 col-form-label form-control-sm">Total:</label>
                           <div class="col-md-8">
                             <input type="text" class="form-control" id="inputSellTotal" readonly placeholder="0.0">
+                            <span class="currency" id="id_total_sell"></span>
                           </div>
                         </div>
                         <button type="submit" class="btn btn-primary"><%-__('Sell')%></button>

@@ -3,9 +3,13 @@
 const utils = require("../../utils.js");
 const g_constants = require("../../constants.js");
 const WebSocket = require('ws');
+const mailer = require("../mailer");
 
 exports.Init = function()
 {
+    mailer.SendStartAppNotification(ret => {
+        console.log(ret.message);
+    })
     setInterval(exports.UpdateMarket, 10000);
 };
 
