@@ -48,9 +48,14 @@ httpListener.on('connection', function(socket) {
     socketMap.http[socketKey] = socket;
     socket.on('close', function() {
         /* remove socket when it is closed */
+        g_constants.ReleaseAddress(socketMap.http[socketKey].remoteAddress);
         delete socketMap.http[socketKey];
     });
+    
+    if (!g_constants.IsAllowedAddress(socket.remoteAddress))
+        socket.end();
 });
+
 httpsListener.on('connection', function(socket) {
     /* generate a new, unique socket-key */
     const socketKey = ++lastSocketKey;
@@ -58,8 +63,12 @@ httpsListener.on('connection', function(socket) {
     socketMap.https[socketKey] = socket;
     socket.on('close', function() {
         /* remove socket when it is closed */
+        g_constants.ReleaseAddress(socketMap.https[socketKey].remoteAddress);
         delete socketMap.https[socketKey];
     });
+    
+    if (!g_constants.IsAllowedAddress(socket.remoteAddress))
+        socket.end();
 });
 
 //httpListener.on('error', () => {});

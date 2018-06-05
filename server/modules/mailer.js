@@ -166,3 +166,64 @@ exports.SendWithdrawConfirmation = function(email, user, url, urlCheck, callback
     }
     
 }
+
+exports.SendStartAppNotification = function(callback)
+{
+    try
+    {
+        let isSent = false;
+        sendmail({
+            from: 'OpenTrade Mailer <'+g_constants.NOREPLY_EMAIL+'>',
+            sender: g_constants.NOREPLY_EMAIL,
+            to: g_constants.SUPPORT_EMAIL,
+            replyTo: unescape(g_constants.NOREPLY_EMAIL),
+            subject: 'OpenTrade process starting notification email',
+            html: unescape("OpenTrade started"),
+        }, 
+        (err, reply) => {
+            if (isSent)
+                return;
+            isSent = true;
+            if (err)
+            {
+                callback({error: true, message: 'Error with your mail server: '+err.message});
+                return;
+            }
+            callback({error: false, message: ''});
+        });        
+    }   
+    catch(err) {
+        callback({error: true, message: err.message})
+    }
+    
+}
+exports.SendAdminNotify = function(message, callback)
+{
+    try
+    {
+        let isSent = false;
+        sendmail({
+            from: 'OpenTrade Mailer <'+g_constants.NOREPLY_EMAIL+'>',
+            sender: g_constants.NOREPLY_EMAIL,
+            to: g_constants.SUPPORT_EMAIL,
+            replyTo: unescape(g_constants.NOREPLY_EMAIL),
+            subject: 'OpenTrade Admin activity notification email',
+            html: unescape(message),
+        }, 
+        (err, reply) => {
+            if (isSent)
+                return;
+            isSent = true;
+            if (err)
+            {
+                callback({error: true, message: 'Error with your mail server: '+err.message});
+                return;
+            }
+            callback({error: false, message: ''});
+        });        
+    }   
+    catch(err) {
+        callback({error: true, message: err.message})
+    }
+    
+}
