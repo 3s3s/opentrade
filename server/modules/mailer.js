@@ -6,7 +6,7 @@ const sendmail = require('sendmail')();
 
 exports.SendSignupConfirmation = function(email, url, urlCheck, callback)
 {
-    const subject = 'OpenTrade signup confirmation letter';
+    const subject = g_constants.MAILER_NAME+' signup confirmation letter';
 
     const urlHREF = "<a href='"+url+"'>"+url+"</a>";
     const confirmHREF = "<a href='"+urlCheck+"'>Click here to proceed with registration</a>";
@@ -53,7 +53,7 @@ exports.SendSignupConfirmation = function(email, url, urlCheck, callback)
 
 exports.SendPasswordResetConfirmation = function(email, user, url, urlCheck, callback)
 {
-    const subject = 'OpenTrade password reset confirmation';
+    const subject = g_constants.MAILER_NAME+' password reset confirmation';
 
     const confirmHREF = "<a href='"+urlCheck+"'>Click here to reset your password</a>";
 
@@ -104,7 +104,7 @@ exports.SendTicket = function(ticket, callback)
             sender: g_constants.NOREPLY_EMAIL,
             to: g_constants.SUPPORT_EMAIL,
             replyTo: unescape(ticket.email),
-            subject: 'Ticket from OpenTrades #'+ticket.id+": "+unescape(ticket.subject),
+            subject: g_constants.MAILER_NAME+' Ticket #'+ticket.id+": "+unescape(ticket.subject),
             html: unescape(ticket.message),
         }, 
         (err, reply) => {
@@ -127,7 +127,7 @@ exports.SendTicket = function(ticket, callback)
 
 exports.SendWithdrawConfirmation = function(email, user, url, urlCheck, callback)
 {
-    const subject = 'OpenTrade withdraw confirmation';
+    const subject = g_constants.MAILER_NAME+' withdraw confirmation';
 
     const confirmHREF = "<a href='"+urlCheck+"'>Click here to confirm withdraw</a>";
 
@@ -177,8 +177,8 @@ exports.SendStartAppNotification = function(callback)
             sender: g_constants.NOREPLY_EMAIL,
             to: g_constants.SUPPORT_EMAIL,
             replyTo: unescape(g_constants.NOREPLY_EMAIL),
-            subject: 'OpenTrade process starting notification email',
-            html: unescape("OpenTrade started"),
+            subject: g_constants.MAILER_NAME+' process starting notification email',
+            html: unescape(g_constants.START_MESSAGE),
         }, 
         (err, reply) => {
             if (isSent)
@@ -207,7 +207,7 @@ exports.SendAdminNotify = function(message, callback)
             sender: g_constants.NOREPLY_EMAIL,
             to: g_constants.SUPPORT_EMAIL,
             replyTo: unescape(g_constants.NOREPLY_EMAIL),
-            subject: 'OpenTrade Admin activity notification email',
+            subject: g_constants.MAILER_NAME+' Admin activity notification email',
             html: unescape(message),
         }, 
         (err, reply) => {
