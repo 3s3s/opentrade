@@ -51,15 +51,51 @@
                 Note: the nonce is not respected right now but will be enforced later.
                 <br><br>
                 <pre>
-$apikey='xxx';
-$apisecret='xxx';
+&lt?php
+
+$request = '/account/getbalance';
+$currency = 'MC';
+
+$apikey='__API_KEY__';
+$apisecret='__API_SECRET__';
 $nonce=time();
-$uri='https://trade.multicoins.org/api/v1/market/getopenorders?apikey='.$apikey.'&nonce='.$nonce;
+
+$uri='https://trade.multicoins.org/api/v1'.$request .'?apikey='.$apikey.'&nonce='.$nonce.'&market='.$market.'&currency='.$currency;
 $sign=hash_hmac('sha512',$uri,$apisecret);
 $ch = curl_init($uri);
 curl_setopt($ch, CURLOPT_HTTPHEADER, array('apisign:'.$sign));
 $execResult = curl_exec($ch);
-$obj = json_decode($execResult);                    
+$obj = json_decode($execResult);   
+?&gt                    
+                </pre>
+                <br><br>
+                <pre>
+'use strict';
+
+const API_PUB_KEY = "__YOUR_API_PUBLIC_KEY__";
+const API_PRIV_KEY = "__YOUR_API_PRIVATE_KEY__";
+
+GetOpenOrders('MC-DOGE', data => { console.log(JSON.stringify(data.result || data)); });
+
+function GetOpenOrders(market, callback)
+{
+    const nonce = Date.now()+Math.floor(Math.random() * (1000)) + 1;
+    const uri = 'https://trade.multicoins.org/api/v1/market/getopenorders?apikey='+API_PUB_KEY+'&nonce='+nonce+'&market='+market;
+    const parsed = require('url').parse(uri, true);
+    const signature = require('crypto').createHmac('sha512', API_PRIV_KEY).update(new Buffer(uri, 'utf-8')).digest('hex');
+    
+    const options = {
+        host: parsed.host,
+        path: parsed.path,
+        headers: { 'apisign': signature }
+    };
+    
+    require("https").request(options, res => {
+        let output = '';
+        res.on('data', chunk => { output += chunk; });
+        res.on('end', () => { return callback(JSON.parse(output)); });
+    }).end();
+};
                 </pre>
                 <hr>
                 <h3>API Reference</h3>

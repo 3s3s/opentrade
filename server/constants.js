@@ -8,7 +8,7 @@ const START_MESSAGE = 'OpenTrade started!';
 
 const DashForks = ['DASH', 'WAVI'];
 
-exports.DEBUG_LOG = false;
+exports.DEBUG_LOG = true;
 
 exports.share = {
    tradeEnabled: false,
