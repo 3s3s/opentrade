@@ -1,5 +1,11 @@
 'use strict';
 
+const SUPPORT_EMAIL = 'support@email.com';
+const NOREPLY_EMAIL = 'no-reply@email.com';
+
+const MAILER_NAME = 'OpenTrade Mailer';
+const START_MESSAGE = 'OpenTrade started!';
+
 const DashForks = ['DASH', 'WAVI'];
 
 exports.DEBUG_LOG = true;
@@ -16,9 +22,6 @@ exports.share = {
 };
 
 exports.TRADE_COMISSION = 0.001;
-
-exports.NOREPLY_EMAIL = 'no-reply@multicoins.org';
-exports.SUPPORT_EMAIL = 'ivanivanovkzv@gmail.com';
 
 exports.my_port = process.env.PORT || 40080;
 
@@ -190,6 +193,10 @@ exports.dbName = './database/sqlite.db';
 const PRIVATE = require("./modules/private_constants");
 exports.password_private_suffix = PRIVATE.password_private_suffix;
 exports.recaptcha_priv_key = PRIVATE.recaptcha_priv_key;
+exports.SUPPORT_EMAIL = PRIVATE.SUPPORT_EMAIL || SUPPORT_EMAIL;
+exports.NOREPLY_EMAIL = PRIVATE.NOREPLY_EMAIL || NOREPLY_EMAIL;
+exports.START_MESSAGE = PRIVATE.START_MESSAGE || START_MESSAGE;
+exports.MAILER_NAME = PRIVATE.MAILER_NAME || MAILER_NAME;
 
 exports.DONATORS = [
     {userID: 1, percent: 99},

@@ -78,6 +78,13 @@ $(() => {
   setInterval(UpdateMCFromLB, 30000);
 });
 
+$('#inputBuyTotal').change(e => {
+  UpdateBuyComissionFromTotal();
+});
+
+$('#inputSellTotal').change(e => {
+  UpdateSellComissionFromTotal();
+});
 function UpdateBuySellText()
 {
   $('#header_sell').text('Sell '+g_CurrentPair);
@@ -635,9 +642,19 @@ function UpdateOrders(orders)
     orders.buy = [{price: 0.0}];
   if (!orders.sell.length)
     orders.sell = [{price: 0.0}];
-    
-  $('#id_max_bid').text(utils.MakePrice(orders.buy[0].price)); //((orders.buy[0].price*1.0).toFixed(8)*1);
-  $('#id_max_ask').text(utils.MakePrice(orders.sell[0].price)); //((orders.sell[0].price*1.0).toFixed(8)*1);
+  
+  const txtBuyPrice = utils.MakePrice(orders.buy[0].price);
+  const txtSellPrice = utils.MakePrice(orders.sell[0].price);
+  
+  const askButton = $('<button type="button" class="p-0 btn btn-link"></button>').append(txtBuyPrice).on('click', e => {
+        $('#inputBuyPrice').val(txtBuyPrice);
+      })
+  const bidButton = $('<button type="button" class="p-0 btn btn-link"></button>').append(txtSellPrice).on('click', e => {
+        $('#inputSellPrice').val(txtSellPrice);
+      })
+  
+  $('#id_max_bid').empty().append(bidButton); //.text(utils.MakePrice(orders.buy[0].price)); //((orders.buy[0].price*1.0).toFixed(8)*1);
+  $('#id_max_ask').empty().append(askButton); //.text(utils.MakePrice(orders.sell[0].price)); //((orders.sell[0].price*1.0).toFixed(8)*1);
   
   if ($('#inputSellPrice').val().length == 0) $('#inputSellPrice').val($('#id_max_bid').text());
   if ($('#inputBuyPrice').val().length == 0) $('#inputBuyPrice').val($('#id_max_ask').text());
@@ -744,7 +761,6 @@ function UpdateBuyComission()
 {
   const amount = $('#inputBuyAmount').val() || 0;
   const price = $('#inputBuyPrice').val() || 0;
-  const balance = $('#id_buy_balance').text() || 0;
   try 
   {
     const comission = utils.COMISSION*amount*price;
@@ -757,9 +773,8 @@ function UpdateBuyComission()
 
 function UpdateBuyComissionFromTotal()
 {
-  const total = $('#inputBuyTotal').val()*1 || 0;
-  const price = $('#inputBuyPrice').val()*1 || 0;
-  //const balance = $('#id_buy_balance').text()*1 || 0;
+  const total = $('#inputBuyTotal').val()*1 || 0.0001;
+  const price = $('#inputBuyPrice').val()*1 || 0.0001;
   try 
   {
     const amount = (total / (price + utils.COMISSION*price)).toFixed(8)*1;
@@ -769,6 +784,21 @@ function UpdateBuyComissionFromTotal()
   }
   catch(e) {}
   
+  //UpdateBuyComission();
+}
+function UpdateSellComissionFromTotal()
+{
+  const total = $('#inputSellTotal').val()*1 || 0.0001;
+  const price = $('#inputSellPrice').val()*1 || 0.0001;
+  try 
+  {
+    const amount = (total / (price + utils.COMISSION*price)).toFixed(8)*1;
+    const comission = utils.COMISSION*amount*price;
+    $('#inputSellComission').val(comission.toFixed(8)*1);
+    $('#inputSellAmount').val(amount.toFixed(8)*1);
+  }
+  catch(e) {}
+  //UpdateSellComission();
 }
 
 function UpdateSellComission()

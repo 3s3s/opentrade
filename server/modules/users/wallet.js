@@ -339,7 +339,7 @@ function GetBalance(userID, coin, callback)
             RPC.send3(userID, coin.id, commands.getbalance, [account, coin.info.minconf || 3], ret => {
                 if (!ret || !ret.result || ret.result != 'success' || g_bProcessWithdraw || (ret.data*1).toFixed(7)*1 <=0)
                 {
-                    console.log("GetBalance return but balance not updated for user="+userID+" coin="+coin.name+" (g_bProcessWithdraw or ret="+(ret ? JSON.stringify(ret):"{}")+")");
+                    console.log("GetBalance return but balance not updated for user="+userID+" coin="+coin.name+" (g_bProcessWithdraw or ret="+(ret ? JSON.stringify(ret):"{}")+")", userID);
                     return callback(utils.isNumeric(balanceDB) ? balanceDB : 0);
                 }
                 
@@ -357,15 +357,15 @@ function GetBalance(userID, coin, callback)
                 }
                 catch(e)
                 {
-                    g_MovingBalances[userID+"_"+coin.name] = false;
-                    console.log("GetBalance return but balance not updated for user="+userID+" ("+e.message+")");
+                    if (e.message != 'wait move') g_MovingBalances[userID+"_"+coin.name] = false;
+                    console.log("GetBalance return but balance not updated for user="+userID+" ("+e.message+")", userID);
                     return callback(utils.isNumeric(balanceDB) ? balanceDB : 0);
                 }
             });
         }
         catch(e)
         {
-            console.log("GetBalance return but balance not updated for user="+userID+" ("+e.message+")");
+            console.log("GetBalance return but balance not updated for user="+userID+" ("+e.message+")", userID);
             return callback(utils.isNumeric(balanceDB) ? balanceDB : 0);
         }
 
@@ -539,9 +539,8 @@ exports.onConfirmWithdraw = function(req, res)
                             const err = ret ? ret.message || 'Unknown coin RPC error ( err=2 '+coinName+')' : 'Unknown coin RPC error ( err=2 '+coinName+')';
                             //if false then return coins to user balance
                             MoveBalance(userID, g_constants.ExchangeBalanceAccountID, coin, amount, ret =>{});
-                            callback({result: false, message: '<b>Withdraw error (3):</b> '+ err});
+                            return callback({result: false, message: '<b>Withdraw error (3):</b> '+ err});
                         });
-                        
                     });
                 });
             });

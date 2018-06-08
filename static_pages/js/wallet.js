@@ -102,20 +102,36 @@ function ShowDepositAddress(coin)
     if (!data || !data.result || !data.data || !data.data.length)
       return utils.alert_fail(data && data.message ? data.message : 'Unknown error/ Please try later');
     
-    var message = '<div><b>To load your account please send the coins to your address :</b><br>'+data.data[data.data.length-1]+'</div>';
+    const coinaddress = data.data[data.data.length-1];
+    const button = $('<button "id_button_copy" type="button" class="btn btn-light">&#x1f4cb;</button>').on('click', e => {
+      var copyText = document.querySelector("#id_coin_address");
+      copyText.select();
+      document.execCommand("copy");
+      alert("Address was copied to the clipboard");
+      //utils.copyTextToClipboard($("#id_coin_address").val(), err => {
+      //  if (err)
+      //    alert("Address was copied to the clipboard");
+      //}); 
+    });
+    let message = $('<div></div>').append(
+      $('<b>To load your account please send the coins to your address :</b><br>')).append( 
+      $('<div class="row align-items-center"></div>').append(
+        $('<div class="col-md-4"></div>').append(
+          $('<canvas id="id_coinQR"></canvas>'))).append(
+        $('<div class="input-group col-md-6"></div>').append(
+          $('<input id="id_coin_address" type="text" class="form-control" readonly value="'+coinaddress+'">')).append(
+          $('<div class="input-group-append"></div>').append(button)))).append(
+      $('<script src="/js/qrcode/build/qrcode.min.js"></script>' +
+      '<script>QRCode.toCanvas(document.getElementById("id_coinQR"), "'+coin.toLowerCase()+":"+coinaddress+'", error => {});</script>'));
     
-    if (coin == '---TTC---')
-    {
-      message += '<div class="p-3 mb-2 bg-danger text-white">WARNING!!! ---TTC--- IS NOT TittieCoin !!!</div>';
-    }
     if (coin == 'Bitcoin Cash')
-    {
-      message += '<div class="p-3 mb-2 bg-warning text-white"><a href="https://cashaddr.bitcoincash.org/" target="_blank">Convert to Legacy address format</a></div>';
-    }
-    
-    modals.OKCancel1('Load your '+coin, message);
+      message.append($('<div class="p-3 mb-2 bg-warning text-white"><a href="https://cashaddr.bitcoincash.org/" target="_blank">Convert to Legacy address format</a></div>'));
+
+    modals.OKCancel1('Load your '+coin, message, true);
   });
 }
+
+//$("id_button_copy").on("click", e => {utils.copyTextToClipboard($("#id_coin_address").val()); alert("Ready");})
 
 function ShowWithdrawDialog(coin, coinID, coinTicker)
 {

@@ -161,7 +161,7 @@
                 <div class="form-group row">
                   <label for="inputBuyTotal" class="col-md-4 col-form-label form-control-sm">Total:</label>
                   <div class="col-md-8">
-                    <input type="text" class="form-control" id="inputBuyTotal" readonly placeholder="0.0">
+                    <input type="text" class="form-control" id="inputBuyTotal" placeholder="0.0" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode == 46 || event.charCode == 0 ">
                     <span class="currency" id="id_total_buy"></span>
                   </div>
                 </div>
@@ -244,7 +244,7 @@
                         <div class="form-group row">
                           <label for="inputSellTotal" class="col-md-4 col-form-label form-control-sm">Total:</label>
                           <div class="col-md-8">
-                            <input type="text" class="form-control" id="inputSellTotal" readonly placeholder="0.0">
+                            <input type="text" class="form-control" id="inputSellTotal" placeholder="0.0" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode == 46 || event.charCode == 0 ">
                             <span class="currency" id="id_total_sell"></span>
                           </div>
                         </div>
