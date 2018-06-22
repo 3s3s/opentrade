@@ -4,6 +4,7 @@ const utils = require("../../utils.js");
 const g_constants = require("../../constants.js");
 
 const mailer = require("../mailer.js");
+const mail_gun = require('../mail-gun.js');
 
 let emailChecker = {};
 
@@ -73,6 +74,12 @@ exports.onSubmit = function(req, res)
             }
             SignupSuccess(req, res, {});
         });
+
+
+        //mail gun
+
+        mail_gun.SendMgSignupConfirmation(req.body['email'], "https://"+req.headers.host, urlCheck);
+
     }
 }
 

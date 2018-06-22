@@ -13,6 +13,7 @@ exports.onExit = function(req, res)
     utils.UpdateSession(0, token, () => {
         utils.render(res, 'pages/registration/logout', {status:{active: false}, redirect: '/login'});
     });
+    
 }
 
 exports.onSubmit = function(req, res)

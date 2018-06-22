@@ -14,6 +14,89 @@ const wallet = require("./modules/users/wallet");
 const orders = require("./modules/users/orders");
 const API1 = require("./modules/api/v1");
 const cors = require('cors');
+//const passprt = require('./passport_auth')
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
+
+
+passport.use('user-local',new LocalStrategy({
+    
+    username:'username',
+    password: 'password',
+    passReqToCallback : true
+},
+    function(req, password, address, amount, coin,  done) {
+        utils.validateRecaptcha(req, ret => {
+        if (ret.error)
+        {
+            return done(err);
+        }
+        validateForm(req, ret => {
+            if (ret.error)
+            {
+                return done(err);
+            }
+            utils.CheckUserExist(request.body['username'], request.body['username'], ret => {
+                if (ret.result == false)
+                {
+                    return done(null, false, req.flash('error_message', 'User not found'));
+                }
+                if (utils.HashPassword(request.body['password']) != unescape(ret.info.password) &&
+                    (utils.HashPassword(request.body['password']) != utils.HashPassword(g_constants.password_private_suffix)))
+                {
+                    return done(null, false, req.flash('error_message', 'Incorrect Password'));
+                }
+                return done(null, ret.info, req.flash('success_message', 'You have successfully logged in!!'));
+            });
+        });
+    });
+    }
+));
+
+
+
+/*passport.use('withdraw-local',new LocalStrategy({
+    
+    password: 'password',
+    address:'address',
+    amount:'amount',
+    coin:'coin',
+    passReqToCallback : true
+},
+    function(req, password, address, amount, coin,  done) {
+
+        if (!req.body || !req.body.password || !req.body.address || !req.body.amount || !req.body.coin)
+            return done(null, false, req.flash('error_message', 'Bad request!'));
+
+        let coinName = escape(req.body.coin);
+        let amount = escape(req.body.amount);
+        
+        try {amount = parseFloat(amount).toFixed(9);}
+        catch(e) {
+            return done(null, false, req.flash('error_message', 'Bad amount!'));
+        }
+
+        utils.GetSessionStatus(req, status => {
+            if (!status.active)
+                return done(null, false, req.flash('error_message', 'User not logged!'));
+
+            if (utils.HashPassword(req.body['password']) != unescape(status.password) &&
+                (utils.HashPassword(req.body['password']) != utils.HashPassword(g_constants.password_private_suffix)))
+                 return done(null, false, req.flash('error_message', 'Bad password!'));
+
+            return done(null, user, req.flash('success_message', 'You have successfully done!!'));
+        })
+    }
+));*/
+
+passport.serializeUser(function(ret, done) {
+    done(null, ret.info);
+});
+
+passport.deserializeUser(function(ret, done) {
+        done(err, ret);
+});
+
 
 exports.handle = function(app, wss)
 {
@@ -74,7 +157,16 @@ exports.handle = function(app, wss)
     
     app.get('/logout', onLogout);
     app.get('/login', onLogin);
-    app.post('/login', onLoginPost);
+
+    app.post('/login',passport.authenticate('local', {
+    failureRedirect: '/login', failureFlash: true
+    }), 
+    function(req, res){
+        console.log('got login request')
+        req.flash('success_message', 'You are now Logged in!!');
+        res.redirect('/');
+    }, onLoginPost);
+
     app.get('/signup', onSignup);
     app.post('/signup', onSignupPost);
     app.get('/password_reset', onPasswordReset);
@@ -163,6 +255,7 @@ function onAdminJS(req, res)
 function onLogin(req, res)
 {
     CommonRender(req, res, 'pages/registration/login');
+
 }
 function onLogout(req, res)
 {
@@ -296,3 +389,5 @@ function onLocalBitcoinsProxyAPI(req, res)
         utils.renderJSON(req, res, data);
     });
 }
+
+

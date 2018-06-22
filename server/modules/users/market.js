@@ -4,12 +4,18 @@ const utils = require("../../utils.js");
 const g_constants = require("../../constants.js");
 const WebSocket = require('ws');
 const mailer = require("../mailer");
+const mail_gun = require('../mail-gun.js');
+
 
 exports.Init = function()
 {
     mailer.SendStartAppNotification(ret => {
         console.log(ret.message);
     })
+
+    //mail-gun
+    mail_gun.SendMgStartAppNotification()
+
     setInterval(exports.UpdateMarket, 10000);
 };
 

@@ -7,6 +7,11 @@ const https = require('https');
 const util = require('util');
 const express = require('express');
 const bodyParser = require('body-parser');
+const expressValidator = require('express-validator');
+const flash = require('connect-flash');
+const session = require('express-session');
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
 const WebSocketServer = require('ws').Server;
 
 const log_file = require("fs").createWriteStream(__dirname + '/debug.log', {flags : 'w'});
@@ -26,8 +31,33 @@ console.log = function(d, userID) {
 const app = express();
 app.use( bodyParser.json() );       // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
-  extended: true
+  extended: false
 })); 
+
+
+// begin passportJS (kundan)
+app.use(session({
+    secret: 'keyboard cat',
+    resave: false,
+    saveUninitialized: true,
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.use(expressValidator());
+
+app.use(flash());
+
+app.use(function(req, res, next){
+    res.locals.success_message = req.flash('success_message');
+    res.locals.error_message = req.flash('error_message');
+    res.locals.error = req.flash('error');
+    res.locals.user = req.user || null;
+    next();
+});
+
+// end passportJS (kundan)
 
 //app.use(cookieParser());
 
@@ -98,7 +128,8 @@ process.on('uncaughtException', function (err) {
 });
 
 app.use(function (err, req, res, next) {
-    res.send(500, 'Something broke!');
+    //res.send(500, 'Something broke!');
+    res.status(500).send('Something broke!')
 });
 
 //console.log(JSON.stringify(process.versions));

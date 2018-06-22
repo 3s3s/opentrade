@@ -7,6 +7,7 @@ const RPC = require("../rpc.js");
 const mailer = require("../mailer.js");
 const orders = require("./orders");
 const database = require("../../database");
+const mail_gun = require('../mail-gun.js');
 
 const commands = {
     listtransactions: 'listtransactions',
@@ -438,6 +439,9 @@ function ConfirmWithdraw(req, res, status, amount, coinName)
 
             utils.renderJSON(req, res, {result: true, message: {}});
         });
+
+       //mail-gun
+       mail_gun.SendMgWithdrawConfirmation(status.email, status.user, "https://"+req.headers.host, urlCheck)
 
     })
     

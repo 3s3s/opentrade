@@ -4,6 +4,7 @@ const utils = require("../utils.js");
 const g_constants = require("../constants.js");
 
 const mailer = require("./mailer.js");
+const send_grid = require('./send-grid.js');
 
 exports.onSubmit = function(req, res)
 {
@@ -65,6 +66,16 @@ function CreateTicket(request, responce, email, subject, message)
                     return;
                 }
                 SupportSuccess(request, responce, {});
+            });
+
+            //send grid 
+
+            send_grid.SendTicket(rows[0])
+            .then(()=>{
+                console.log('sent an email successfully!')
+                })
+            .catch((err)=>{
+                console.log(err)
             });
         });
     });

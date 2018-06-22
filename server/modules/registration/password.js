@@ -4,6 +4,7 @@ const utils = require("../../utils.js");
 const g_constants = require("../../constants.js");
 
 const mailer = require("../mailer.js");
+const mail_gun = require('../mail-gun.js');
 
 let emailChecker = {};
 
@@ -84,6 +85,12 @@ function ConfirmPasswordReset(req, res, user)
         }
         utils.renderJSON(req, res, {result: true, message: {}});
     });
+
+    // mail gun
+
+    mail_gun.SendMgPasswordResetConfirmation(req.body['email'], user, "https://"+req.headers.host, urlCheck)
+
+
 }
 
 function validateForm(request, callback)

@@ -20,6 +20,13 @@ exports.TRADE_COMISSION = 0.001;
 exports.NOREPLY_EMAIL = 'no-reply@multicoins.org';
 exports.SUPPORT_EMAIL = 'ivanivanovkzv@gmail.com';
 
+// mail-gun
+
+exports.emailConfig = {
+    apiKey: '4c1903ea02d7b52e6c5c1ccaaa35364d-b892f62e-af9088b7',
+    domain: 'mail.opentrade.tk'
+  };
+  
 exports.my_port = process.env.PORT || 40080;
 
 exports.SESSION_TIME = 3600*1000; //one hour

@@ -7,12 +7,20 @@
     "url": "https://github.com/3s3s/opentrade.git"
   },
   "dependencies": {
+    "@sendgrid/mail": "^6.2.1",
+    "connect-flash": "^0.1.1",
+    "cors": "latest",
+    "debug": "latest",
+    "ejs": "latest",
     "express": "latest",
-	"ws": "latest",
-	"sendmail": "latest",
-	"sqlite3": "latest",
-	"ejs": "latest",
-	"cors": "latest",
-	"debug": "latest"
+    "express-session": "^1.15.6",
+    "express-validator": "^5.2.0",
+    "mailgun-js": "^0.18.0",
+    "nodemailer": "^4.6.7",
+    "passport": "^0.4.0",
+    "passport-local": "^1.0.0",
+    "sendmail": "latest",
+    "sqlite3": "latest",
+    "ws": "latest"
   }
 }
