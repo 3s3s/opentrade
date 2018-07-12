@@ -22,6 +22,7 @@ const chat_languages = ['ru', 'en'];
 var pairData = {};
 
 var coinNameToTicker = {};
+var coinTickerToName = {};
 
 var chartData = [];
 
@@ -55,6 +56,9 @@ function IsNeadScroll()
 
 
 $(() => {
+  if (RedirectToCurrentPair())
+    return;
+
   utils.CreateSocket(onSocketMessage, onOpenSocket);
   
   for (var i=0; i<chat_languages.length; i++)
@@ -65,10 +69,6 @@ $(() => {
         SendChatMessage();
   });
 
-  const currentPair = storage.getItem('CurrentPair');
-  if (currentPair != null)
-    g_CurrentPair = currentPair.value;
-  
   UpdateBuySellText();  
 
   setInterval(IsNeadScroll, 5000);
@@ -155,7 +155,7 @@ function AddCoinInfo(info)
   $('#coin_legend').text(g_CurrentPair);
   
   const p1 = $('<p><strong>Forum</strong> ANN: <a target="_blank" href="'+(info.result.coin_info.page || "")+'">'+g_CurrentPair+' @ bitcointalk</a></p>');
-  $('#coin_info').append(p1);
+  $('#coin_info').empty().append(p1);
 }
 
 function ShowLanguageChat()
@@ -274,6 +274,7 @@ function onOpenSocket()
   socket.send(JSON.stringify({request: 'getrole'}))
 
   setInterval(()=>{socket.send(JSON.stringify({request: 'getpair', message: [utils.MAIN_COIN, g_CurrentPair]}));}, 5000)
+  setInterval(() => {  socket.send(JSON.stringify({request: 'getchart', message: [utils.MAIN_COIN, g_CurrentPair]}));}, 60000)
 }
 
 function onSocketMessage(event)
@@ -363,6 +364,33 @@ function UpdateExchange(message)
   socket.send(JSON.stringify({request: 'getpair', message: [utils.MAIN_COIN, g_CurrentPair]}));
 }
 
+function RedirectToCurrentPair()
+{
+  const currentPair = storage.getItem('CurrentPair');
+  if (currentPair != null)
+    g_CurrentPair = currentPair.value;
+
+  const coinNameToTickerItem = storage.getItem('coinNameToTicker');
+  const coinTickerToNameItem = storage.getItem('coinTickerToName');
+  
+  if (coinNameToTickerItem != null) coinNameToTicker = coinNameToTickerItem.value;
+  if (coinTickerToNameItem != null) coinTickerToName = coinTickerToNameItem.value;
+
+  const uri = window.location.href.split("?")[0];
+  const posMarket  = uri.indexOf('/market/');
+  const pair = (posMarket == -1 && uri.split("-").length == 2) ?
+    coinNameToTicker[g_CurrentPair].ticker :
+    uri.split("-")[1];
+    
+  if (coinNameToTicker[g_CurrentPair] && coinTickerToName[pair] && pair != coinNameToTicker[g_CurrentPair].ticker)
+  {
+    storage.setItem('CurrentPair', coinTickerToName[pair].name);
+    location.reload(); 
+    return true;
+  }
+  return false;
+}
+
 function UpdateMarket(message)
 {
   if (!message || !message.coins || !message.coins.length)
@@ -374,6 +402,7 @@ function UpdateMarket(message)
     const coinName = unescape(message.coins[i].name);
     
     coinNameToTicker[coinName] = {ticker: message.coins[i].ticker};
+    coinTickerToName[message.coins[i].ticker] = {name: coinName};
     
     if (coinName == utils.MAIN_COIN)
       continue;
@@ -400,6 +429,11 @@ function UpdateMarket(message)
       .on('click', e => {
         if (coinName == g_CurrentPair)
           return;
+          
+        const MC = coinNameToTicker[utils.MAIN_COIN] ? coinNameToTicker[utils.MAIN_COIN].ticker || 'MC' : 'MC';
+        const BTC = coinNameToTicker[coinName].ticker;
+        
+        utils.ChangeUrl(document.title + "(" + coinName + ' market)', '/market/'+MC+'-'+BTC);
         storage.setItem('CurrentPair', coinName);
         location.reload(); 
       });
@@ -407,6 +441,12 @@ function UpdateMarket(message)
     $('#table-market').append(tr);
   }
   
+  storage.setItem('coinNameToTicker', coinNameToTicker);
+  storage.setItem('coinTickerToName', coinTickerToName);
+  
+  if (RedirectToCurrentPair())
+    return;
+
   if (!$('#id_buy_orders_header_price').length)
   {
     $('#id_buy_orders_header').append($('<th id="id_buy_orders_header_price">Price</th><th>'+coinNameToTicker[utils.MAIN_COIN].ticker+'</th><th>'+coinNameToTicker[g_CurrentPair].ticker+'</th>'))
@@ -414,6 +454,11 @@ function UpdateMarket(message)
   }
   
   UpdateBuySellTickers();
+  
+  const MC = coinNameToTicker[utils.MAIN_COIN] ? coinNameToTicker[utils.MAIN_COIN].ticker || 'MC' : 'MC';
+  const BTC = coinNameToTicker[g_CurrentPair].ticker;
+
+  utils.ChangeUrl(document.title + "(" + g_CurrentPair+' market)', '/market/'+MC+'-'+BTC);
 }
 
 function UpdateBuySellTickers()
@@ -816,7 +861,7 @@ function UpdateSellComission()
   
 }
 
-
+let g_TableLengthPrev = 0;
 function drawChart()
 {
   try
@@ -863,8 +908,13 @@ function drawChart()
       table.push([time, min/1000000, init/1000000, final/1000000, max/1000000]);
     }
     
-    if (!table.length)
+    if (!table.length || table.length < g_TableLengthPrev-2)
       return;
+      
+    g_TableLengthPrev = table.length;
+      
+    if (table.length > 24)
+      table = table.slice(table.length - 24);
       
     var data = google.visualization.arrayToDataTable(table, true);
     var options = {

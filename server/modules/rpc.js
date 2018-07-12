@@ -81,7 +81,8 @@ exports.send3 = function(userID, coinID, command, params, callback, counter)
         return setTimeout(callback, 1, {result: false, message: 'Coin RPC is not responded after 10 sec. Try later. '});
     }
 
-    if (bWaitCoin[coinID] && bWaitCoin[coinID].status && bWaitCoin[coinID].status == true)
+    if (bWaitCoin[coinID] && bWaitCoin[coinID].status && bWaitCoin[coinID].status == true && 
+        command != 'getaccountaddress' && command != 'sendfrom')
     {
         if (bWaitCoin[coinID].time > Date.now() + 5000)
         {
