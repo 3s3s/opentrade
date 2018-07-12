@@ -27,7 +27,7 @@ exports.Init = function(callback)
     function CreateIndex(indexObject)
     {
         g_db.run("CREATE INDEX IF NOT EXISTS "+indexObject.name+" ON "+indexObject.table+" ("+indexObject.fields+")", function(err){
-            if (err) throw err.message;
+            if (err) throw new Error(err.message);
         });
     }
     
@@ -155,8 +155,8 @@ exports.Init = function(callback)
         try {
             let query = 'UPDATE ' + tableName;
             
-            if (!SET || !SET.length)  throw "Table Update MUST have 'SET'";
-            if (!WHERE || !WHERE.length) throw "Table Update MUST have 'WHERE'";
+            if (!SET || !SET.length)  throw new Error("Table Update MUST have 'SET'");
+            if (!WHERE || !WHERE.length) throw new Error("Table Update MUST have 'WHERE'");
                 
             query += ' SET ' + SET;
             query += ' WHERE ' + WHERE;
@@ -176,7 +176,7 @@ exports.Init = function(callback)
     g_db.parallelize(function(){
         
         g_utils.ForEachSync(g_constants.dbTables, CreateTable, function(err) {
-            if (err) throw 'unexpected init db error 2';
+            if (err) throw new Error('unexpected init db error 2');
             
             if (g_constants.dbIndexes)
             {
@@ -205,7 +205,7 @@ exports.Init = function(callback)
                 globalCallback();
                 
         }, function(err, params, cbError){
-            if (err) throw 'unexpected init db error 1';
+            if (err) throw new Error('unexpected init db error 1');
             
             const i = params.nIndex;
             
@@ -285,7 +285,7 @@ exports.RollbackTransaction = function(callback)
 var g_memQueries = [];
 exports.addMemQuery = function(strQuery) 
 {
-    if (!strQuery || !strQuery.length) throw 'invlid SQL query';
+    if (!strQuery || !strQuery.length) throw new Error('invlid SQL query');
     
     g_memQueries.push(strQuery);
 };

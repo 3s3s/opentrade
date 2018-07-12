@@ -87,7 +87,7 @@ exports.CloseOrder = function(req, res)
                                 if (userOrders[status.id])
                                     delete userOrders[status.id];
                                 
-                                onSuccess(req, res, {});
+                                onSuccess(req, res, {"success" : true, "message" : "", "result" : null});
                             });
                         });
                         
@@ -191,12 +191,17 @@ exports.GetUserOrders = function(userID, coins, callback)
             WHERE += " ) ";
     }
     
-    g_constants.dbTables['orders'].selectAll('ROWID AS id, *', WHERE, 'ORDER BY time DESC LIMIT 20', (err, rows) => {
+    g_constants.dbTables['orders'].selectAll('ROWID AS id, *', WHERE, 'ORDER BY time DESC LIMIT 200', (err, rows) => {
         if (err)
             return callback({result: false, message: err.message || 'Unknown database error'});
 
         callback({result: true, data: rows});
     });
+}
+
+exports.ProcessExchangeForCoin = function(coinName, callback)
+{
+    
 }
 
 let g_GetAllOrders_start = false;
@@ -207,6 +212,11 @@ exports.GetAllOrders = function(coinsOrigin, callback)
         coins = [coinsOrigin[1], coinsOrigin[0]];
     
     const coin0 = unescape(coins[0].name);
+    
+    if (coin0 == 'Dogecoin')
+    {
+        var i = 0;
+    }
     if (coins.length != 2)
         return callback({result: false, message: 'Coins error'});
 
@@ -395,7 +405,8 @@ function ProcessExchange(data)
         var ret = null;
         for (var i=0; i<rows.length; i++)
         {
-            if (i > 100) return null;
+            if (i > 10000) 
+                break;
             
             if (first.id == rows[i] || (!utils.isNumeric(first.price) || (!utils.isNumeric(rows[i].price)))) 
                 continue;

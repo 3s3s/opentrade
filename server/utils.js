@@ -178,7 +178,7 @@ exports.ForEachSync = function(array, func, cbEndAll, cbEndOne)
     
     function Run(nIndex)
     {
-        if (nIndex >= array.length) throw 'error: ForEachSync_Run (nIndex >= array.length)';
+        if (nIndex >= array.length) throw new Error('error: ForEachSync_Run (nIndex >= array.length)');
         func(array, nIndex, onEndOne);
         
         function onEndOne(err, params)

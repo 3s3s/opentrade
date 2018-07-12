@@ -44,6 +44,7 @@ exports.handle = function(app, wss)
     app.get('/api/v1/account/getdepositaddress', cors(), API1.onAccountGetDepositAddress);
     app.get('/api/v1/account/getorder', cors(), API1.onAccountGetOrder);
     app.get('/api/v1/account/getorderhistory', cors(), API1.onAccountGetOrderHistory);
+    app.get('/api/v1/account/withdraw', cors(), API1.onAccountWithdraw);
     
 //////////////////
     app.post('/api/v1/market/buylimit', cors(), API1.onMarketBuylimit);
