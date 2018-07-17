@@ -8,7 +8,7 @@ const START_MESSAGE = 'OpenTrade started!';
 
 const DashForks = ['DASH', 'WAVI'];
 
-exports.DEBUG_LOG = false;
+exports.DEBUG_LOG = true;
 
 exports.share = {
    tradeEnabled: false,
@@ -158,6 +158,17 @@ exports.dbTables = [
            ['uid', 'TEXT UNIQUE']
         ],
         'commands': 'PRIMARY KEY (userRegID, uid)'
+   },
+   {
+       'name' : 'payments',
+       'cols' : [
+           ['userTo', 'INTEGER'],
+           ['userFrom', 'INTEGER'],
+           ['volume', 'TEXT'],
+           ['coin', 'TEXT'],
+           ['time', 'INTEGER'],
+           ['comment', 'TEXT']
+        ]
    }
 ];
 
