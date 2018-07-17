@@ -172,7 +172,6 @@ exports.dbTables = [
    }
 ];
 
-
 exports.dbIndexes = [
   {
     'name' : 'uid',
