@@ -168,8 +168,6 @@ exports.onGetOrderbook = function(req, res)
 
 exports.onGetMarketSummary = function(req, res)
 {
-    //return onError(req, res, 'Under construction');
-    
     const dataParsed = url.parse(req.url);
     if (!dataParsed || !dataParsed.query)
     {
@@ -265,12 +263,8 @@ exports.onGetMarketSummary = function(req, res)
     });
 }
 
-let g_onGetMarketHistory = 0;
 exports.onGetMarketHistory = function(req, res)
 {
-    if (g_onGetMarketHistory > 100)
-        return onError(req, res, 'Queue is full.');
-
     const dataParsed = url.parse(req.url);
     if (!dataParsed || !dataParsed.query)
         return onError(req, res, 'Bad request');
@@ -283,24 +277,19 @@ exports.onGetMarketHistory = function(req, res)
     if (!data || !data.length || data.length != 2)
         return  onError(req, res, 'Bad request. Parameter "market" is invalid');
 
-    //const MarketName = queryStr.market;
-    g_onGetMarketHistory++;
-    
+
     g_constants.dbTables['coins'].selectAll('name, ticker, info', 'ticker="'+data[1]+'"', '', (err, rows) => {
         try
         {
-            if (err || !rows) throw err && err.message ? err.message : 'unknown database error';
-            if (!rows.length) throw 'ticker '+data[1]+' not found';
+            if (err || !rows) throw new Error(err && err.message ? err.message : 'unknown database error');
+            if (!rows.length) throw new Error('ticker '+data[1]+' not found');
 
             const COIN = rows[0];
             const WHERE = 'coin="'+escape(COIN.name)+'"';
             
             g_constants.dbTables['history'].selectAll('ROWID AS id, *', WHERE, 'ORDER BY time DESC LIMIT 200', (err, rows) => {
                 if (err || !rows) 
-                {
-                    g_onGetMarketHistory--;
                     return onError(req, res, err && err.message ? err.message : 'unknown database error');
-                }
 
                 let retData = [];
                 
@@ -318,58 +307,45 @@ exports.onGetMarketHistory = function(req, res)
                     };
                     retData.push(data);
                 }
-                g_onGetMarketHistory--;
                 return onSuccess(req, res, retData);
             });
         }
-        catch(e)
-        {
-            g_onGetMarketHistory--;
+        catch(e) {
             return onError(req, res, e.message);
         }
     });
 }
 
-let g_SubmitOrder = 0;
 function SubmitOrder(req, res, buysell)
 {
-    if (g_SubmitOrder > 10)
-        return onError(req, res, 'API queue is full. Please try to call it letter');
-
-    g_SubmitOrder++;    
     try
     {
         const dataParsed = url.parse(req.url);
-        if (!dataParsed || !dataParsed.query || !req.headers['apisign']) throw 'Bad request';
+        if (!dataParsed || !dataParsed.query || !req.headers['apisign']) throw new Error('Bad request');
 
         const queryStr = querystring.parse(dataParsed.query);
-        if (!queryStr.apikey || !queryStr.nonce || !queryStr.market || !queryStr.quantity || !queryStr.rate) throw 'Bad request. Required parameter (apikey or nonce or market or quantity or rate) not found.';
+        if (!queryStr.apikey || !queryStr.nonce || !queryStr.market || !queryStr.quantity || !queryStr.rate) throw new Error('Bad request. Required parameter (apikey or nonce or market or quantity or rate) not found.');
     
         const currency = queryStr.market.split('-');
-        if (!currency.length || currency.length != 2) throw 'Bad request. Parameter currency is invalid.';
+        if (!currency.length || currency.length != 2) throw new Error('Bad request. Parameter currency is invalid.');
         
         utils.GetCoinFromTicker(currency[1], coin => {
             if (!coin || !coin.name) 
-            {
-                g_SubmitOrder--;
                 return onError(req, res, 'Coin ticker not found');
-            }
-                
+
             var fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
     
             CheckAPIkey(queryStr.apikey, req.headers['apisign'], fullUrl, ret => {
                 try
                 {
-                    if (ret.success == false) throw ret.message;
-                    if (ret.key.write == 0) throw 'apikey disabled for write';
+                    if (ret.success == false) throw new Error(ret.message);
+                    if (ret.key.write == 0) throw new Error('apikey disabled for write');
                     
                     const request = {
                         session_status: {active: true, id: ret.key.userid},
                         body: {order: buysell, coin: coin.name, amount: queryStr.quantity, price: queryStr.rate},
                         callback: function(ret)
                         {
-                            g_SubmitOrder--;
-                            
                             if (!ret || ret.result != true)
                                 return onError(req, res, ret ? ret.message || 'Unexpected error': 'Unexpected error');
                                 
@@ -378,17 +354,13 @@ function SubmitOrder(req, res, buysell)
                     };
                     orders.SubmitOrder(request, null);
                 }
-                catch(e)
-                {
-                    g_SubmitOrder--;
+                catch(e) {
                     return onError(req, res, e.message);
                 }
             })
         });    
     }
-    catch(e)
-    {
-        g_SubmitOrder--;
+    catch(e) {
         return onError(req, res, e.message);
     }
     
@@ -404,17 +376,12 @@ exports.onMarketSelllimit = function(req, res)
     SubmitOrder(req, res, 'sell');
 }
 
-let g_onMarketCancel = 0;
 exports.onMarketCancel = function(req, res)
 {
-    if (g_onMarketCancel > 10)
-        return onError(req, res, 'API queue is full. Please try to call it letter');
-
-    g_onMarketCancel++;    
     try
     {
         const dataParsed = url.parse(req.url);
-        if (!dataParsed || !dataParsed.query || !req.headers['apisign']) throw 'Bad request';
+        if (!dataParsed || !dataParsed.query || !req.headers['apisign']) throw new Error('Bad request');
 
         const queryStr = querystring.parse(dataParsed.query);
         if (!queryStr.apikey || !queryStr.nonce || !queryStr.uuid) throw 'Bad request. Required parameter (apikey or nonce or uuid) not found.';
@@ -425,23 +392,18 @@ exports.onMarketCancel = function(req, res)
         CheckAPIkey(queryStr.apikey, req.headers['apisign'], fullUrl, ret => {
             try
             {
-                if (ret.success == false) throw ret.message;
-                if (ret.key.write == 0) throw 'apikey disabled for write';
+                if (ret.success == false) throw new Error(ret.message);
+                if (ret.key.write == 0) throw new Error('apikey disabled for write');
                 
                 g_constants.dbTables['orders'].selectAll('ROWID AS id', 'uuid="'+queryStr.uuid+'"', '', (err, rows) => {
                     if (err || !rows || !rows.length) 
-                    {
-                        g_onMarketCancel--;
                         return onError(req, res, 'Order with this uuid not found');
-                    }
-    
+
                     const request = {
                         session_status: {active: true, id: ret.key.userid},
                         body: {orderID: rows[0].id},
                         callback: function(ret)
                         {
-                            g_onMarketCancel--;
-                                
                             if (!ret || ret.result != true)
                                 return onError(req, res, ret ? ret.message || 'Unexpected error': 'Unexpected error');
                                     
@@ -451,61 +413,45 @@ exports.onMarketCancel = function(req, res)
                     orders.CloseOrder(request, null);
                 });
             }
-            catch(e)
-            {
-                g_onMarketCancel--;
+            catch(e) {
                 return onError(req, res, e.message);
             }
         })
     }
-    catch(e)
-    {
-        g_onMarketCancel--;
+    catch(e) {
         return onError(req, res, e.message);
     }
 }
 
-let g_onMarketGetOpenOrders = 0;
 exports.onMarketGetOpenOrders = function(req, res)
 {
-    if (g_onMarketGetOpenOrders > 10)
-        return onError(req, res, 'API queue is full. Please try to call it letter');
-
-    g_onMarketGetOpenOrders++;    
     try
     {
         const dataParsed = url.parse(req.url);
-        if (!dataParsed || !dataParsed.query || !req.headers['apisign']) throw 'Bad request';
+        if (!dataParsed || !dataParsed.query || !req.headers['apisign']) throw new Error('Bad request');
 
         const queryStr = querystring.parse(dataParsed.query);
-        if (!queryStr.apikey || !queryStr.nonce || !queryStr.market) throw 'Bad request. Required parameter (apikey or nonce or market) not found.';
+        if (!queryStr.apikey || !queryStr.nonce || !queryStr.market) throw new Error('Bad request. Required parameter (apikey or nonce or market) not found.');
     
         const currency = queryStr.market.split('-');
-        if (!currency.length || currency.length != 2) throw 'Bad request. Parameter currency is invalid.';
+        if (!currency.length || currency.length != 2) throw new Error('Bad request. Parameter currency is invalid.');
         
         utils.GetCoinFromTicker(currency[1], coin => {
             if (!coin || !coin.name) 
-            {
-                g_onMarketGetOpenOrders--;
                 return onError(req, res, 'Coin ticker not found');
-            }
-                
+
             var fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
     
             CheckAPIkey(queryStr.apikey, req.headers['apisign'], fullUrl, ret => {
                 try
                 {
-                    if (ret.success == false) throw ret.message;
-                    if (ret.key.read == 0) throw 'apikey disabled for read';
+                    if (ret.success == false) throw new Error(ret.message);
+                    if (ret.key.read == 0) throw new Error('apikey disabled for read');
                     
                     orders.GetUserOrders(ret.key.userid, [coin], err => {
-                        g_onMarketGetOpenOrders--;
                         if (err.result != true) 
-                        {
-                            g_onMarketGetOpenOrders--;
                             return onError(req, res, err.message);
-                        }
-                        
+
                         let retData = [];
                         for (var i=0; i<err.data.length; i++)
                         {
@@ -524,73 +470,61 @@ exports.onMarketGetOpenOrders = function(req, res)
                     })
                         
                 }
-                catch(e)
-                {
-                    g_onMarketGetOpenOrders--;
+                catch(e) {
                     return onError(req, res, e.message);
                 }
             })
         });    
     }
-    catch(e)
-    {
-        g_onMarketGetOpenOrders--;
+    catch(e) {
         return onError(req, res, e.message);
     }
 }
 
-let g_onAccountGetBalance = 0;
 exports.onAccountGetBalance = function(req, res)
 {
-    if (g_onAccountGetBalance > 10)
-        return onError(req, res, 'API queue is full. Please try to call it letter');
-
-    g_onAccountGetBalance++;    
     try
     {
         const dataParsed = url.parse(req.url);
-        if (!dataParsed || !dataParsed.query || !req.headers['apisign']) throw 'Bad request';
+        if (!dataParsed || !dataParsed.query || !req.headers['apisign']) throw new Error('Bad request');
 
         const queryStr = querystring.parse(dataParsed.query);
-        if (!queryStr.apikey || !queryStr.nonce || !queryStr.currency) throw 'Bad request. Required parameter (apikey or nonce or currency) not found.';
+        if (!queryStr.apikey || !queryStr.nonce || !queryStr.currency) throw new Error('Bad request. Required parameter (apikey or nonce or currency) not found.');
     
         utils.GetCoinFromTicker(queryStr.currency, coin => {
             if (!coin || !coin.name) 
-            {
-                g_onAccountGetBalance--;
                 return onError(req, res, 'Coin ticker not found');
-            }
-                
+
             var fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
     
             CheckAPIkey(queryStr.apikey, req.headers['apisign'], fullUrl, ret => {
                 try
                 {
-                    if (ret.success == false) throw ret.message;
-                    if (ret.key.read == 0) throw 'apikey disabled for read';
+                    if (ret.success == false) throw new Error(ret.message);
+                    if (ret.key.read == 0) throw new Error('apikey disabled for read');
                     
                     wallet.GetCoinWallet(null, ret.key.userid, coin, data => {
-                        const message = JSON.parse(data).message;
-                            
-                        const balance = (message.balance || 0)*1; 
-                        const awaiting = (message.awaiting || 0)*1;
-                        const hold = (message.hold || 0)*1;
-                            
-                        g_onAccountGetBalance--;
-                        return onSuccess(req, res, {Currency: message.coin.ticker, Balance: (balance+awaiting+hold).toFixed(8)*1, Available: balance.toFixed(8)*1, Pending: awaiting.toFixed(8)*1});
+                        try {
+                            const message = JSON.parse(data).message;
+                                
+                            const balance = (message.balance || 0)*1; 
+                            const awaiting = (message.awaiting || 0)*1;
+                            const hold = (message.hold || 0)*1;
+                                
+                            return onSuccess(req, res, {Currency: message.coin.ticker, Balance: (balance+awaiting+hold).toFixed(8)*1, Available: balance.toFixed(8)*1, Pending: awaiting.toFixed(8)*1});
+                        }
+                        catch (e) {
+                            return onError(req, res, e.message);
+                        }
                     });
                 }
-                catch(e)
-                {
-                    g_onAccountGetBalance--;
+                catch(e) {
                     return onError(req, res, e.message);
                 }
             })
         });    
     }
-    catch(e)
-    {
-        g_onAccountGetBalance--;
+    catch(e) {
         return onError(req, res, e.message);
     }
         
@@ -674,7 +608,6 @@ exports.onEditAPIkey = function(req, res)
     }
 }
 
-let g_onAccountGetDepositAddress = 0;
 exports.onAccountGetDepositAddress = function(req, res)
 {
     const dataParsed = url.parse(req.url);
@@ -685,56 +618,128 @@ exports.onAccountGetDepositAddress = function(req, res)
     if (!queryStr.apikey || !queryStr.nonce || !queryStr.currency)
         return onError(req, res, 'Bad request. Required parameter (apikey or nonce or currency) not found.');
     
-    if (g_onAccountGetDepositAddress > 10)
-        return onError(req, res, 'API queue is full. Please try to call it letter');
-    
-    g_onAccountGetDepositAddress++;    
-
     utils.GetCoinFromTicker(queryStr.currency, coin => {
         if (!coin || !coin.name) 
-        {
-            g_onAccountGetBalance--;
             return onError(req, res, 'Coin ticker not found');
-        }
-                
+
         var fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
     
         CheckAPIkey(queryStr.apikey, req.headers['apisign'], fullUrl, ret => {
             try
             {
-                if (ret.success == false) throw ret.message;
-                if (ret.key.read == 0) throw 'apikey disabled for read';
+                if (ret.success == false) throw new Error(ret.message);
+                if (ret.key.read == 0) throw new Error('apikey disabled for read');
                     
                 wallet.GetAccountAddress(ret.key.userid, coin.name, ret => {
                     if (ret.result != 'success' || !ret.data) 
-                    {
-                        g_onAccountGetBalance--;
                         return onError(req, res, ret.message);
-                    }
-                        
+
                     onSuccess(req, res, {Currency: coin.ticker, Address: ret.data});
-                    g_onAccountGetBalance--;
                 });
             }
-            catch(e)
-            {
-                g_onAccountGetBalance--;
+            catch(e) {
                 return onError(req, res, e.message);
             }
         })
     });    
-        
-    //onError(req, res, 'getdepositaddress under construction');
 }
 
 exports.onAccountGetOrder = function(req, res)
 {
-    onError(req, res, 'getorder under construction');
+    try
+    {
+        const dataParsed = url.parse(req.url);
+        if (!dataParsed || !dataParsed.query || !req.headers['apisign']) throw new Error('Bad request');
+
+        const queryStr = querystring.parse(dataParsed.query);
+        if (!queryStr.apikey || !queryStr.nonce || !queryStr.uuid) throw 'Bad request. Required parameter (apikey or nonce or uuid) not found.';
+        if (!queryStr.uuid.length) throw 'Bad uuid';
+        
+        var fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
+    
+        CheckAPIkey(queryStr.apikey, req.headers['apisign'], fullUrl, ret => {
+            try
+            {
+                if (ret.success == false) throw new Error(ret.message);
+                if (ret.key.read == 0) throw new Error('apikey disabled for read');
+                
+                g_constants.dbTables['orders'].selectAll('ROWID AS id, *', 'uuid="'+queryStr.uuid+'"', '', (err, rows) => {
+                    if (err || !rows || !rows.length) 
+                        return onError(req, res, 'Order with this uuid not found');
+                    
+                    g_constants.dbTables['coins'].selectAll('name, ticker', 'name="'+rows[0].coin+'" OR name="'+rows[0].price_pair+'"', '', (err, r) => {
+                        if (err || !r || r.length != 2)
+                            return onError(req, res, 'Coin name error');
+                            
+                        const MC = r[0].name == rows[0].price_pair ? r[0].ticker : r[1].ticker;
+                        const BTC = r[0].name == rows[0].price_pair ? r[1].ticker : r[0].ticker;
+                        const time = new Date(rows[0].time*1);
+
+                        return onSuccess(req, res, {
+                            "OrderUuid" : rows[0].uuid || 0,
+                            "Exchange" : MC+"-"+BTC,
+                            "QuantityRemaining" : rows[0].amount,
+                            "Price" : rows[0].price,
+                            "Opened" : new Date(time).toISOString().slice(0, -1),
+                            "IsOpen" : true
+                        });
+                    })    
+                });
+            }
+            catch(e) {
+                return onError(req, res, e.message);
+            }
+        })
+    }
+    catch(e) {
+        return onError(req, res, e.message);
+    }
+
+    //onError(req, res, 'getorder under construction');
 }
 
 exports.onAccountGetOrderHistory = function(req, res)
 {
     onError(req, res, 'getorderhistory under construction');
+}
+
+exports.onAccountWithdraw = function(req, res)
+{
+    const dataParsed = url.parse(req.url);
+    if (!dataParsed || !dataParsed.query || !req.headers['apisign'])
+        return onError(req, res, 'Bad request');
+
+    const queryStr = querystring.parse(dataParsed.query);
+    if (!queryStr.apikey || !queryStr.nonce || !queryStr.currency)
+        return onError(req, res, 'Bad request. Required parameter (apikey or nonce or currency) not found.');
+    
+    if (!queryStr.quantity || !queryStr.address)
+        return onError(req, res, 'Bad request. Required parameter (quantity or address) not found.');
+
+    utils.GetCoinFromTicker(queryStr.currency, coin => {
+        if (!coin || !coin.name) 
+            return onError(req, res, 'Coin ticker not found');
+
+        var fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
+    
+        CheckAPIkey(queryStr.apikey, req.headers['apisign'], fullUrl, ret => {
+            try
+            {
+                if (ret.success == false) throw new Error(ret.message);
+                if (ret.key.withdraw == 0) throw new Error('apikey disabled for withdraw');
+                
+                wallet.ProcessWithdraw(ret.key.userid, queryStr.address, queryStr.quantity, coin.name, ret => {
+                    if (ret.error)
+                        return onError(req, res, ret.message);
+                        
+                    return onSuccess(req, res, {uuid: ret.data});
+                })
+            }
+            catch(e) {
+                return onError(req, res, e.message);
+            }
+        });
+    });
 }
 
 function CheckAPIkey(strKey, strSign, strQuery, callback)
@@ -743,8 +748,7 @@ function CheckAPIkey(strKey, strSign, strQuery, callback)
         if (err || !rows || !rows.length)
             return callback({success: false, message: 'apikey not found', read: 0, write: 0, withdraw: 0});
             
-        try
-        {
+        try {
             const info = JSON.parse(unescape(rows[0].info));
             if (!info.privKey)
                 return callback({success: false, message: 'apisecret not found', read: 0, write: 0, withdraw: 0});
@@ -755,11 +759,8 @@ function CheckAPIkey(strKey, strSign, strQuery, callback)
                 
             return callback({success: true, message: '', key: rows[0]});
         }
-        catch(e)
-        {
+        catch(e)  {
             return callback({success: false, message: e.message});
         }
-            
     });
-    
 }

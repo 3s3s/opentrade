@@ -77,6 +77,8 @@ function SendResponce(ws, req, client)
 
     if (client.request == "rpc_test")
         return coins.onTestRPC(ws, req, client.message);
+   /* if (client.request == "daemon_start")
+        return coins.onDaemonStart(ws, req, client.message);*/
 
     if (client.request == "getwallet")
         return wallet.onGetWallet(ws, req);

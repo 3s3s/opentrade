@@ -178,7 +178,7 @@ exports.ForEachSync = function(array, func, cbEndAll, cbEndOne)
     
     function Run(nIndex)
     {
-        if (nIndex >= array.length) throw 'error: ForEachSync_Run (nIndex >= array.length)';
+        if (nIndex >= array.length) throw new Error('error: ForEachSync_Run (nIndex >= array.length)');
         func(array, nIndex, onEndOne);
         
         function onEndOne(err, params)
@@ -212,8 +212,50 @@ exports.ForEachSync = function(array, func, cbEndAll, cbEndOne)
     }
 };
 
+exports.UpdateRef = function(IP, userID)
+{
+    const WHERE = "uid=(SELECT uid FROM referals WHERE timeReg='0' AND IP='"+IP+"' ORDER BY timeIn LIMIT 1)";
+    
+    console.log('UpdateRef WHERE='+WHERE);
+    g_constants.dbTables['referals'].update(
+        'timeReg="'+Date.now()+'", userRegID="'+userID+'"', 
+        WHERE,
+        err => {});
+}
+
+function InsertRef(req)
+{
+    const uuid = Math.random()*10000+"-"+Date.now()+"-"+exports.Encrypt(req.query['ref']);
+    const tmpUserID = (req.headers['x-forwarded-for'] || req.connection.remoteAddress) + "-" + (Date.now()/(600*1000)).toFixed(0);
+    
+    if (!exports.isNumeric(req.query['ref']))
+        return;
+    
+    g_constants.dbTables['users'].selectAll('ROWID AS id', 'ROWID='+escape(req.query['ref']), '', (err, rows) => {
+        if (err || !rows || rows.length != 1)
+            return;
+            
+        g_constants.dbTables['referals'].insert(
+            req.query['ref'],
+            req.headers.referer || "",
+            req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+            Date.now(),
+            0,
+            tmpUserID,
+            JSON.stringify({}),
+            uuid,
+            err => {}
+        );
+    });
+
+    //g_constants.dbTables['referals'].delete("timeReg = '0' AND timeIn < "+(Date.now()-24*3600*1000), err => {});
+}
+
 exports.GetSessionStatus = function(req, callback)
 {
+    if (req['query'] && req.query['ref'])
+        InsertRef(req);
+        
     if (req['session_status'])
         return callback(req['session_status']);
         

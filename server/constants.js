@@ -1,6 +1,6 @@
 'use strict';
 
-const SUPPORT_EMAIL = 'support@email.com'; 
+const SUPPORT_EMAIL = 'support@email.com';
 const NOREPLY_EMAIL = 'no-reply@email.com';
 
 const MAILER_NAME = 'OpenTrade Mailer';
@@ -12,7 +12,7 @@ exports.DEBUG_LOG = true;
 
 exports.share = {
    tradeEnabled: false,
-   recaptchaEnabled: false,
+   recaptchaEnabled: true,
    
    my_portSSL: 40443,
    
@@ -158,6 +158,17 @@ exports.dbTables = [
            ['uid', 'TEXT UNIQUE']
         ],
         'commands': 'PRIMARY KEY (userRegID, uid)'
+   },
+   {
+       'name' : 'payments',
+       'cols' : [
+           ['userTo', 'INTEGER'],
+           ['userFrom', 'INTEGER'],
+           ['volume', 'TEXT'],
+           ['coin', 'TEXT'],
+           ['time', 'INTEGER'],
+           ['comment', 'TEXT']
+        ]
    }
 ];
 

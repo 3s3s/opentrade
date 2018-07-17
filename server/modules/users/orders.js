@@ -87,7 +87,7 @@ exports.CloseOrder = function(req, res)
                                 if (userOrders[status.id])
                                     delete userOrders[status.id];
                                 
-                                onSuccess(req, res, {});
+                                onSuccess(req, res, {"success" : true, "message" : "", "result" : null});
                             });
                         });
                         
@@ -191,12 +191,17 @@ exports.GetUserOrders = function(userID, coins, callback)
             WHERE += " ) ";
     }
     
-    g_constants.dbTables['orders'].selectAll('ROWID AS id, *', WHERE, 'ORDER BY time DESC LIMIT 20', (err, rows) => {
+    g_constants.dbTables['orders'].selectAll('ROWID AS id, *', WHERE, 'ORDER BY time DESC LIMIT 200', (err, rows) => {
         if (err)
             return callback({result: false, message: err.message || 'Unknown database error'});
 
         callback({result: true, data: rows});
     });
+}
+
+exports.ProcessExchangeForCoin = function(coinName, callback)
+{
+    
 }
 
 let g_GetAllOrders_start = false;
@@ -207,6 +212,11 @@ exports.GetAllOrders = function(coinsOrigin, callback)
         coins = [coinsOrigin[1], coinsOrigin[0]];
     
     const coin0 = unescape(coins[0].name);
+    
+    if (coin0 == 'Dogecoin')
+    {
+        var i = 0;
+    }
     if (coins.length != 2)
         return callback({result: false, message: 'Coins error'});
 
@@ -395,7 +405,8 @@ function ProcessExchange(data)
         var ret = null;
         for (var i=0; i<rows.length; i++)
         {
-            if (i > 100) return null;
+            if (i > 10000) 
+                break;
             
             if (first.id == rows[i] || (!utils.isNumeric(first.price) || (!utils.isNumeric(rows[i].price)))) 
                 continue;
@@ -510,19 +521,40 @@ function ProcessExchange(data)
 
                 exports.AddBalance(buyOrder.userID, buyerChange, sellOrder.price_pair, err => {
                     callback(err);
-                    ProcessComission(comission, sellOrder.price_pair);
+                    ProcessComission(comission, sellOrder.price_pair, buyOrder.userID, fromBuyerToSeller);
                 });
             });
         });
     }
     
-    function ProcessComission(comission, price_pair)
+    function ProcessComission(comission, price_pair, buerID, fromBuyerToSeller)
     {
-        for (var i=0; i<g_constants.DONATORS.length; i++)
-        {
-            if (g_constants.DONATORS[i].percent && g_constants.DONATORS[i].userID)
-                exports.AddBalance(g_constants.DONATORS[i].userID, (comission*(g_constants.DONATORS[i].percent*1-1)) / 100.0, price_pair, () => {});
-        }
+        const WHERE = 'userRegID="'+buerID+'"';
+        g_constants.dbTables['referals'].selectAll('*', WHERE, '', (err, rows) => {
+            const affiliateFee = (!err && rows && rows.length == 1) ? (comission / 2).toFixed(6)*1 : 0;
+            const donatorsFee = (comission - affiliateFee).toFixed(7)*1;
+            
+            if (affiliateFee > 0 && utils.isNumeric(affiliateFee) && rows.length == 1)
+                exports.AddBalance(rows[0].userFrom, affiliateFee, price_pair, () => {}, buerID, 'Affiliate reward');
+
+            let newHistory = {};
+            try
+            {
+                newHistory = (rows && rows.length) ? JSON.parse(unescape(rows[0].history)) : {};
+                if (!newHistory['volumes']) 
+                    newHistory['volumes'] = [];
+                    
+                newHistory.volumes.push({time: Date.now(), volume: fromBuyerToSeller});
+                g_constants.dbTables['referals'].update('history="'+escape(JSON.stringify(newHistory))+'"', WHERE, err => {});
+            }
+            catch(e) {}
+            
+            for (var i=0; i<g_constants.DONATORS.length; i++)
+            {
+                if (g_constants.DONATORS[i].percent && g_constants.DONATORS[i].userID)
+                    exports.AddBalance(g_constants.DONATORS[i].userID, (donatorsFee*(g_constants.DONATORS[i].percent*1-1)) / 100.0, price_pair, () => {}, buerID, 'From OpenTrade comission');
+            }
+        });
     }
     
     function UpdateOrders(newBuyAmount, newSellAmount, buyOrderID, sellOrderID, callback)
@@ -542,7 +574,7 @@ function ProcessExchange(data)
     }
 }
 
-exports.AddBalance = function(userID, count, coin, callback)
+exports.AddBalance = function(userID, count, coin, callback, userFrom, comment)
 {
     if (count*1.0 == 0.0) return callback(null); //No need update balance
     if (!utils.isNumeric(count)) return callback(1); //Fatal error need rollback transaction
@@ -563,6 +595,19 @@ exports.AddBalance = function(userID, count, coin, callback)
         try {historyStr = JSON.stringify(JSON.parse(unescape(rows[0].history || {})).concat(JSON.stringify(commentJSON)));} catch(e){};
 
 /////////
+        if (userFrom && comment)
+        {
+            g_constants.dbTables['payments'].insert(
+                userID,
+                userFrom,
+                count,
+                unescape(coin),
+                Date.now(),
+                comment,
+                err => {}
+            );
+        }
+
         if (rows.length)
             return g_constants.dbTables['balance'].update('balance="'+balance+'", history="'+escape(historyStr)+'"', WHERE, callback);
 

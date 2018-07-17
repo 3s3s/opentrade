@@ -110,7 +110,7 @@ function GetCoins(coin1, coin2, callback)
             {
                 try { 
                     rows[i].info = JSON.parse(utils.Decrypt(rows[i].info));
-                    if (rows[i].info.active != true) throw 'Coin is not active'
+                    if (rows[i].info.active != true) throw new Error('Coin is not active')
                 }
                 catch(e) {
                     callback({result: false, message: e.message});
@@ -255,7 +255,7 @@ function GetChartData(data, callback)
     try
     {
         //g_constants.dbTables['history'].selectAll('fromSellerToBuyer AS volume, AVG(price*1000000) AS avg_10min, (time/360000) AS t10min', 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'"', 'GROUP BY t10min ORDER BY t10min DESC LIMIT 60', (err, rows) => {
-        g_constants.dbTables['history'].selectAll('fromSellerToBuyer AS volume, AVG((fromBuyerToSeller/fromSellerToBuyer)*1000000) AS avg_10min, (time/360000) AS t10min', 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'"', 'GROUP BY t10min ORDER BY t10min DESC LIMIT 60', (err, rows) => {
+        g_constants.dbTables['history'].selectAll('fromSellerToBuyer AS volume, AVG((fromBuyerToSeller/fromSellerToBuyer)*1000000) AS avg_10min, (time/360000) AS t10min', 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'"', 'GROUP BY t10min ORDER BY t10min DESC LIMIT 200', (err, rows) => {
             if (err || !rows) callback({result: false, data: []});
             
             if (chartData[data[1]]) delete chartData[data[1]];

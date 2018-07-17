@@ -50,6 +50,11 @@
                 the HMAC hash and include it under an <code>apisign</code> header. 
                 Note: the nonce is not respected right now but will be enforced later.
                 <br><br>
+<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#PHP_Example1" aria-expanded="false" aria-controls="PHP_Example1">
+    PHP example
+</button>   
+<div class="collapse" id="PHP_Example1">
+    <div class="card card-body">
                 <pre>
 &lt?php
 
@@ -60,7 +65,7 @@ $apikey='__API_KEY__';
 $apisecret='__API_SECRET__';
 $nonce=time();
 
-$uri='https://trade.multicoins.org/api/v1'.$request .'?apikey='.$apikey.'&nonce='.$nonce.'&market='.$market.'&currency='.$currency;
+$uri='https://trade.multicoins.org/api/v1'.$request .'?apikey='.$apikey.'&ampnonce='.$nonce.'&ampmarket='.$market.'&ampcurrency='.$currency;
 $sign=hash_hmac('sha512',$uri,$apisecret);
 $ch = curl_init($uri);
 curl_setopt($ch, CURLOPT_HTTPHEADER, array('apisign:'.$sign));
@@ -68,7 +73,15 @@ $execResult = curl_exec($ch);
 $obj = json_decode($execResult);   
 ?&gt                    
                 </pre>
+        
+    </div>
+</div>
                 <br><br>
+<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#Node_Example1" aria-expanded="false" aria-controls="Node_Example1">
+    node.js example
+</button>   
+<div class="collapse" id="Node_Example1">
+    <div class="card card-body">
                 <pre>
 'use strict';
 
@@ -80,7 +93,7 @@ GetOpenOrders('MC-DOGE', data => { console.log(JSON.stringify(data.result || dat
 function GetOpenOrders(market, callback)
 {
     const nonce = Date.now()+Math.floor(Math.random() * (1000)) + 1;
-    const uri = 'https://trade.multicoins.org/api/v1/market/getopenorders?apikey='+API_PUB_KEY+'&nonce='+nonce+'&market='+market;
+    const uri = 'https://trade.multicoins.org/api/v1/market/getopenorders?apikey='+API_PUB_KEY+'&ampnonce='+nonce+'&ampmarket='+market;
     const parsed = require('url').parse(uri, true);
     const signature = require('crypto').createHmac('sha512', API_PRIV_KEY).update(new Buffer(uri, 'utf-8')).digest('hex');
     
@@ -93,10 +106,12 @@ function GetOpenOrders(market, callback)
     require("https").request(options, res => {
         let output = '';
         res.on('data', chunk => { output += chunk; });
-        res.on('end', () => { return callback(JSON.parse(output)); });
-    }).end();
+        res.on('end', () => { return callback(JSON.parse(output)); }); }).end();
 };
                 </pre>
+        
+    </div>
+</div>
                 <hr>
                 <h3>API Reference</h3>
                 Our APIs are broken into distinct groups
@@ -329,7 +344,45 @@ function GetOpenOrders(market, callback)
 	}
     }                        
                     </pre>
-                    
+
+<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#Node_Example4" aria-expanded="false" aria-controls="Node_Example4">
+    node.js example
+</button>   
+<div class="collapse" id="Node_Example4">
+    <div class="card card-body">
+                <pre>
+'use strict';
+
+const API_PUB_KEY = "__YOUR_API_PUBLIC_KEY__";
+const API_PRIV_KEY = "__YOUR_API_PRIVATE_KEY__";
+
+BuyLimit('MC-BTC', 0.00001, 1135000, data => { console.log(JSON.stringify(data.result || data)); });
+
+function BuyLimit(market, quantity, rate, callback)
+{
+    const nonce = Date.now()+Math.floor(Math.random() * (1000)) + 1;
+    const uri = 'https://trade.multicoins.org/api/v1/market/buylimit?apikey='+API_PUB_KEY+'&ampnonce='+nonce+'&ampmarket='+market+'&ampquantity='+quantity+'&amprate='+rate;
+    const parsed = require('url').parse(uri, true);
+    const signature = require('crypto').createHmac('sha512', API_PRIV_KEY).update(new Buffer(uri, 'utf-8')).digest('hex');
+    
+    const options = {
+        host: parsed.host,
+        path: parsed.path,
+        headers: { 'apisign': signature }
+    };
+    
+    require("https").request(options, res => {
+        let output = '';
+        res.on('data', chunk => { output += chunk; });
+        res.on('end', () => { return callback(JSON.parse(output)); });
+    }).end();
+    
+}
+                </pre>
+        
+    </div>
+</div>
+<br><br>
                     <h5>/market/selllimit</h5>
                     <p>Used to place an sell order in a specific market. Use <code>selllimit</code> to place limit orders. Make sure you have the proper permissions set on your API keys for this call to work</p>
                     Parameters 
@@ -368,6 +421,45 @@ function GetOpenOrders(market, callback)
     }                        
                     </pre>
                     
+<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#Node_Example5" aria-expanded="false" aria-controls="Node_Example5">
+    node.js example
+</button>   
+<div class="collapse" id="Node_Example5">
+    <div class="card card-body">
+                <pre>
+'use strict';
+
+const API_PUB_KEY = "__YOUR_API_PUBLIC_KEY__";
+const API_PRIV_KEY = "__YOUR_API_PRIVATE_KEY__";
+
+SellLimit('MC-BTC', 0.00001, 11350000, data => { console.log(JSON.stringify(data.result || data)); });
+
+function SellLimit(market, quantity, rate, callback)
+{
+    const nonce = Date.now()+Math.floor(Math.random() * (1000)) + 1;
+    const uri = 'https://trade.multicoins.org/api/v1/market/selllimit?apikey='+API_PUB_KEY+'&ampnonce='+nonce+'&ampmarket='+market+'&ampquantity='+quantity+'&amprate='+rate;
+    const parsed = require('url').parse(uri, true);
+    const signature = require('crypto').createHmac('sha512', API_PRIV_KEY).update(new Buffer(uri, 'utf-8')).digest('hex');
+    
+    const options = {
+        host: parsed.host,
+        path: parsed.path,
+        headers: { 'apisign': signature }
+    };
+    
+    require("https").request(options, res => {
+        let output = '';
+        res.on('data', chunk => { output += chunk; });
+        res.on('end', () => { return callback(JSON.parse(output)); });
+    }).end();
+    
+}
+                </pre>
+        
+    </div>
+</div>
+<br><br>
+                    
                     <h5>/market/cancel</h5>
                     <p>Used to cancel a buy or sell order. </p>
                     Parameters 
@@ -393,7 +485,46 @@ function GetOpenOrders(market, callback)
         "result" : null
     }
                     </pre>
-                    
+
+<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#Node_Example6" aria-expanded="false" aria-controls="Node_Example6">
+    node.js example
+</button>   
+<div class="collapse" id="Node_Example6">
+    <div class="card card-body">
+                <pre>
+'use strict';
+
+const API_PUB_KEY = "__YOUR_API_PUBLIC_KEY__";
+const API_PRIV_KEY = "__YOUR_API_PRIVATE_KEY__";
+
+CancelOrder("1530078445865-2-0.6676880290983116", data => { console.log(JSON.stringify(data.result || data)); });
+
+function CancelOrder(uuid, callback)
+{
+    const nonce = Date.now()+Math.floor(Math.random() * (1000)) + 1;
+    const uri = 'https://trade.multicoins.org/api/v1/market/cancel?apikey='+API_PUB_KEY+'&nonce='+nonce+'&uuid='+uuid;
+    const parsed = require('url').parse(uri, true);
+    const signature = require('crypto').createHmac('sha512', API_PRIV_KEY).update(new Buffer(uri, 'utf-8')).digest('hex');
+    
+    const options = {
+        host: parsed.host,
+        path: parsed.path,
+        headers: { 'apisign': signature }
+    };
+    
+    require("https").request(options, res => {
+        let output = '';
+        res.on('data', chunk => { output += chunk; });
+        res.on('end', () => { return callback(JSON.parse(output)); });
+    }).end();
+    
+}
+                </pre>
+        
+    </div>
+</div>
+<br><br>
+
                     <h5>/market/getopenorders</h5>
                     <p>Get all orders that you currently have opened. </p>
                     Parameters 
@@ -433,6 +564,46 @@ function GetOpenOrders(market, callback)
     }
                         
                     </pre>
+
+<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#Node_Example7" aria-expanded="false" aria-controls="Node_Example7">
+    node.js example
+</button>   
+<div class="collapse" id="Node_Example7">
+    <div class="card card-body">
+                <pre>
+'use strict';
+
+const API_PUB_KEY = "__YOUR_API_PUBLIC_KEY__";
+const API_PRIV_KEY = "__YOUR_API_PRIVATE_KEY__";
+
+GetOpenOrders('MC-BTC', data => { console.log(JSON.stringify(data.result || data)); });
+
+function GetOpenOrders(market, callback)
+{
+    const nonce = Date.now()+Math.floor(Math.random() * (1000)) + 1;
+    const uri = 'https://trade.multicoins.org/api/v1/market/getopenorders?apikey='+API_PUB_KEY+'&ampnonce='+nonce+'&ampmarket='+market;
+    const parsed = require('url').parse(uri, true);
+    const signature = require('crypto').createHmac('sha512', API_PRIV_KEY).update(new Buffer(uri, 'utf-8')).digest('hex');
+    
+    const options = {
+        host: parsed.host,
+        path: parsed.path,
+        headers: { 'apisign': signature }
+    };
+    
+    require("https").request(options, res => {
+        let output = '';
+        res.on('data', chunk => { output += chunk; });
+        res.on('end', () => { return callback(JSON.parse(output)); });
+    }).end();
+};
+                </pre>
+        
+    </div>
+</div>
+<br><br>
+                    
+                    
                 </div>
                 <br>
                 <h4>Account Api</h4>
@@ -468,6 +639,47 @@ function GetOpenOrders(market, callback)
     }                        
                     </pre>
                     
+<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#Node_Example2" aria-expanded="false" aria-controls="Node_Example2">
+    node.js example
+</button>   
+<div class="collapse" id="Node_Example2">
+    <div class="card card-body">
+                <pre>
+'use strict';
+
+const API_PUB_KEY = "__YOUR_API_PUBLIC_KEY__";
+const API_PRIV_KEY = "__YOUR_API_PRIVATE_KEY__";
+
+GetBalance('MC', data => { console.log(JSON.stringify(data.result || data)); });
+
+
+function GetBalance(currency, callback)
+{
+    const nonce = Date.now()+Math.floor(Math.random() * (1000)) + 1;
+    const uri = 'https://trade.multicoins.org/api/v1/account/getbalance?apikey='+API_PUB_KEY+'&ampnonce='+nonce+'&ampcurrency='+currency;
+    const parsed = require('url').parse(uri, true);
+    const signature = require('crypto').createHmac('sha512', API_PRIV_KEY).update(new Buffer(uri, 'utf-8')).digest('hex');
+    
+    const options = {
+        host: parsed.host,
+        path: parsed.path,
+        headers: { 'apisign': signature }
+    };
+    
+    require("https").request(options, res => {
+        let output = '';
+        res.on('data', chunk => { output += chunk; });
+        res.on('end', () => { return callback(JSON.parse(output)); });
+    }).end();
+};
+                </pre>
+        
+    </div>
+</div>
+
+                    <br><br>
+                    
+                    
                     <h5>/account/getdepositaddress</h5>
                     <p>Used to retrieve or generate an address for a specific currency. </p>
                     Parameters 
@@ -496,7 +708,7 @@ function GetOpenOrders(market, callback)
     	}
     }
                     </pre>
-                    
+                
                     <h5>/account/getorder</h5>
                     <p>Used to retrieve a single order by uuid. </p>
                     Parameters 
@@ -529,6 +741,46 @@ function GetOpenOrders(market, callback)
     	}
     }
                     </pre>
+
+<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#Node_Example8" aria-expanded="false" aria-controls="Node_Example8">
+    node.js example
+</button>   
+<div class="collapse" id="Node_Example8">
+    <div class="card card-body">
+                <pre>
+'use strict';
+
+const API_PUB_KEY = "__YOUR_API_PUBLIC_KEY__";
+const API_PRIV_KEY = "__YOUR_API_PRIVATE_KEY__";
+
+GetOrder("1530077938662-2-0.04123927384759796", data => { console.log(JSON.stringify(data.result || data)); });
+
+function GetOrder(uuid, callback)
+{
+    const nonce = Date.now()+Math.floor(Math.random() * (1000)) + 1;
+    const uri = 'https://trade.multicoins.org/api/v1/account/getorder?apikey='+API_PUB_KEY+'&ampnonce='+nonce+'&ampuuid='+uuid;
+    const parsed = require('url').parse(uri, true);
+    const signature = require('crypto').createHmac('sha512', API_PRIV_KEY).update(new Buffer(uri, 'utf-8')).digest('hex');
+    
+    const options = {
+        host: parsed.host,
+        path: parsed.path,
+        headers: { 'apisign': signature }
+    };
+    
+    require("https").request(options, res => {
+        let output = '';
+        res.on('data', chunk => { output += chunk; });
+        res.on('end', () => { return callback(JSON.parse(output)); });
+    }).end();
+    
+}
+                </pre>
+        
+    </div>
+</div>
+<br><br>
+
                     
                     <h5>/account/getorderhistory</h5>
                     <p>Used to retrieve your order history. </p>
@@ -566,6 +818,81 @@ function GetOpenOrders(market, callback)
     	]
     }
                     </pre>
+                    
+                    <h5>/account/withdraw</h5>
+                    <p>Used to withdraw funds from your account. </p>
+                    Parameters 
+                    <table class='table'>
+                        <tr>
+                            <th>parameter</th>
+                            <th>required</th>
+                            <th>description</th>
+                        </tr>
+                        <tr>
+                            <td><code>currency</code></td>
+                            <td>required</td>
+                            <td>a string literal for the market (ie. MC-LTC).</td>
+                        </tr>
+                        <tr>
+                            <td><code>quantity</code></td>
+                            <td>required</td>
+                            <td>the quantity of coins to withdraw</td>
+                        </tr>
+                        <tr>
+                            <td><code>address</code></td>
+                            <td>required</td>
+                            <td>the address where to send the funds</td>
+                        </tr>
+                    </table>
+                    Request: 
+                    <pre>https://trade.multicoins.org/api/v1/account/withdraw?apikey=API_KEY&amp;nonce=NONCE&amp;currency=MC&amp;quantity=20.40&amp;address=MC_ADDRESS</pre>
+                    Response:
+                    <pre>
+{
+	"success" : true,
+	"message" : "",
+	"result" : {
+			"uuid" : "68b5a16c-92de-11e3-ba3b-425861b86ab6"
+	}
+}
+                    </pre>
+                    
+
+<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#Node_Example3" aria-expanded="false" aria-controls="Node_Example3">
+    node.js example
+</button>   
+<div class="collapse" id="Node_Example3">
+    <div class="card card-body">
+                <pre>
+'use strict';
+
+const API_PUB_KEY = "__YOUR_API_PUBLIC_KEY__";
+const API_PRIV_KEY = "__YOUR_API_PRIVATE_KEY__";
+
+Withdraw('MC', 5, 'MVe3eoMq7TeGMzPw9EpXGpKQzW2aMvJNAa', data => { console.log(JSON.stringify(data.result || data)); });
+
+function Withdraw(currency, quantity, address, callback)
+{
+    const nonce = Date.now()+Math.floor(Math.random() * (1000)) + 1;
+    const uri = 'https://trade.multicoins.org/api/v1/account/withdraw?apikey='+API_PUB_KEY+'&nonce='+nonce+'&currency='+currency+'&quantity='+quantity+'&address='+address;
+    const parsed = require('url').parse(uri, true);
+    const signature = require('crypto').createHmac('sha512', API_PRIV_KEY).update(new Buffer(uri, 'utf-8')).digest('hex');
+    
+    const options = {
+        host: parsed.host,
+        path: parsed.path,
+        headers: { 'apisign': signature }
+    };
+    
+    require("https").request(options, res => {
+        let output = '';
+        res.on('data', chunk => { output += chunk; });
+        res.on('end', () => { return callback(JSON.parse(output)); }); }).end();
+}
+                </pre>
+        
+    </div>
+</div>
                     
                 </div>
             </div>

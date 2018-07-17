@@ -23,7 +23,7 @@ let balances = {};
 let coinsBalance = {};
 let history = {};
 
-let g_bProcessWithdraw = false;
+let g_ProcessWithdraw = {};
 
 function onError(req, res, message)
 {
@@ -74,12 +74,22 @@ exports.GetHistory = function(req, res)
     });
 }
 
+let accountAddr = {};
 exports.GetAccountAddress = function(userID, coinName, callback)
 {
+    if (accountAddr[coinName] && accountAddr[coinName][userID] && Date.now() - accountAddr[coinName][userID].time < 300000)
+        return callback(accountAddr[coinName][userID].ret);
+        
     const account = utils.Encrypt(userID);
     
     console.log('RPC call from GetAccountAddress');        
-    RPC.send2(userID, coinName, commands.getaccountaddress, [account], callback);
+    RPC.send2(userID, coinName, commands.getaccountaddress, [account], ret => {
+        if (ret.result != 'success' || !ret.data) return callback(ret);
+            
+        accountAddr[coinName] = {};
+        accountAddr[coinName][userID] = {ret: ret, time: Date.now()}
+        callback(ret);
+    });
 }
 
 exports.onGetAddress = function(req, res)
@@ -154,78 +164,69 @@ exports.GetCoinWallet = function(socket, userID, coin, callback)
     if (balances[userID][coin.id] == undefined)
         balances[userID][coin.id] = {time:0, coinBalance:0};
     if (coinsBalance[coin.id] == undefined)
-        coinsBalance[coin.id] = {time:0, balance:0};
-        
-    if (userID == 2)
     {
-        var ii = 1;
+        coinsBalance[coin.id] = { balance: 0 };
+        
+        const coinID = coin.id;
+        setInterval(() => {
+            console.log('RPC call from GetCoinWallet1');
+            RPC.send3(0, coinID, commands.getbalance, ["*", 0], ret => {
+                if (!ret || !ret.result || ret.result != 'success') return;
+                    
+                coinsBalance[coinID].balance = (ret.data*1).toFixed(7)*1;
+            });
+        }, 120000);
     }
     
-    const TIME_NOW = Date.now();
-    
-    if (TIME_NOW - balances[userID][coin.id].time < 120000 || (balances[userID][coin.id].coinBalance == coinsBalance[coin.id].balance && coinsBalance[coin.id].balance != 0))
-        return GetCachedBalance(socket, userID, coin, callback);
-
-    if (TIME_NOW - coinsBalance[coin.id].time > 120000)
+    if ((Date.now() - balances[userID][coin.id].time < 120000) || (balances[userID][coin.id].coinBalance == coinsBalance[coin.id].balance && coinsBalance[coin.id].balance != 0))
     {
-        delete coinsBalance[coin.id];
-        coinsBalance[coin.id] = {time:0, balance:0};
-        
-        coinsBalance[coin.id].time = TIME_NOW;
-        
-        console.log('RPC call from GetCoinWallet1');
-        RPC.send3(userID, coin.id, commands.getbalance, ["*", 0], ret => {
-            if (!ret || !ret.result || ret.result != 'success') return;
-                
-            coinsBalance[coin.id].balance = (ret.data*1).toFixed(7)*1;
-        });
+        if (Date.now() - balances[userID][coin.id].time < 600000)
+            return GetCachedBalance(socket, userID, coin, callback);
     }
     
-    if (balances[userID])
-    {
-        delete balances[userID];
-        balances[userID] = {};
-        balances[userID][coin.id] = {time:0, coinBalance:0};
-    }
+    balances[userID][coin.id].time = Date.now();
+    balances[userID][coin.id].coinBalance = coinsBalance[coin.id].balance;
 
-    balances[userID][coin.id].time = TIME_NOW;
-
-    const account = utils.Encrypt(userID);
     GetBalance(userID, coin, balance =>{
         if (socket  && (socket.readyState === WebSocket.OPEN)) socket.send(JSON.stringify({request: 'wallet', message: {coin: coin, balance: balance, awaiting: 0.0, hold: 0.0} }));
         
-        console.log('RPC call from GetCoinWallet2');   
-        RPC.send3(userID, coin.id, commands.getbalance, [account, 0], ret => {
-            const awaiting0 = (!ret || !ret.result || ret.result != 'success') ? 0 : (ret.data*1).toFixed(7)*1;
+        orders.GetReservedBalance(userID, coin.name, ret => {
+            const reserved = (!ret || !ret.result || ret.result != 'success') ? 0 : ret.data;
+            const hold = (reserved*1).toFixed(7)*1;
+            const data = JSON.stringify({request: 'wallet', message: {coin: coin, balance: (balance*1).toFixed(7)*1, awaiting: 0.0, hold: hold} })
             
-            //const balance = (awaiting0 < 0) ? (balance0*1).toFixed(7)*1+awaiting0 : (balance0*1).toFixed(7)*1;
-            const awaiting = !utils.isNumeric(awaiting0) ? 0.0 : awaiting0;
-            
-            if (awaiting < -0.0000001)
-                FixBalance(userID, coin, awaiting);
+            if (socket  && (socket.readyState === WebSocket.OPEN)) socket.send(data);    
+            if (balances[userID][coin.id]['timerID']) return callback ? setTimeout(callback, 1, data) : 0;
 
-            if (socket  && (socket.readyState === WebSocket.OPEN)) socket.send(JSON.stringify({request: 'wallet', message: {coin: coin, balance: (balance*1).toFixed(7)*1, awaiting: awaiting, hold: 0.0} }));
-            
-            orders.GetReservedBalance(userID, coin.name, ret => {
-                const reserved = (!ret || !ret.result || ret.result != 'success') ? 0 : ret.data;
-                
-                const data = JSON.stringify({request: 'wallet', message: {coin: coin, balance: (balance*1).toFixed(7)*1, awaiting: awaiting, hold: (reserved*1).toFixed(7)*1} })
-                
-                if (!balances[userID]) balances[userID] = {};
-                balances[userID][coin.id] = {data: data, time: Date.now()};
-                
-                if (awaiting <= 0.0 && awaiting >= -0.0000001)
-                    balances[userID][coin.id].coinBalance = coinsBalance[coin.id].balance;
-                    
-                if (socket  && (socket.readyState === WebSocket.OPEN)) socket.send(data);
-                if (callback) setTimeout(callback, 1, data); //callback(data);
-            });
+            balances[userID][coin.id]['timerID'] = setTimeout(UpdateAwaitingBalance, 6000, socket, userID, coin, balance, hold); 
         });
     });
 }
 
+function UpdateAwaitingBalance(socket, userID, coin, balance, hold)
+{
+    const account = utils.Encrypt(userID);
+    
+    console.log('RPC call from GetCoinWallet2');   
+    RPC.send3(userID, coin.id, commands.getbalance, [account, 0], ret => {
+        balances[userID][coin.id]['timerID'] = (!ret || !ret.result || ret.result != 'success') ?
+            setTimeout(UpdateAwaitingBalance, 5000, socket, userID, coin, balance, hold) : 0; 
+
+        const awaiting0 = (!ret || !ret.result || ret.result != 'success') ? 0 : (ret.data*1).toFixed(7)*1;
+        const awaiting = !utils.isNumeric(awaiting0) ? 0.0 : awaiting0;
+                
+        if (awaiting < -0.0000001) setTimeout(FixBalance, 6000, userID, coin, awaiting);
+    
+        const message = {coin: coin, balance: (balance*1).toFixed(7)*1, awaiting: awaiting, hold: hold};
+        if (socket  && (socket.readyState === WebSocket.OPEN)) socket.send(JSON.stringify({request: 'wallet', message: message }));
+        
+        if (!balances[userID][coin.id].data)
+            balances[userID][coin.id]['data'] = JSON.stringify({message: {awaiting: awaiting}});
+    });
+}
+
 let g_CachedBalance = {};
-function GetCachedBalance(socket, userID, coin, callback)
+function GetCachedBalance(socket, userID, coin, callback, newBalance)
 {
    // console.log('GetCachedBalance');
     if (!balances[userID][coin.id].data)
@@ -239,17 +240,25 @@ function GetCachedBalance(socket, userID, coin, callback)
     if (g_CachedBalance[WHERE] && Date.now() - g_CachedBalance[WHERE].time < 1000*60)
     {
         if (socket  && (socket.readyState === WebSocket.OPEN)) try {socket.send(g_CachedBalance[WHERE].data)}catch(e){socket.terminate();}
-        if (callback)  setTimeout(callback, 1, g_CachedBalance[WHERE].data); //callback(balances[userID][coin.id].data);
+        if (callback)  setTimeout(callback, 1, g_CachedBalance[WHERE].data); 
         
-        console.log('return GetCachedBalance userid='+userID+' coin='+coin.name);
-        return;
+        return console.log('return GetCachedBalance userid='+userID+' coin='+coin.name);
     }
     
     if (g_CachedBalance[WHERE])
+    {
         g_CachedBalance[WHERE]['time'] = Date.now();
+        if (awaiting == 0.0 && g_CachedBalance[WHERE].data && g_CachedBalance[WHERE].data.length)
+        {
+            try {
+                awaiting = JSON.parse(g_CachedBalance[WHERE].data).message.awaiting;
+            }
+            catch(e) {}
+        }
+    }
     
     g_constants.dbTables['balance'].selectAll('balance', WHERE, '', (err, rows) => {
-        const balance = (err || !rows || !rows.length) ? 0.0 : rows[0].balance;
+        const balance = (err || !rows || !rows.length) ? 0.0 : (newBalance || rows[0].balance);
 
         orders.GetReservedBalance(userID, coin.name, ret => {
             const reserved = (!ret || !ret.result || ret.result != 'success') ? 0 : ret.data;
@@ -262,14 +271,9 @@ function GetCachedBalance(socket, userID, coin, callback)
             g_CachedBalance[WHERE] = {time: Date.now(), data: data};
                 
             if (socket  && (socket.readyState === WebSocket.OPEN)) try {socket.send(g_CachedBalance[WHERE].data)}catch(e){socket.terminate();}
-            if (callback)  setTimeout(callback, 1, g_CachedBalance[WHERE].data); //callback(balances[userID][coin.id].data);
+            if (callback)  setTimeout(callback, 1, g_CachedBalance[WHERE].data); 
         });
     });
-    return;
-        
-    //if (socket  && (socket.readyState === WebSocket.OPEN)) socket.send(balances[userID][coin.id].data);
-    //if (callback)  callback(balances[userID][coin.id].data);
-    //return;
 }
 
 function FixBalance(userID, coin, awaiting)
@@ -321,32 +325,41 @@ function FixBalance(userID, coin, awaiting)
 }
 
 let g_MovingBalances = {};
-function GetBalance(userID, coin, callback)
+function GetBalance(userID, coin, callback, count)
 {
     const account = utils.Encrypt(userID);
     const WHERE = 'userID="'+escape(userID)+'" AND coin="'+coin.name+'"';
-    
+
     console.log('GetBalance from DB start for userID='+userID+' coin='+coin.name);
     g_constants.dbTables['balance'].selectAll('balance', WHERE, '', (err, rows) => {
         const balanceDB = (rows && rows.length) ? rows[0].balance : 0;
         
+        if (count && count > 2)
+        {
+            console.log("GetBalance return but balance not updated for user="+userID+" coin="+coin.name+" (count > 2) ", userID);
+            return callback(utils.isNumeric(balanceDB) ? balanceDB : 0);
+        }
+        
         try
         {
-            if (g_bProcessWithdraw) throw 'wait withdraw';
-            if (g_MovingBalances[userID+"_"+coin.name]) throw 'wait move';
+//            if (g_bProcessWithdraw) throw 'wait withdraw';
+            if (g_MovingBalances[userID+"_"+coin.name]) throw new Error('wait move');
             
             console.log('RPC call from GetBalance');
             RPC.send3(userID, coin.id, commands.getbalance, [account, coin.info.minconf || 3], ret => {
-                if (!ret || !ret.result || ret.result != 'success' || g_bProcessWithdraw || (ret.data*1).toFixed(7)*1 <=0)
+                if (!ret || !ret.result || ret.result != 'success')
+                    return setTimeout(GetBalance, 5000, userID, coin, callback, (count || 0)+1);
+                //if (g_bProcessWithdraw || (ret.data*1).toFixed(7)*1 <=0)
+                if ((ret.data*1).toFixed(7)*1 <= 0)
                 {
-                    console.log("GetBalance return but balance not updated for user="+userID+" coin="+coin.name+" (g_bProcessWithdraw or ret="+(ret ? JSON.stringify(ret):"{}")+")", userID);
+                    console.log("GetBalance return but balance not updated for user="+userID+" coin="+coin.name+" (ret="+(ret ? JSON.stringify(ret):"{}")+")", userID);
                     return callback(utils.isNumeric(balanceDB) ? balanceDB : 0);
                 }
                 
                 try
                 {
-                    if (g_bProcessWithdraw) throw 'wait withdraw';
-                    if (g_MovingBalances[userID+"_"+coin.name]) throw 'wait move';
+                    if (g_ProcessWithdraw[userID+"_"+coin.name]) throw new Error('wait withdraw');
+                    if (g_MovingBalances[userID+"_"+coin.name]) throw new Error('wait move');
                     
                     g_MovingBalances[userID+"_"+coin.name] = true;
                     
@@ -457,11 +470,15 @@ exports.onConfirmWithdraw = function(req, res)
         if (!emailChecker[strCheck])
             return utils.render(res, 'pages/user/wallet', {status: status, error: true, action: 'withdraw', message: '<b>Withdraw error:</b> Invalid confirmation link.'});
 
-        g_bProcessWithdraw = true;
+        exports.ProcessWithdraw(emailChecker[strCheck].userID, emailChecker[strCheck].address, emailChecker[strCheck].amount, emailChecker[strCheck].coinName, ret => {
+            ret['status'] = status;
+            return utils.render(res, 'pages/user/wallet', ret);
+        });
+        /*g_ProcessWithdraw[emailChecker[strCheck].userID+"_"+emailChecker[strCheck].coinName] = true;
         try
         {
             ProcessWithdraw(emailChecker[strCheck].userID, emailChecker[strCheck].address, emailChecker[strCheck].amount, emailChecker[strCheck].coinName, err => {
-                g_bProcessWithdraw = false;
+                g_ProcessWithdraw[emailChecker[strCheck].userID+"_"+emailChecker[strCheck].coinName] = false;
                 if (err.result == false)
                     return utils.render(res, 'pages/user/wallet', {status: status, error: true, action: 'withdraw', message: err.message});
 
@@ -470,82 +487,100 @@ exports.onConfirmWithdraw = function(req, res)
         }
         catch(e)
         {
-            g_bProcessWithdraw = false;
+            g_ProcessWithdraw[emailChecker[strCheck].userID+"_"+emailChecker[strCheck].coinName] = false;
             utils.render(res, 'pages/user/wallet', {status: status, error: true, action: 'withdraw', message: e.message});
-        }
-
+        }*/
         delete emailChecker[strCheck];
-
     });
-    
-    function ProcessWithdraw(userID, address, amount, coinName, callback)
+}
+
+exports.ProcessWithdraw = function(userID, address, amount, coinName, callback)
+{
+    g_ProcessWithdraw[userID+"_"+coinName] = true;
+    try
     {
-        const userAccount = utils.Encrypt(userID);
+        ProcessWithdraw(userID, address, amount, coinName, err => {
+            g_ProcessWithdraw[userID+"_"+coinName] = false;
+            if (err.result == false)
+                return callback({error: true, action: 'withdraw', message: err.message});
+
+            return callback({data: err.data || {}, error: false, action: 'withdraw', message: 'Done! Your withdraw is confirmed. '});
+        });
+    }
+    catch(e)
+    {
+        g_ProcessWithdraw[userID+"_"+coinName] = false;
+        callback({error: true, action: 'withdraw', message: e.message});
+    }
+}
+
+function ProcessWithdraw(userID, address, amount, coinName, callback)
+{
+    const userAccount = utils.Encrypt(userID);
         
-        g_constants.dbTables['coins'].selectAll('ROWID AS id, *', 'name="'+coinName+'"', '', (err, rows) => {
-            if (err || !rows || !rows.length)
-                return callback({result: false, message: 'Coin "'+unescape(coinName)+'" not found'});
+    g_constants.dbTables['coins'].selectAll('ROWID AS id, *', 'name="'+coinName+'"', '', (err, rows) => {
+        if (err || !rows || !rows.length)
+            return callback({result: false, message: 'Coin "'+unescape(coinName)+'" not found'});
 
-            try { rows[0].info = JSON.parse(utils.Decrypt(rows[0].info));}
-            catch(e) {}
+        try { rows[0].info = JSON.parse(utils.Decrypt(rows[0].info));}
+        catch(e) {}
             
-            if (!rows[0].info || !rows[0].info.active)
-                return callback({result: false, message: 'Coin "'+unescape(coinName)+'" is not active'});
+        if (!rows[0].info || !rows[0].info.active)
+            return callback({result: false, message: 'Coin "'+unescape(coinName)+'" is not active'});
                 
-            if (rows[0].info.withdraw == 'Disabled')
-                return callback({result: false, message: 'Coin "'+unescape(coinName)+'" withdraw is temporarily disabled'});
+        if (rows[0].info.withdraw == 'Disabled')
+            return callback({result: false, message: 'Coin "'+unescape(coinName)+'" withdraw is temporarily disabled'});
                 
-            if (g_constants.share.tradeEnabled == false)
-                return callback({result: false, message: 'Trading is temporarily disabled'});
+        if (g_constants.share.tradeEnabled == false)
+            return callback({result: false, message: 'Trading is temporarily disabled'});
 
-            const coin = rows[0];
-            const coinID = rows[0].id;
+        const coin = rows[0];
+        const coinID = rows[0].id;
             
-            MoveBalance(g_constants.ExchangeBalanceAccountID, userID, coin, (amount*1+(rows[0].info.hold || 0.002)).toFixed(7)*1, ret => {
-                if (!ret || !ret.result)
-                    return callback({result: false, message: '<b>Withdraw error (1):</b> '+ ret.message});
+        MoveBalance(g_constants.ExchangeBalanceAccountID, userID, coin, (amount*1+(rows[0].info.hold || 0.002)).toFixed(7)*1, ret => {
+            if (!ret || !ret.result)
+                return callback({result: false, message: '<b>Withdraw error (1):</b> '+ ret.message});
 
-                const comment = JSON.stringify([{from: userAccount, to: address, amount: amount, time: Date.now()}]);
-                const walletPassphrase = g_constants.walletpassphrase(coin.ticker);
+            const comment = JSON.stringify([{from: userAccount, to: address, amount: amount, time: Date.now()}]);
+            const walletPassphrase = g_constants.walletpassphrase(coin.ticker);
                 
-                console.log('RPC call from ProcessWithdraw1');
-                RPC.send3(userID, coinID, commands.walletpassphrase, [walletPassphrase, 60], ret => {
-                    if (walletPassphrase.length && (!ret || !ret.result || ret.result != 'success') && ret.data && ret.data.length)
+            console.log('RPC call from ProcessWithdraw1');
+            RPC.send3(userID, coinID, commands.walletpassphrase, [walletPassphrase, 60], ret => {
+                if (walletPassphrase.length && (!ret || !ret.result || ret.result != 'success') && ret.data && ret.data.length)
+                {
+                    const err = ret.data;
+                    //if false then return coins to user balance
+                    MoveBalance(userID, g_constants.ExchangeBalanceAccountID, coin, amount, ret =>{});
+                    return callback({result: false, message: '<b>Withdraw error (2):</b> '+ err});
+                }    
+                    
+                const rpcParams = g_constants.IsDashFork(coin.ticker) ? 
+                    [userAccount, address, (amount*1).toFixed(7)*1, coin.info.minconf || 3, false, comment] :
+                    [userAccount, address, (amount*1).toFixed(7)*1, coin.info.minconf || 3, comment];
+                    
+                console.log('RPC call from ProcessWithdraw2');
+                RPC.send3(userID, coinID, commands.sendfrom, rpcParams, ret => {
+                    if (ret && ret.result && ret.result == 'success')
                     {
-                        const err = ret.data;
+                        exports.ResetBalanceCache(userID);
+                        return callback({result: true, data: ret.data});
+                    }
+                    //if false then try one more time
+                    console.log('RPC call from ProcessWithdraw3');
+                    setTimeout(RPC.send3, 5000, userID, coinID, commands.sendfrom, rpcParams, ret => {
+                        exports.ResetBalanceCache(userID);
+                        if (ret && ret.result && ret.result == 'success')
+                            return callback({result: true, data: ret.data});
+
+                        const err = ret ? ret.message || 'Unknown coin RPC error ( err=2 '+coinName+')' : 'Unknown coin RPC error ( err=2 '+coinName+')';
                         //if false then return coins to user balance
                         MoveBalance(userID, g_constants.ExchangeBalanceAccountID, coin, amount, ret =>{});
-                        return callback({result: false, message: '<b>Withdraw error (2):</b> '+ err});
-                    }    
-                    
-                    const rpcParams = g_constants.IsDashFork(coin.ticker) ? 
-                        [userAccount, address, (amount*1).toFixed(7)*1, coin.info.minconf || 3, false, comment] :
-                        [userAccount, address, (amount*1).toFixed(7)*1, coin.info.minconf || 3, comment];
-                    
-                    console.log('RPC call from ProcessWithdraw2');
-                    RPC.send3(userID, coinID, commands.sendfrom, rpcParams, ret => {
-                        if (ret && ret.result && ret.result == 'success')
-                        {
-                            exports.ResetBalanceCache(userID);
-                            return callback({result: true, data: ret.data});
-                        }
-                        //if false then try one more time
-                        console.log('RPC call from ProcessWithdraw3');
-                        setTimeout(RPC.send3, 5000, userID, coinID, commands.sendfrom, rpcParams, ret => {
-                            exports.ResetBalanceCache(userID);
-                            if (ret && ret.result && ret.result == 'success')
-                                return callback({result: true, data: ret.data});
-
-                            const err = ret ? ret.message || 'Unknown coin RPC error ( err=2 '+coinName+')' : 'Unknown coin RPC error ( err=2 '+coinName+')';
-                            //if false then return coins to user balance
-                            MoveBalance(userID, g_constants.ExchangeBalanceAccountID, coin, amount, ret =>{});
-                            return callback({result: false, message: '<b>Withdraw error (3):</b> '+ err});
-                        });
+                        return callback({result: false, message: '<b>Withdraw error (3):</b> '+ err});
                     });
                 });
             });
         });
-    }
+    });
 }
 
 exports.ResetBalanceCache = function(userID)

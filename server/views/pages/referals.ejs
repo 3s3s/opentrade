@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+    
+    <% include ../partials/head %>
+  <body>
+
+    <% include ../partials/header %>
+
+
+    <div class="container pt-2">
+      <% include ../partials/alerts %>
+      <div class='row'>
+        <div class="offset2 col-md-12">
+          <h1>OpenTrade affiliate program</h1>
+          <p>Your affiliate program is enabled, and you can earn commissions by adding your affiliate tag ?ref=<span id='refid'><%- status.id || 0 %></span> to any OpenTrade URL</p>
+          <p>Affiliation is registered when any user activates new account from a flyer generated from your affiliate account.</p>
+          <h2>Example links:</h2>
+          <pre>
+            https://trade.multicoins.org/?ref=<span id='refid'><%- status.id || 0 %></span>
+            https://trade.multicoins.org/market/MC-BTC?ref=<span id='refid'><%- status.id || 0 %></span>
+          </pre>
+          <h2>Statistics</h2>
+          <p>You are currently registered as an affiliate for <strong id='usersAll'>0</strong> users and will earn commissions from all <span class='text-danger'>BUY orders</span> done by these. Total <strong id='allVisits'></strong> visits have been done through your links.</p>
+          <hr>
+          Please note: <strong>You have got payments <span class='text-danger'>only</span> from <span class='text-danger'>BUY</span> orders !</strong>
+          <hr>
+          <h2>Latest payouts</h2>
+          <table class='table'>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Amount</th>
+                <th>Comment</th>
+              </tr>
+            </thead>
+            <tbody id='table_payouts'>
+            </tbody>
+          </table>
+          <h2>Latest converted users</h2>
+          <table class='table'>
+            <thead>
+              <tr>
+                <th>Date converted</th>
+                <th>Trade volume</th>
+                <th>Landing page</th>
+              </tr>
+            </thead>
+            <tbody id='table_referals'>
+            </tbody>
+          </table>
+          
+        </div>
+      </div>
+
+    </div> <!-- /container -->
+
+
+    <% include ../partials/footer %>
+    <script src='/js/referals.js'></script>
+  </body>
+</html>

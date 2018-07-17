@@ -77,7 +77,16 @@ $('#coin-visible').click(function() {
     $('#coin-info').val(JSON.stringify(info));
 });
 
-$('#coin-hold').change(function(){ 
+$('#coin-daemon-path').change(() => { 
+    var info = {};
+    try {info = JSON.parse($('#coin-info').val())}catch(e){}
+    
+    info['daemon'] =$('#coin-daemon-path').val();
+ 
+    $('#coin-info').val(JSON.stringify(info));
+});
+
+$('#coin-hold').change(() => { 
     var info = {};
     try {info = JSON.parse($('#coin-info').val())}catch(e){}
     
@@ -87,7 +96,7 @@ $('#coin-hold').change(function(){
     $('#coin-info').val(JSON.stringify(info));
 });
 
-$('#coin-page').change(function(){ 
+$('#coin-page').change(e => { 
     var info = {};
     try {info = JSON.parse($('#coin-info').val())}catch(e){}
     
@@ -97,7 +106,7 @@ $('#coin-page').change(function(){
 });
 
 
-$('#coin-minconf').change(function(){ 
+$('#coin-minconf').change(e => { 
     if (!isInt($('#coin-minconf').val()))
         return;
 
@@ -113,7 +122,7 @@ function isInt(value) {
   return !isNaN(value) && (function(x) { return (x | 0) === x; })(parseFloat(value))
 }
 
-$('#coins-select').change(function(){ 
+$('#coins-select').change(e => { 
     socket.send(JSON.stringify({request: 'admincoins'}));
 });
 
@@ -129,6 +138,18 @@ $('#form-rpc_test').submit(e => {
         }
     }));
 });
+
+/*$('#start-daemon').click(e => {
+    e.preventDefault();
+    
+    socket.send(JSON.stringify({
+        request: 'daemon_start', 
+        message: {
+            path: $( "#coin-daemon-path" ).val(),
+        }
+    }));
+    
+})*/
 
 $('#form-edit-coin').submit(e => {
     e.preventDefault();
