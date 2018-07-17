@@ -1,6 +1,6 @@
 'use strict';
 
-const SUPPORT_EMAIL = 'support@email.com';
+const SUPPORT_EMAIL = 'support@email.com'; 
 const NOREPLY_EMAIL = 'no-reply@email.com';
 
 const MAILER_NAME = 'OpenTrade Mailer';
