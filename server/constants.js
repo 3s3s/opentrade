@@ -158,6 +158,17 @@ exports.dbTables = [
            ['uid', 'TEXT UNIQUE']
         ],
         'commands': 'PRIMARY KEY (userRegID, uid)'
+   },
+   {
+       'name' : 'payments',
+       'cols' : [
+           ['userTo', 'INTEGER'],
+           ['userFrom', 'INTEGER'],
+           ['volume', 'TEXT'],
+           ['coin', 'TEXT'],
+           ['time', 'INTEGER'],
+           ['comment', 'TEXT']
+        ]
    }
 ];
 
