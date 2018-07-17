@@ -458,7 +458,7 @@ function UpdateMarket(message)
   const MC = coinNameToTicker[utils.MAIN_COIN] ? coinNameToTicker[utils.MAIN_COIN].ticker || 'MC' : 'MC';
   const BTC = coinNameToTicker[g_CurrentPair].ticker;
 
-  utils.ChangeUrl(document.title + "(" + g_CurrentPair+' market)', '/market/'+MC+'-'+BTC);
+  utils.ChangeUrl(document.title + "(" + g_CurrentPair+' market)', '/market/'+MC+'-'+BTC+(window.location.search || ""));
 }
 
 function UpdateBuySellTickers()

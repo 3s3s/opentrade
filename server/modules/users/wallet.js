@@ -217,7 +217,11 @@ function UpdateAwaitingBalance(socket, userID, coin, balance, hold)
                 
         if (awaiting < -0.0000001) setTimeout(FixBalance, 6000, userID, coin, awaiting);
     
-        if (socket  && (socket.readyState === WebSocket.OPEN)) socket.send(JSON.stringify({request: 'wallet', message: {coin: coin, balance: (balance*1).toFixed(7)*1, awaiting: awaiting, hold: hold} }));
+        const message = {coin: coin, balance: (balance*1).toFixed(7)*1, awaiting: awaiting, hold: hold};
+        if (socket  && (socket.readyState === WebSocket.OPEN)) socket.send(JSON.stringify({request: 'wallet', message: message }));
+        
+        if (!balances[userID][coin.id].data)
+            balances[userID][coin.id]['data'] = JSON.stringify({message: {awaiting: awaiting}});
     });
 }
 
@@ -242,7 +246,16 @@ function GetCachedBalance(socket, userID, coin, callback, newBalance)
     }
     
     if (g_CachedBalance[WHERE])
+    {
         g_CachedBalance[WHERE]['time'] = Date.now();
+        if (awaiting == 0.0 && g_CachedBalance[WHERE].data && g_CachedBalance[WHERE].data.length)
+        {
+            try {
+                awaiting = JSON.parse(g_CachedBalance[WHERE].data).message.awaiting;
+            }
+            catch(e) {}
+        }
+    }
     
     g_constants.dbTables['balance'].selectAll('balance', WHERE, '', (err, rows) => {
         const balance = (err || !rows || !rows.length) ? 0.0 : (newBalance || rows[0].balance);
