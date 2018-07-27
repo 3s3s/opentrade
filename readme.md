@@ -37,7 +37,7 @@ exports.SSL_KEY = '../ssl_certificates/privkey.pem'; //change to your ssl certif
 exports.SSL_CERT = '../ssl_certificates/fullchain.pem'; //change to your ssl certificates fullchain
 
 exports.walletspassphrase = {
-    'MC' : 'LONG_RANDOM_STRING2',
+    'ZSX' : 'LONG_RANDOM_STRING2',
     'BTC' : 'LONG_RANDOM_STRING3',
     'DOGE' : 'LONG_RANDOM_STRING4'
 };
@@ -104,8 +104,8 @@ File ~/opentrade/server/constants.js have constant that you can change
 https://github.com/3s3s/opentrade/blob/master/server/constants.js#L5
 
 ```
-exports.TRADE_MAIN_COIN = "Marycoin"; //change Marycoin to your main coin pair
-exports.TRADE_DEFAULT_PAIR = "Litecoin"; //change Litecoin to your default coin pair
+exports.TRADE_MAIN_COIN = "ZSmart"; //change ZSmart to your main coin pair
+exports.TRADE_DEFAULT_PAIR = "Bitcoin"; //change Litecoin to your default coin pair
 exports.TRADE_COMISSION = 0.001; //change trade comission percent
 
 exports.recaptcha_pub_key = "6LeX5SQUAAAAAKTieM68Sz4MECO6kJXsSR7_sGP1"; //change to your recaptcha public key

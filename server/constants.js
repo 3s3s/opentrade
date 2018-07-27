@@ -1,10 +1,10 @@
 'use strict';
 
-const SUPPORT_EMAIL = 'support@email.com';
-const NOREPLY_EMAIL = 'no-reply@email.com';
+const SUPPORT_EMAIL = 'support@zsmart.org';
+const NOREPLY_EMAIL = 'no-reply@zsmart.org';
 
-const MAILER_NAME = 'OpenTrade Mailer';
-const START_MESSAGE = 'OpenTrade started!';
+const MAILER_NAME = 'ZTrade Mailer';
+const START_MESSAGE = 'ZTrade started!';
 
 const DashForks = ['DASH', 'WAVI'];
 
@@ -16,9 +16,9 @@ exports.share = {
    
    my_portSSL: 40443,
    
-   TRADE_MAIN_COIN: "Marycoin",
-   TRADE_MAIN_COIN_TICKER: "MC",
-   TRADE_DEFAULT_PAIR: "Litecoin"
+   TRADE_MAIN_COIN: "ZSmart",
+   TRADE_MAIN_COIN_TICKER: "ZSX",
+   TRADE_DEFAULT_PAIR: "Bitcoin"
 };
 
 exports.TRADE_COMISSION = 0.001;
@@ -27,7 +27,7 @@ exports.my_port = process.env.PORT || 40080;
 
 exports.SESSION_TIME = 3600*1000; //one hour
 
-exports.recaptcha_pub_key = "6LeX5SQUAAAAAKTieM68Sz4MECO6kJXsSR7_sGP1";
+exports.recaptcha_pub_key = "6LctdmYUAAAAAHJnvu7z4DGz-z-M7T7RS0KojUm1";
 const MAX_IP_CONNECTIONS = 100;
 
 exports.dbTables = [
