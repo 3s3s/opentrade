@@ -11,7 +11,40 @@ exports.Init = function()
         console.log(ret.message);
     })
     setInterval(exports.UpdateMarket, 10000);
+    
+    setTimeout(UpdateExchangeSummary, 10000);
+    setInterval(UpdateExchangeSummary, 3600000);
 };
+
+let g_History24 = {};
+function UpdateExchangeSummary()
+{
+    utils.getJSON('https://trade.multicoins.org/api/v1/public/getmarkets', (status, data) => {
+        if (status != 200 || !data || !data.result || data.success != true)
+            return;
+            
+        for (let i=0; i<data.result.length; i++)
+        {
+            if (data.result[i].IsActive != true)
+                continue;
+            
+            const BTC = data.result[i].MarketCurrency;
+            const MC = data.result[i].BaseCurrency;
+            
+            utils.getJSON('https://trade.multicoins.org/api/v1/public/getmarketsummary?market='+MC+'-'+BTC+'&period=24', (status2, data2) => {
+                if (status2 != 200 || !data2 || data2.success != true || !data2.result)
+                    return;
+
+                g_History24[BTC] = data2.result;
+            });
+        }
+    });
+}
+
+exports.GetMarketSummary24 = function(callback)
+{
+    return callback(g_History24);
+}
 
 let g_LastMarketData = {};
 
