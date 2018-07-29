@@ -64,6 +64,15 @@ exports.onChangeRole = function(ws, req, data)
     });
 }
 
+exports.onDeleteOrders = function(ws, req, data)
+{
+    utils.GetSessionStatus(req, status => {
+        if (status.id != 1)
+            return;
+            
+    });
+}
+
 exports.onQueryRole = function(ws, req, data)
 {
     utils.GetSessionStatus(req, status => {

@@ -24,6 +24,75 @@ function onSuccess(req, res, data)
     utils.renderJSON(req, res, {result: true, data: data});
 }
 
+exports.CloseUserOrder = function(userID, orderID, callback)
+{
+    const WHERE_ORDER = 'userID="'+userID+'" AND ROWID="'+escape(orderID)+'"';
+    g_constants.dbTables['orders'].selectAll('ROWID AS id, *', WHERE_ORDER, '', (err, rows) => {
+        if (err || !rows || !rows.length)
+            return callback(false, err ? err.message || 'Order not found' : 'Order not found');
+
+        const order = rows[0];
+        const fullAmount = order.buysell == 'buy' ?
+                (order.amount*order.price+g_constants.TRADE_COMISSION*order.amount*order.price).toFixed(7)*1 :
+                (order.amount*1).toFixed(7)*1;
+                    
+        const coinBalance = order.buysell == 'buy' ? order.price_pair : order.coin;
+            
+        const WHERE_BALANCE = 'userID="'+userID+'" AND coin="'+coinBalance+'"';
+        g_constants.dbTables['balance'].selectAll('*', WHERE_BALANCE, '', (err, rows) => {
+            if (err || !rows || !rows.length)
+                return callback(false, err.message || 'Balance not found');
+                
+            const oldBalance = rows.length ? rows[0].balance*1 : 0.0;
+            const newBalance = (rows[0].balance*1 + fullAmount).toFixed(7)*1;
+                
+            if (!utils.isNumeric(newBalance)) return callback(false, 'Balance is not numeric ('+newBalance+')');
+                
+            database.BeginTransaction(err => {
+                if (err) return callback(false, err.message && err.message.length ? err.message : 'Database transaction error');
+                    
+                try
+                {
+                    g_constants.dbTables['orders'].delete(WHERE_ORDER, err => {
+                        if (err)
+                        {
+                            database.RollbackTransaction();
+                            return callback(false, err.message && err.message.length ? err.message : 'Database Delete error');
+                        }
+                            
+////////
+                        let commentJSON = [{amount: newBalance-oldBalance, time: Date.now(), action: 'ret', balanceOld: oldBalance, balanceNew: newBalance}];
+                     
+                        let historyStr = "";
+                        try {historyStr = JSON.stringify(JSON.parse(unescape(rows[0].history || {})).concat(JSON.stringify(commentJSON)));} catch(e){};
+/////////
+                        g_constants.dbTables['balance'].update('balance="'+newBalance+'", history="'+escape(historyStr)+'"', WHERE_BALANCE, err => {
+                            if (err)
+                            {
+                                database.RollbackTransaction();
+                                return callback(false, err.message && err.message.length ? err.message : 'Database Update error');
+                            }
+                            database.EndTransaction();
+
+                            wallet.ResetBalanceCache(userID);
+                            allOrders = {};
+                            if (userOrders[userID])
+                                delete userOrders[userID];
+                                
+                            return callback(true, {"success" : true, "message" : "", "result" : null});
+                        });
+                    });
+                }
+                catch(e)
+                {
+                    database.RollbackTransaction();
+                    return callback(false, e.message);
+                }
+            });
+        })
+    });
+}
+
 exports.CloseOrder = function(req, res)
 {
     if (!req || !req.body || !req.body.orderID)
@@ -32,74 +101,11 @@ exports.CloseOrder = function(req, res)
     utils.GetSessionStatus(req, status => {
         if (!status.active)
             return onError(req, res, 'User not logged');
-
-        const WHERE_ORDER = 'userID="'+status.id+'" AND ROWID="'+escape(req.body.orderID)+'"';
-        g_constants.dbTables['orders'].selectAll('ROWID AS id, *', WHERE_ORDER, '', (err, rows) => {
-            if (err || !rows || !rows.length)
-                return onError(req, res, err ? err.message || 'Order not found' : 'Order not found');
-
-            const order = rows[0];
-            const fullAmount = order.buysell == 'buy' ?
-                    (order.amount*order.price+g_constants.TRADE_COMISSION*order.amount*order.price).toFixed(7)*1 :
-                    (order.amount*1).toFixed(7)*1;
-                    
-            const coinBalance = order.buysell == 'buy' ? order.price_pair : order.coin;
             
-            const WHERE_BALANCE = 'userID="'+status.id+'" AND coin="'+coinBalance+'"';
-            g_constants.dbTables['balance'].selectAll('*', WHERE_BALANCE, '', (err, rows) => {
-                if (err || !rows || !rows.length)
-                    return onError(req, res, err.message || 'Balance not found');
-                
-                const oldBalance = rows.length ? rows[0].balance*1 : 0.0;
-                const newBalance = (rows[0].balance*1 + fullAmount).toFixed(7)*1;
-                
-                if (!utils.isNumeric(newBalance)) return onError(req, res, 'Balance is not numeric ('+newBalance+')');
-                
-                database.BeginTransaction(err => {
-                    if (err) return onError(req, res, err.message && err.message.length ? err.message : 'Database transaction error');
-                    
-                    try
-                    {
-                        g_constants.dbTables['orders'].delete(WHERE_ORDER, err => {
-                            if (err)
-                            {
-                                database.RollbackTransaction();
-                                return onError(req, res, err.message && err.message.length ? err.message : 'Database Delete error');
-                            }
-                            
-////////
-                            let commentJSON = [{amount: newBalance-oldBalance, time: Date.now(), action: 'ret', balanceOld: oldBalance, balanceNew: newBalance}];
-                     
-                            let historyStr = "";
-                            try {historyStr = JSON.stringify(JSON.parse(unescape(rows[0].history || {})).concat(JSON.stringify(commentJSON)));} catch(e){};
-/////////
-                            g_constants.dbTables['balance'].update('balance="'+newBalance+'", history="'+escape(historyStr)+'"', WHERE_BALANCE, err => {
-                                if (err)
-                                {
-                                    database.RollbackTransaction();
-                                    return onError(req, res, err.message && err.message.length ? err.message : 'Database Update error');
-                                }
-                                database.EndTransaction();
-                                //database.RollbackTransaction();
-                                
-                                wallet.ResetBalanceCache(status.id);
-                                allOrders = {};
-                                if (userOrders[status.id])
-                                    delete userOrders[status.id];
-                                
-                                onSuccess(req, res, {"success" : true, "message" : "", "result" : null});
-                            });
-                        });
-                        
-                    }
-                    catch(e)
-                    {
-                        database.RollbackTransaction();
-                        return onError(req, res, e.message);
-                    }
-
-                });
-            })
+        exports.CloseUserOrder(status.id, req.body.orderID, (result, data) => {
+            if (result == false)
+                return onError(req, res, data);
+            return onSuccess(req, res, data);
         });
     });    
 }

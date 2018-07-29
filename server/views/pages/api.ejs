@@ -230,7 +230,7 @@ function GetOpenOrders(market, callback)
                     </pre>
 
                     <h5>/public/getmarketsummary</h5>
-                    <p>Used to get the last 24 hour summary of all active exchanges </p>
+                    <p>Used to get the last 24 hour summary of one active exchange </p>
                     Parameters 
                     <table class='table'>
                         <tr>
@@ -256,7 +256,7 @@ function GetOpenOrders(market, callback)
     {
 	"success" : true,
 	"message" : "",
-	"result" : [{
+	"result" : {
 			"MarketName" : "MC-LTC",
 			"High" : 0.01350000,
 			"Low" : 0.01200000,
@@ -267,10 +267,32 @@ function GetOpenOrders(market, callback)
 			"OpenBuyOrders" : 45,
 			"OpenSellOrders" : 45
 		}
-        ]
+    }
+                    </pre>
+
+                    <h5>/public/getmarkets24</h5>
+                    <p>Used to get the last 24 hour summary of all active exchanges </p>
+                    Parameters 
+                    Request: 
+                    <pre>https://trade.multicoins.org/api/v1/public/getmarkets24</pre>
+                    Response:
+                    <pre>
+    {
+    "success":true,
+    "message":"",
+    "result":{
+        "TotalMarkets":22,
+        "v24":30545.55264574,
+        "data":{
+            "YTN":{"MarketName":"MC-YTN","High":"1.10000000","Low":"1.10000000","Volume":"21.74889000","Last":"1.1000000","Bid":"1.10000000","Ask":"1.99990000","OpenBuyOrders":5,"OpenSellOrders":15,"coin_icon_src":"https%3A//raw.githubusercontent.com/conan-equal-newone/yenten/master/src/qt/res/icons/bitcoin.png","coin_info":{"minconf":6,"hold":0.002,"active":true,"page":"https://bitcointalk.org/index.php?topic=2329470.0"}},
+            "WAVI":{"MarketName":"MC-WAVI","High":"1.01000000","Low":"0.49999999","Volume":"890.04802700","Last":"1.0100000","Bid":"0.31000001","Ask":"1.01000000","OpenBuyOrders":8,"OpenSellOrders":104,"coin_icon_src":"https%3A//raw.githubusercontent.com/wavidev-the-man/wavi/master/src/qt/res/icons/bitcoin.png","coin_info":{"minconf":3,"hold":0.002,"active":true,"page":"https://bitcointalk.org/index.php?topic=3146751.0"}},
+            ...
+            }
+        }
     }
                     </pre>
                     
+
                     <h5>/public/getmarkethistory</h5>
                     <p>Used to retrieve the latest trades that have occured for a specific market. </p>
                     Parameters 

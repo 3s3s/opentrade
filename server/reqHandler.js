@@ -37,6 +37,7 @@ exports.handle = function(app, wss)
     app.get('/api/v1/public/getmarketsummary', cors(), API1.onGetMarketSummary);
     app.get('/api/v1/public/getmarkethistory', cors(), API1.onGetMarketHistory);
     app.get('/api/v1/public/getlastmarketdata', cors(), API1.onGetLastMarketData)
+    app.get('/api/v1/public/getmarkets24', cors(), API1.onGetExchangeSummary);
     
     app.get('/api/v1/market/buylimit', cors(), API1.onMarketBuylimit);
     app.get('/api/v1/market/selllimit', cors(), API1.onMarketSelllimit);

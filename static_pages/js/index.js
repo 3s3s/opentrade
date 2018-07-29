@@ -21,7 +21,10 @@ function UpdatePageWithRole()
     return;
   
   if (g_role == 'root')
+  {
     $('.del_message_button').show();
+    $('.del_order_button').show();
+  }
   if (g_role == 'Support')
     $('.staff_area').show();
 }
@@ -543,11 +546,18 @@ function UpdateOrders(orders)
     const price = utils.MakePrice(orders.buy[i].price);//(orders.buy[i].price*1.0).toFixed(8)*1;
     const amountMain = utils.MakePrice(orders.buy[i].price*orders.buy[i].amount); //(orders.buy[i].price*orders.buy[i].amount*1.0).toFixed(8)*1;
     const amountPair = utils.MakePrice(orders.buy[i].amount); //(orders.buy[i].amount*1.0).toFixed(8)*1;
+
+    const delButton = $('<a href="#" title="Delete orders" class="del_order_button" style="text-decoration: none">&#10006;&nbsp</a>').hide();
+    delButton.on('click', e => {
+      e.preventDefault();
+      socket.send(JSON.stringify({request: 'del_orders', message: {coinName: g_CurrentPair, price: price}}));
+    });
     
     const tr = $('<tr></tr>')
       .append($('<td>'+price+'</td>'))
       .append($('<td>'+amountMain+'</td>'))
-      .append($('<td>'+amountPair+'</td>'));
+      .append($('<td>'+amountPair+'</td>'))
+      .append(delButton);
       
     volumeBuy += amountMain*1;
     volumeBuyPair += amountPair*1;
@@ -578,10 +588,17 @@ function UpdateOrders(orders)
     const amountMain = utils.MakePrice(orders.sell[i].price*orders.sell[i].amount); //(orders.sell[i].price*orders.sell[i].amount*1.0).toFixed(8)*1;
     const amountPair = utils.MakePrice(orders.sell[i].amount); //(orders.sell[i].amount*1.0).toFixed(8)*1;
     
+    const delButton = $('<a href="#" title="Delete orders" class="del_order_button" style="text-decoration: none">&#10006;&nbsp</a>').hide();
+    delButton.on('click', e => {
+      e.preventDefault();
+      socket.send(JSON.stringify({request: 'del_orders', message: {coinName: g_CurrentPair, price: price}}));
+    });
+    
     const tr = $('<tr></tr>')
       .append($('<td>'+price+'</td>'))
       .append($('<td>'+amountMain+'</td>'))
-      .append($('<td>'+amountPair+'</td>'));
+      .append($('<td>'+amountPair+'</td>'))
+      .append(delButton);
       
     volumeSell += amountPair*1;
     volumeSellPair += amountMain*1;
@@ -627,6 +644,8 @@ function UpdateOrders(orders)
   
   $('#id_max_bid_coin').text(utils.MAIN_COIN);
   $('#id_max_ask_coin').text(utils.MAIN_COIN);
+  
+  UpdatePageWithRole();
   
 }
 

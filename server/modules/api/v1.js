@@ -69,6 +69,20 @@ exports.onGetLastMarketData = function(req, res)
     });
 }
 
+exports.onGetExchangeSummary = function(req, res)
+{
+    market.GetMarketSummary24(data => {
+        let TotalMarkets = 0;
+        let v24 = 0;
+        for (let key in data)
+        {
+            v24 += data[key].Volume*1;
+            TotalMarkets++;
+        }
+        return onSuccess(req, res, {TotalMarkets: TotalMarkets, v24: v24, data: data});
+    });
+}
+
 exports.onGetMarkets = function(req, res)
 {
     let ret = GetCache('GetMarkets');

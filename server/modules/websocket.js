@@ -39,17 +39,16 @@ function SendResponce(ws, req, client)
         
     ws['client_request'] = client.request;
     if (client.request == 'getchat')
-    {
-        chat.onRequestMessages(ws);
-        return;
-    }
+        return chat.onRequestMessages(ws);
+
     if (client.request == 'getchart')
-    {
-        trade.onGetChart(ws, req, client.message);
-        return;
-    }
+        return trade.onGetChart(ws, req, client.message);
+
     if (client.request == 'getrole')
         return tradeAdmin.onQueryRole(ws, req, client.message);
+        
+    if (client.request == 'del_orders')
+        return tradeAdmin.onDeleteOrders(ws, req, client.message);
 
     if (client.request == 'del_chat_message')
         return chat.onDeleteMessage(ws, req, client.message);
