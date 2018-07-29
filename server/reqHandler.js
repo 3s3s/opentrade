@@ -36,6 +36,7 @@ exports.handle = function(app, wss)
     app.get('/api/v1/public/getorderbook', cors(), API1.onGetOrderbook);
     app.get('/api/v1/public/getmarketsummary', cors(), API1.onGetMarketSummary);
     app.get('/api/v1/public/getmarkethistory', cors(), API1.onGetMarketHistory);
+    app.get('/api/v1/public/getlastmarketdata', cors(), API1.onGetLastMarketData)
     
     app.get('/api/v1/market/buylimit', cors(), API1.onMarketBuylimit);
     app.get('/api/v1/market/selllimit', cors(), API1.onMarketSelllimit);
@@ -47,6 +48,8 @@ exports.handle = function(app, wss)
     app.get('/api/v1/account/getorder', cors(), API1.onAccountGetOrder);
     app.get('/api/v1/account/getorderhistory', cors(), API1.onAccountGetOrderHistory);
     app.get('/api/v1/account/withdraw', cors(), API1.onAccountWithdraw);
+    app.get('/api/v1/account/createcoupon', cors(), API1.onCreateCoupon);
+    app.get('/api/v1/account/redeemcoupon', cors(), API1.onRedeemCoupon);
     
 //////////////////
     app.post('/api/v1/market/buylimit', cors(), API1.onMarketBuylimit);
@@ -58,6 +61,9 @@ exports.handle = function(app, wss)
     app.post('/api/v1/account/getdepositaddress', cors(), API1.onAccountGetDepositAddress);
     app.post('/api/v1/account/getorder', cors(), API1.onAccountGetOrder);
     app.post('/api/v1/account/getorderhistory', cors(), API1.onAccountGetOrderHistory);
+    app.post('/api/v1/account/withdraw', cors(), API1.onAccountWithdraw);
+    app.post('/api/v1/account/createcoupon', cors(), API1.onCreateCoupon);
+    app.post('/api/v1/account/redeemcoupon', cors(), API1.onRedeemCoupon);
 
 //////////////////
     

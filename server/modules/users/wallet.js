@@ -352,7 +352,7 @@ function GetBalance(userID, coin, callback, count)
                 //if (g_bProcessWithdraw || (ret.data*1).toFixed(7)*1 <=0)
                 if ((ret.data*1).toFixed(7)*1 <= 0)
                 {
-                    console.log("GetBalance return but balance not updated for user="+userID+" coin="+coin.name+" (ret="+(ret ? JSON.stringify(ret):"{}")+")", userID);
+                    console.log("GetBalance return but balance not updated for user="+userID+" account='"+account+"' coin="+coin.name+" (ret="+(ret ? JSON.stringify(ret):"{}")+")", userID);
                     return callback(utils.isNumeric(balanceDB) ? balanceDB : 0);
                 }
                 
@@ -474,23 +474,168 @@ exports.onConfirmWithdraw = function(req, res)
             ret['status'] = status;
             return utils.render(res, 'pages/user/wallet', ret);
         });
-        /*g_ProcessWithdraw[emailChecker[strCheck].userID+"_"+emailChecker[strCheck].coinName] = true;
-        try
-        {
-            ProcessWithdraw(emailChecker[strCheck].userID, emailChecker[strCheck].address, emailChecker[strCheck].amount, emailChecker[strCheck].coinName, err => {
-                g_ProcessWithdraw[emailChecker[strCheck].userID+"_"+emailChecker[strCheck].coinName] = false;
-                if (err.result == false)
-                    return utils.render(res, 'pages/user/wallet', {status: status, error: true, action: 'withdraw', message: err.message});
 
-                utils.render(res, 'pages/user/wallet', {status: status, data: err.data || {}, error: false, action: 'withdraw', message: 'Done! Your withdraw is confirmed. '});
-            });
-        }
-        catch(e)
-        {
-            g_ProcessWithdraw[emailChecker[strCheck].userID+"_"+emailChecker[strCheck].coinName] = false;
-            utils.render(res, 'pages/user/wallet', {status: status, error: true, action: 'withdraw', message: e.message});
-        }*/
         delete emailChecker[strCheck];
+    });
+}
+
+/*   {
+       'name' : 'coupons',
+       'cols' : [
+           ['uid', 'TEXT UNIQUE'],
+           ['UserFrom', 'INTEGER'],
+           ['timeCreated', 'INTEGER'],
+           ['amount', 'TEXT'],
+           ['coin', 'TEXT'],
+           ['timeClosed', 'INTEGER'],
+           ['UserTo', 'INTEGER'],
+           ['comment', 'TEXT']
+        ],
+        'commands': 'PRIMARY KEY (uid)'
+   }
+*/
+exports.RedeemCoupon = function(userID, coupon, callback)
+{
+   g_constants.dbTables['coupons'].selectAll('*', 'uid="'+escape(decodeURIComponent(coupon))+'" AND timeClosed=0', '', (err, rows) => {
+        if (err || !rows || !rows.length)
+            return callback({result: false, message: 'Coupon not found or already closed'});
+        
+        const amount = rows[0].amount;    
+        const coinName = rows[0].coin;
+        
+        g_constants.dbTables['coins'].selectAll('ROWID AS id, *', 'name="'+coinName+'"', '', (err, rows) => {
+            if (err || !rows || !rows.length)
+                return callback({result: false, message: 'Coin "'+unescape(coinName)+'" not found'});
+
+            try { rows[0].info = JSON.parse(utils.Decrypt(rows[0].info));}
+            catch(e) {}
+            
+            if (!rows[0].info || !rows[0].info.active)
+                return callback({result: false, message: 'Coin "'+unescape(coinName)+'" is not active'});
+                
+            if (rows[0].info.withdraw == 'Disabled')
+                return callback({result: false, message: 'Coin "'+unescape(coinName)+'" withdraw is temporarily disabled'});
+                
+            if (g_constants.share.tradeEnabled == false)
+                return callback({result: false, message: 'Trading is temporarily disabled'});
+
+            const coin = rows[0];
+
+            const commentJSON = [{from: userID, to: g_constants.ExchangeBalanceAccountID, amount: amount, time: Date.now(), action: 'set'}];
+            const comment = JSON.stringify(commentJSON);
+
+            database.BeginTransaction(err => {
+                if (err) return callback({result: false, message: err.message && err.message.length ? err.message : 'Database transaction error'});
+                
+                try
+                {
+                    UpdateBalanceDB(userID, g_constants.ExchangeBalanceAccountID, coin, amount, comment, ret => {
+                        if (!ret || ret.result != true)
+                        {
+                            database.RollbackTransaction();
+                            return callback({result: false, message: ret.message && ret.message.length ? ret.message : 'Update Balance error'});
+                        }
+                        
+                        const newBalance = ret.balance;
+                        
+                        g_constants.dbTables['coupons'].update(
+                            "timeClosed="+Date.now()+", UserTo= "+escape(userID),
+                            'uid="'+escape(decodeURIComponent(coupon))+'"',
+                            err => {
+                                if (err)
+                                {
+                                    database.RollbackTransaction();
+                                    return callback({result: false, message: err.message && err.message.length ? err.message : 'Database updateerror'});
+                                }
+                                database.EndTransaction();
+                                
+                                const ret = {result: true, success: 1, return: {"couponAmount":"1", "couponCurrency": coin.ticker, "funds":{}}};
+                                ret.return.funds[coin.ticker] = newBalance;
+                                return callback(ret)
+                            }
+                        );
+                    });
+
+                }
+                catch(e)
+                {
+                    database.RollbackTransaction();
+                    return callback({result: false, message: e.message});
+                }
+            });
+        });
+   });
+}
+
+exports.ProcessWithdrawToCoupon = function(userID, amount, coinName, callback)
+{
+    g_constants.dbTables['coins'].selectAll('ROWID AS id, *', 'name="'+coinName+'"', '', (err, rows) => {
+        if (err || !rows || !rows.length)
+            return callback({result: false, message: 'Coin "'+unescape(coinName)+'" not found'});
+
+        try { rows[0].info = JSON.parse(utils.Decrypt(rows[0].info));}
+        catch(e) {}
+            
+        if (!rows[0].info || !rows[0].info.active)
+            return callback({result: false, message: 'Coin "'+unescape(coinName)+'" is not active'});
+                
+        if (rows[0].info.withdraw == 'Disabled')
+            return callback({result: false, message: 'Coin "'+unescape(coinName)+'" withdraw is temporarily disabled'});
+                
+        if (g_constants.share.tradeEnabled == false)
+            return callback({result: false, message: 'Trading is temporarily disabled'});
+
+        const coin = rows[0];
+
+        const commentJSON = [{from: userID, to: g_constants.ExchangeBalanceAccountID, amount: amount, time: Date.now(), action: 'set'}];
+        const comment = JSON.stringify(commentJSON);
+        database.BeginTransaction(err => {
+            if (err) return callback({result: false, message: err.message && err.message.length ? err.message : 'Database transaction error'});
+            
+            try
+            {
+                UpdateBalanceDB(g_constants.ExchangeBalanceAccountID, userID, coin, amount, comment, ret => {
+                    if (!ret || ret.result != true)
+                    {
+                        database.RollbackTransaction();
+                        return callback({result: false, message: ret.message && ret.message.length ? ret.message : 'Update Balance error'});
+                    }
+                    
+                    const newBalance = ret.balance;
+                    const uid = "OT-"+userID+"-"+coin.id+"-"+amount+"-"+Date.now()+"-"+utils.Encrypt(Math.random());
+                    
+                    g_constants.dbTables['coupons'].insert(
+                        uid,
+                        userID,
+                        Date.now(),
+                        amount,
+                        coinName,
+                        0,
+                        "",
+                        JSON.stringify({}),
+                        err => {
+                            if (err)
+                            {
+                                database.RollbackTransaction();
+                                return callback({result: false, message: err.message && err.message.length ? err.message : 'Database insert error'});
+                            }
+                            database.EndTransaction();
+                            
+                            const ret = {result: true, success: 1, return: {coupon: encodeURIComponent(uid), funds: {}}};
+                            ret.return.funds[coin.ticker] = newBalance;
+                            ret['data'] = ret.return;
+                            return callback(ret)
+                        }
+                    );
+                });
+            }
+            catch(e)
+            {
+                database.RollbackTransaction();
+                return callback({result: false, message: e.message});
+            }
+                
+        });
     });
 }
 
@@ -516,6 +661,9 @@ exports.ProcessWithdraw = function(userID, address, amount, coinName, callback)
 
 function ProcessWithdraw(userID, address, amount, coinName, callback)
 {
+    if (!address || address == 0)
+        return exports.ProcessWithdrawToCoupon(userID, amount, coinName, callback);
+
     const userAccount = utils.Encrypt(userID);
         
     g_constants.dbTables['coins'].selectAll('ROWID AS id, *', 'name="'+coinName+'"', '', (err, rows) => {

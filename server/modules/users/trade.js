@@ -24,7 +24,7 @@ exports.onGetChart = function(ws, req, data)
 let g_onGetPair_counter = 0;
 exports.onGetPair = function(ws, req, data)
 {
-    if (g_onGetPair_counter > 40)
+    if (g_onGetPair_counter > 30)
     {
         return;
     }
@@ -247,25 +247,33 @@ function GetTradeHistory(data, callback)
 
 function GetChartData(data, callback)
 {
+    if (!data || !Array.isArray(data) || data.length != 3)
+        return callback({result: false, data: [], message: 'Bad request: data is not array or length != 3'});
+    
     if (!chartData[data[1]]) 
-        chartData[data[1]] = {time: 0, data: []};
+        chartData[data[1]] = {}; //
+    if (!chartData[data[1]][data[2]])
+        chartData[data[1]][data[2]] = {time: 0, data: []};
         
-    if (Date.now() - chartData[data[1]].time < 3600000) return callback({result: true, data: chartData[data[1]].data});
+    if (Date.now() - chartData[data[1]][data[2]].time < 3600000) return callback({result: true, data: chartData[data[1]][data[2]].data});
 
     try
     {
+        const group = 
+            (data[2] == 24) ? 360000 :
+            (data[2] == 250) ? 3600000 :
+            (data[2] == 1000) ? 14400000 :
+            (data[2] == 6000) ? 86400000 : 360000;
+            
         //g_constants.dbTables['history'].selectAll('fromSellerToBuyer AS volume, AVG(price*1000000) AS avg_10min, (time/360000) AS t10min', 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'"', 'GROUP BY t10min ORDER BY t10min DESC LIMIT 60', (err, rows) => {
-        g_constants.dbTables['history'].selectAll('fromSellerToBuyer AS volume, AVG((fromBuyerToSeller/fromSellerToBuyer)*1000000) AS avg_10min, (time/360000) AS t10min', 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'"', 'GROUP BY t10min ORDER BY t10min DESC LIMIT 200', (err, rows) => {
+        g_constants.dbTables['history'].selectAll('fromSellerToBuyer AS volume, AVG((fromBuyerToSeller/fromSellerToBuyer)*1000000) AS avg_10min, (time/'+group+') AS t10min', 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'"', 'GROUP BY t10min ORDER BY t10min DESC LIMIT 200', (err, rows) => {
             if (err || !rows) callback({result: false, data: []});
             
-            if (chartData[data[1]]) delete chartData[data[1]];
+            if (chartData[data[1]][data[2]]) delete chartData[data[1]][data[2]];
                 
-            chartData[data[1]] = {time: 0, data: []};
+            chartData[data[1]][data[2]] = {time: Date.now(), data: rows};
             
-            chartData[data[1]].time = Date.now();
-            chartData[data[1]].data = rows;
-            
-            callback({result: true, data: chartData[data[1]].data});
+            callback({result: true, data: chartData[data[1]][data[2]].data});
         });
     }
     catch(e)
