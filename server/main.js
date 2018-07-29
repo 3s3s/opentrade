@@ -105,30 +105,4 @@ app.use(function (err, req, res, next) {
 require("./database").Init();
 require("./modules/users/market").Init();
 
-//require("../debug/dump.js").init('/root/marycoin/Trade2/debug');
-//var heapdump = require('heapdump');
-/*setInterval(loadDump, 1000*60*5);
-function loadDump()
-{
-    heapdump.writeSnapshot('/root/marycoin/Trade2/debug/' + Date.now() + '.heapsnapshot');
-}*/
 
-/*setInterval(callGC, 1000*60);
-function callGC()
-{
-    try
-    {
-        if (global.gc) {
-            global.gc();
-            //heapdump.writeSnapshot('/root/marycoin/Trade2/debug/' + Date.now() + '.heapsnapshot');
-            
-        } else {
-            console.log('Garbage collection unavailable.  Pass --expose-gc '
-              + 'when launching node to enable forced garbage collection.');
-        }
-    }
-    catch(e)
-    {
-        
-    }
-}*/

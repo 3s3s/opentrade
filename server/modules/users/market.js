@@ -13,6 +13,8 @@ exports.Init = function()
     setInterval(exports.UpdateMarket, 10000);
 };
 
+let g_LastMarketData = {};
+
 exports.UpdateMarket = function()
 {
     if (!g_constants.WEB_SOCKETS || !g_constants.dbTables['coins']) return;
@@ -36,6 +38,7 @@ exports.UpdateMarket = function()
             data.push(rows[i]);
         }
         const msg = {coins: data};
+        g_LastMarketData = msg;
         
         // Broadcast to everyone else.
         const msgString = JSON.stringify({request: 'market', message: msg});
@@ -45,4 +48,8 @@ exports.UpdateMarket = function()
         });
     });
 };
+
+exports.GetMarketData = function(callback) {
+    callback(g_LastMarketData);
+}
 

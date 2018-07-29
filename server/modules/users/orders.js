@@ -56,7 +56,7 @@ exports.CloseOrder = function(req, res)
                 if (!utils.isNumeric(newBalance)) return onError(req, res, 'Balance is not numeric ('+newBalance+')');
                 
                 database.BeginTransaction(err => {
-                    if (err) return onError(req, res, err.message || 'Database transaction error');
+                    if (err) return onError(req, res, err.message && err.message.length ? err.message : 'Database transaction error');
                     
                     try
                     {
@@ -64,7 +64,7 @@ exports.CloseOrder = function(req, res)
                             if (err)
                             {
                                 database.RollbackTransaction();
-                                return onError(req, res, err.message || 'Database Delete error');
+                                return onError(req, res, err.message && err.message.length ? err.message : 'Database Delete error');
                             }
                             
 ////////
@@ -77,7 +77,7 @@ exports.CloseOrder = function(req, res)
                                 if (err)
                                 {
                                     database.RollbackTransaction();
-                                    return onError(req, res, err.message || 'Database Update error');
+                                    return onError(req, res, err.message && err.message.length ? err.message : 'Database Update error');
                                 }
                                 database.EndTransaction();
                                 //database.RollbackTransaction();

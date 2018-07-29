@@ -4,7 +4,7 @@ const utils = require("../../utils.js");
 const g_constants = require("../../constants.js");
 const WebSocket = require('ws');
 
-let chat = [];
+let chat = {ru: [], en: []};
 
 exports.onNewMessage = function(ws, req, messageObject)
 {
@@ -102,16 +102,19 @@ exports.onDeleteMessage = function(ws, req, messageObject)
         if (status.id != 1) return;
         
         GetLastMessages(messages => {
-            let tmp = [];
-            for (var i=0; i<messages.length; i++)
+            let tmp = {};
+            for (let key in messages)
             {
-                if (messages[i].user == 'octo8')
+                if (!tmp[key]) tmp[key] = [];
+
+                const msg = messages[key];
+                for (var i=0; i<msg.length; i++)
                 {
-                    var k = 1;
+                    if (msg[i].message.text == messageObject.message.text && msg[i].user == messageObject.user && messageObject.message.lang == key)
+                        continue;
+                        
+                    tmp[key].push(msg[i]);
                 }
-                if (messages[i].message.text == messageObject.message.text && messages[i].user == messageObject.user)
-                    continue;
-                tmp.push(messages[i]);
             }
             chat = tmp;
             
@@ -125,37 +128,57 @@ exports.onRequestMessages = function(ws)
     require("./market").UpdateMarket();
     
     GetLastMessages(messages => {
-        if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({request: 'chat-messages', message: messages}));
+        let msgArray = [];
+        for (var key in messages)
+            msgArray = msgArray.concat(messages[key]);
+            
+        if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({request: 'chat-messages', message: msgArray}));
     });
 }
 
 function GetLastMessages(callback)
 {
-    if (chat.length || !g_constants.dbTables['KeyValue'])
-    {
-        callback(chat);
-        return;
-    }
-    
+    if (!g_constants.dbTables['KeyValue'])
+        return callback(chat);
+        
+    for (var key in chat)
+        if (chat[key].length) return callback(chat);
+
     try
     {
         g_constants.dbTables['KeyValue'].get('chat', (err, value) => {
-            try { chat = JSON.parse(value) } catch(e) {}
+            try {
+                chat = JSON.parse(value);
+                /*const parsed = JSON.parse(value);
+                let msgArray = [];
+                for (var key in parsed)
+                    msgArray = msgArray.concat(parsed[key]);
+                
+                let tmp = {};    
+                for (var i=0; i<msgArray.length; i++)
+                {
+                    if (!tmp[msgArray[i].message.lang]) tmp[msgArray[i].message.lang] = [];
+                    tmp[msgArray[i].message.lang].push(msgArray[i]);
+                }
+                
+                chat = tmp;//JSON.parse(value);*/
+            } catch(e) {}
             callback(chat);
         });
     }
-    catch(e)
-    {
+    catch(e) {
         callback(chat);
     }
 }
 
 function SaveMessage(msg)
 {
-    chat.push(msg);
+    if (!msg.message || !msg.message.lang || !chat[msg.message.lang]) return;
     
-    var tmp = (chat.length > 300) ? chat.slice(chat.length-300) : chat;
-    chat = tmp;
+    chat[msg.message.lang].push(msg);
+    
+    var tmp = (chat[msg.message.lang].length > 300) ? chat[msg.message.lang].slice(chat[msg.message.lang].length-300) : chat[msg.message.lang];
+    chat[msg.message.lang] = tmp;
     
     setTimeout(SaveToDB, 30000);
 }

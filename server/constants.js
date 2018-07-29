@@ -8,10 +8,10 @@ const START_MESSAGE = 'OpenTrade started!';
 
 const DashForks = ['DASH', 'WAVI'];
 
-exports.DEBUG_LOG = true;
+exports.DEBUG_LOG = false;
 
 exports.share = {
-   tradeEnabled: false,
+   tradeEnabled: true,
    recaptchaEnabled: true,
    
    my_portSSL: 40443,
@@ -169,6 +169,20 @@ exports.dbTables = [
            ['time', 'INTEGER'],
            ['comment', 'TEXT']
         ]
+   },
+   {
+       'name' : 'coupons',
+       'cols' : [
+           ['uid', 'TEXT UNIQUE'],
+           ['UserFrom', 'INTEGER'],
+           ['timeCreated', 'INTEGER'],
+           ['amount', 'TEXT'],
+           ['coin', 'TEXT'],
+           ['timeClosed', 'INTEGER'],
+           ['UserTo', 'INTEGER'],
+           ['comment', 'TEXT']
+        ],
+        'commands': 'PRIMARY KEY (uid)'
    }
 ];
 

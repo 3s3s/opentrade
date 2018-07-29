@@ -157,6 +157,7 @@ function GetOpenOrders(market, callback)
     }
 
                     </pre>
+                    
                     <h5>/public/getorderbook</h5>
                     <p>Used to get retrieve the orderbook for a given market </p>
                     Parameters 
@@ -207,6 +208,27 @@ function GetOpenOrders(market, callback)
     }
 
                     </pre>
+                    <br>
+                    
+                    <h5>/public/getlastmarketdata</h5>
+                    <p>Used to get the last summary of all coins </p>
+                    Request: 
+                    <pre>https://trade.multicoins.org/api/v1/public/getlastmarketdata</pre>
+                    Response:
+                    <pre>
+{
+"success":true,
+"message":"",
+"result":{
+    "coins":[
+    {"id":1,"name":"Marycoin","ticker":"MC","icon":"https%3A//trade.multicoins.org/mc8.png","info":{"active":true,"minconf":3,"hold":0.002,"page":"1","withdraw":"Enabled","orders":"Enabled"},"volume":0,"price":0,"fromBuyerToSeller":0,"buysell":"buy","prev_price":0,"prev_frombuyertoseller":0,"prev_buysell":"buy"},
+    {"id":2,"name":"Bitcoin","ticker":"BTC","icon":"https%3A//raw.githubusercontent.com/bitcoin/bitcoin/master/src/qt/res/icons/bitcoin.png","info":{"active":true,"minconf":3,"hold":0.0002,"page":"https://bitcointalk.org/index.php?topic=5.0","withdraw":"Enabled","orders":"Enabled"},"volume":"0.000014000000","price":"1441881.0","fromBuyerToSeller":"20.186334","buysell":"buy","prev_price":"1437854.0","prev_frombuyertoseller":1437854,"prev_buysell":"buy"},
+    {"id":3,"name":"Dogecoin","ticker":"DOGE","icon":"https%3A//raw.githubusercontent.com/dogecoin/dogecoin/master/src/qt/res/icons/bitcoin.png","info":{"minconf":3,"hold":2,"active":true,"page":"https://bitcointalk.org/index.php?topic=361813.0"},"volume":"8.8580000","price":"0.71999990","fromBuyerToSeller":"6.3777591","buysell":"sell","prev_price":"0.71999990","prev_frombuyertoseller":0.7199999034455098,"prev_buysell":"sell"},
+    ***]
+    }
+}                    
+                    </pre>
+
                     <h5>/public/getmarketsummary</h5>
                     <p>Used to get the last 24 hour summary of all active exchanges </p>
                     Parameters 
@@ -221,9 +243,14 @@ function GetOpenOrders(market, callback)
                             <td>required</td>
                             <td>a string literal for the market (ex: MC-LTC)</td>
                         </tr>
+                        <tr>
+                            <td><code>period</code></td>
+                            <td>optional</td>
+                            <td>period in hours. Can be: 24, 250, 1000 or 6000. By default period=24</td>
+                        </tr>
                     </table>
                     Request: 
-                    <pre>https://trade.multicoins.org/api/v1/public/getmarketsummary?market=MC-LTC</pre>
+                    <pre>https://trade.multicoins.org/api/v1/public/getmarketsummary?market=MC-LTC&amp;period=250</pre>
                     Response:
                     <pre>
     {
@@ -871,8 +898,7 @@ const API_PRIV_KEY = "__YOUR_API_PRIVATE_KEY__";
 
 Withdraw('MC', 5, 'MVe3eoMq7TeGMzPw9EpXGpKQzW2aMvJNAa', data => { console.log(JSON.stringify(data.result || data)); });
 
-function Withdraw(currency, quantity, address, callback)
-{
+function Withdraw(currency, quantity, address, callback) {
     const nonce = Date.now()+Math.floor(Math.random() * (1000)) + 1;
     const uri = 'https://trade.multicoins.org/api/v1/account/withdraw?apikey='+API_PUB_KEY+'&nonce='+nonce+'&currency='+currency+'&quantity='+quantity+'&address='+address;
     const parsed = require('url').parse(uri, true);
@@ -881,14 +907,155 @@ function Withdraw(currency, quantity, address, callback)
     const options = {
         host: parsed.host,
         path: parsed.path,
-        headers: { 'apisign': signature }
-    };
+        headers: { 'apisign': signature }};
     
     require("https").request(options, res => {
         let output = '';
         res.on('data', chunk => { output += chunk; });
         res.on('end', () => { return callback(JSON.parse(output)); }); }).end();
 }
+                </pre>
+        
+    </div>
+</div>
+
+<br><br>
+
+                    <h5>/account/createcoupon</h5>
+                    <p>This method allows you to create Coupons. </p>
+                    Parameters 
+                    <table class='table'>
+                        <tr>
+                            <th>parameter</th>
+                            <th>required</th>
+                            <th>description</th>
+                        </tr>
+                        <tr>
+                            <td><code>currency</code></td>
+                            <td>required</td>
+                            <td>a string literal for the market (ie. MC-LTC).</td>
+                        </tr>
+                        <tr>
+                            <td><code>quantity</code></td>
+                            <td>required</td>
+                            <td>the quantity of coins to withdraw</td>
+                        </tr>
+                    </table>
+                    Request: 
+                    <pre>https://trade.multicoins.org/api/v1/account/createcoupon?apikey=API_KEY&amp;nonce=NONCE&amp;currency=MC&amp;quantity=20.40</pre>
+                    Response:
+                    <pre>
+{
+    "result": true, 
+    "success":1,
+    "return":{
+        "coupon":"OT-2-1-0.01-1532875173145-f4f1b216f09507d6d987bhvgfbfc85ef36d0ba236e0983gslkjn196dafa9648",
+        "funds":{"MC":430.4460447}
+    }
+}                    
+                    </pre>
+                    
+
+<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#Node_Example31" aria-expanded="false" aria-controls="Node_Example31">
+    node.js example
+</button>   
+<div class="collapse" id="Node_Example31">
+    <div class="card card-body">
+                <pre>
+'use strict';
+
+const API_PUB_KEY = "__YOUR_API_PUBLIC_KEY__";
+const API_PRIV_KEY = "__YOUR_API_PRIVATE_KEY__";
+
+Create('MC', 0.01, ret => {console.log(JSON.stringify(ret))});
+
+function Create(currency, quantity, callback) {
+    const nonce = Date.now()+Math.floor(Math.random() * (1000)) + 1;
+    const uri = 'https://trade.multicoins.org/api/v1/account/createcoupon?apikey='+API_PUB_KEY+'&nonce='+nonce+'&currency='+currency+'&quantity='+quantity;
+    const parsed = require('url').parse(uri, true);
+    const signature = require('crypto').createHmac('sha512', API_PRIV_KEY).update(new Buffer(uri, 'utf-8')).digest('hex');
+    
+    const options = {
+        host: parsed.host,
+        path: parsed.path,
+        headers: { 'apisign': signature }};
+    
+    require("https").request(options, res => {
+        let output = '';
+        res.on('data', chunk => { output += chunk; });
+        res.on('end', () => { return callback(JSON.parse(output)); });
+    }).end();
+}
+
+                </pre>
+        
+    </div>
+</div>
+
+<br><br>
+
+                    <h5>/account/redeemcoupon</h5>
+                    <p>This method is used to redeem coupons.</p>
+                    Parameters 
+                    <table class='table'>
+                        <tr>
+                            <th>parameter</th>
+                            <th>required</th>
+                            <th>description</th>
+                        </tr>
+                        <tr>
+                            <td><code>coupon</code></td>
+                            <td>required</td>
+                            <td>a string literal for coupon</td>
+                        </tr>
+                    </table>
+                    Request: 
+                    <pre>https://trade.multicoins.org/api/v1/account/redeemcoupon?apikey=API_KEY&amp;nonce=NONCE&amp;coupon=OT-2-1-0.01-1532875173145-f4f1b216f09507bsld587ygsek7fc88903tydfsjk36e7c8633196dafa9648</pre>
+                    Response:
+                    <pre>
+{
+    "result":true,
+    "success":1,
+    "return": {
+        "couponAmount":"1",
+        "couponCurrency":"MC",
+        "funds":{"MC":431.9670079}
+    }
+}                    
+                    </pre>
+                    
+
+<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#Node_Example32" aria-expanded="false" aria-controls="Node_Example32">
+    node.js example
+</button>   
+<div class="collapse" id="Node_Example32">
+    <div class="card card-body">
+                <pre>
+'use strict';
+
+const API_PUB_KEY = "__YOUR_API_PUBLIC_KEY__";
+const API_PRIV_KEY = "__YOUR_API_PRIVATE_KEY__";
+
+Close("OT-2-1-0.01-1532875173145-f4f1b216f09507bsld587ygsek7fc88903tydfsjk36e7c8633196dafa9648", ret => { console.log(JSON.stringify(ret));}
+
+function Close(coupon, callback) {
+    const nonce = Date.now()+Math.floor(Math.random() * (1000)) + 1;
+    const uri = 'https://trade.multicoins.org/api/v1/account/redeemcoupon?apikey='+API_PUB_KEY+'&nonce='+nonce+'&coupon='+coupon;
+    const parsed = require('url').parse(uri, true);
+    const signature = require('crypto').createHmac('sha512', API_PRIV_KEY).update(new Buffer(uri, 'utf-8')).digest('hex');
+    
+    const options = {
+        host: parsed.host,
+        path: parsed.path,
+        headers: { 'apisign': signature }};
+    
+    require("https").request(options, res => {
+        let output = '';
+        res.on('data', chunk => { output += chunk; });
+        res.on('end', () => { return callback(JSON.parse(output)); });
+    }).end();
+}
+
                 </pre>
         
     </div>
