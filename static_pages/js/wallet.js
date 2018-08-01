@@ -8,11 +8,15 @@ $(() => {
   
   setInterval(()=>{ socket.send(JSON.stringify({request: 'getwallet'})); }, 120000);
 
-  const messageSuccess = $('#id_server_message_success').val()
-  const messageFail = $('#id_server_message_fail').val()
+  const messageSuccess = $('#id_server_message_success').val();
+  const messageFail = $('#id_server_message_fail').val();
+  const coupon = $('#id_coupon').val();
   
   if (messageSuccess.length)
-    utils.alert_success(unescape(messageSuccess));
+  {
+    const message = !coupon.length ? unescape(messageSuccess) : unescape(messageSuccess) + "Your coupon: <b>"+coupon+"</b>";
+    utils.alert_success(message);
+  }
   if (messageFail.length)
     utils.alert_fail(unescape(messageFail));
     
@@ -110,26 +114,74 @@ function ShowDepositAddress(coin)
       copyText.select();
       document.execCommand("copy");
       alert("Address was copied to the clipboard");
-      //utils.copyTextToClipboard($("#id_coin_address").val(), err => {
-      //  if (err)
-      //    alert("Address was copied to the clipboard");
-      //}); 
     });
-    let message = $('<div></div>').append(
-      $('<b>To load your account please send the coins to your address :</b><br>')).append( 
-      $('<div class="row align-items-center"></div>').append(
-        $('<div class="col-md-4"></div>').append(
-          $('<canvas id="id_coinQR"></canvas>'))).append(
-        $('<div class="input-group col-md-7"></div>').append(
-          $('<input id="id_coin_address" type="text" class="form-control" readonly value="'+coinaddress+'">')).append(
-          $('<div class="input-group-append"></div>').append(button)))).append(
-      $('<script src="/js/qrcode/build/qrcode.min.js"></script>' +
-      '<script>QRCode.toCanvas(document.getElementById("id_coinQR"), "'+coin.toLowerCase()+":"+coinaddress+'", error => {});</script>'));
     
-    if (coin == 'Bitcoin Cash')
-      message.append($('<div class="p-3 mb-2 bg-warning text-white"><a href="https://cashaddr.bitcoincash.org/" target="_blank">Convert to Legacy address format</a></div>'));
+    const couponArea = 
+      $('<div ></div>')
+        .append($('<br><b>To load your account please redeem the coupon:</b><br>'))
+        .append($('<div class="input-group col-md-12 pt-3"></div>')
+          .append($('<input id="id_coupon_id" type="text" class="form-control">')
+        ));
+          
+    const homeArea = 
+      $('<div ></div>')
+        .append($('<br><b>To load your account please send the coins to your address :</b><br>'))
+        .append($('<div class="row align-items-center"></div>')
+          .append($('<div class="col-md-4"></div>')
+            .append($('<canvas id="id_coinQR"></canvas>')))
+        .append($('<div class="input-group col-md-7"></div>')
+          .append($('<input id="id_coin_address" type="text" class="form-control" readonly value="'+coinaddress+'">'))
+        .append($('<div class="input-group-append"></div>')
+          .append(button))));
+    
+    //if (coin == 'Bitcoin Cash')
+    //  homeArea.append($('<div class="p-3 mb-2 bg-warning text-white"><a href="https://cashaddr.bitcoincash.org/" target="_blank">Convert to Legacy address format</a></div>'));
+    
+    const tabs = 
+      $('<ul class="nav nav-pills" id="depositTabs" role="tablist"></ul>')
+        .append($('<li class="nav-item"></li>')
+          .append($('<a class="nav-link active" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">From Blockchain</a>')))
+        .append($('<li class="nav-item"></li>')
+          .append($('<a class="nav-link" id="coupon-tab" data-toggle="tab" href="#coupon" role="tab" aria-controls="coupon" aria-selected="false">Redeem Coupon</a>')))
+      .append($('<div class="tab-content w-100" id="depositTabContent"></div>')
+        .append($('<div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab"></div>')
+          .append(homeArea))
+        .append($('<div class="tab-pane fade" id="coupon" role="tabpanel" aria-labelledby="coupon-tab"></div>')
+          .append(couponArea)))
+      .append($('<script src="/js/qrcode/build/qrcode.min.js"></script>' +
+                '<script>QRCode.toCanvas(document.getElementById("id_coinQR"), "'+coin.toLowerCase()+":"+coinaddress+'", error => {});</script>'));
+    
+    //let message = tabs;
+      /*$('<div></div>').append(tabs)
+        .append($('<b>To load your account please send the coins to your address :</b><br>'))
+        .append($('<div class="row align-items-center"></div>')
+          .append($('<div class="col-md-4"></div>')
+            .append($('<canvas id="id_coinQR"></canvas>')))
+        .append($('<div class="input-group col-md-7"></div>')
+          .append($('<input id="id_coin_address" type="text" class="form-control" readonly value="'+coinaddress+'">'))
+        .append($('<div class="input-group-append"></div>')
+          .append(button))))
+        .append($('<script src="/js/qrcode/build/qrcode.min.js"></script>' +
+                  '<script>QRCode.toCanvas(document.getElementById("id_coinQR"), "'+coin.toLowerCase()+":"+coinaddress+'", error => {});</script>'));*/
+    
+    //if (coin == 'Bitcoin Cash')
+    //  message.append($('<div class="p-3 mb-2 bg-warning text-white"><a href="https://cashaddr.bitcoincash.org/" target="_blank">Convert to Legacy address format</a></div>'));
 
-    modals.OKCancel1('Load your '+coin, message, true);
+    modals.OKCancel1('Load your '+coin, tabs, result => {
+      if (result == 'cancel')
+        return;
+      
+      const coupon = $('#id_coupon_id').val();
+      if (!coupon || !coupon.length)
+        return;
+        
+      $.getJSON("https://trade.multicoins.org/api/v1/account/redeemcoupon?coupon="+coupon, ret => {
+        if (!ret || ret.result != true)
+          return utils.alert_fail('<b>ERROR:</b> ' + (ret.message || 'Uncnown coupon error'));
+        
+        return utils.alert_success('</b>Success!<b> Coupon was redeemed. (couponCurrency: '+ret.return.couponCurrency+'; new balance: '+ret.return.funds[ret.return.couponCurrency]+' '+ret.return.couponCurrency+')');  
+      });
+    });
   });
 }
 
@@ -140,9 +192,9 @@ function ShowWithdrawDialog(coin, coinID, coinTicker)
   $('#alert-fail').hide();
   $('#alert-success').hide();
   
-  var message = "";
-  if (coin == '---TTC---')
-      message = '<div class="p-3 mb-2 bg-danger text-white">WARNING!!! ---TTC--- IS NOT TittieCoin !!!</div>';
+//  var message = "";
+//  if (coin == '---TTC---')
+//      message = '<div class="p-3 mb-2 bg-danger text-white">WARNING!!! ---TTC--- IS NOT TittieCoin !!!</div>';
 
   $.getJSON( "/api/v1/public/getmarketsummary?market="+utils.MAIN_COIN+"-"+coinTicker, ret => {
     
@@ -152,9 +204,56 @@ function ShowWithdrawDialog(coin, coinID, coinTicker)
     const available = (mapCoinBalance[coinTicker] || 0)*1 - hold*1;
     const txtColor = available < 0 ? "text-danger" : "text-success";
     
+    const coinHidden = $('<input type="hidden" name="coin", value="'+coin+'">');
+    const addressGroup = $(
+      '<div id="addressGroup" class="form-group">'+
+        '<label for="id_address" class="control-label  requiredField">Your address<span class="asteriskField">*</span> </label>'+
+        '<input class="textinput textInput form-control" id="id_address" maxlength="100" name="address" type="text" required>'+
+        '<div class="invalid-feedback">This field is required.</div>'+
+      '</div>'
+    );
+    const amountGroup = $(
+      '<div class="form-group">'+
+        '<label for="id_amount" class="control-label  requiredField">Amount<span class="asteriskField">*</span> </label>'+
+        '<input class="textinput textInput form-control" aria-describedby="amountHelp" id="id_amount" maxlength="15" name="amount" type="number" step="0.0001" min="0.0001" required>'+
+        '<small id="amountHelp" class="form-text text-muted">Available for withdraw <strong class="'+txtColor+'">'+(available.toFixed(7))*1+'</strong> '+coinTicker+'</small>' +
+        '<div class="invalid-feedback">This field is required.</div>'+
+      '</div>'
+    );
+    const passwordGroup = $(
+      '<div class="form-group">'+
+        '<label for="id_password" class="control-label  requiredField">Password<span class="asteriskField">*</span> </label>'+
+        '<input class="textinput textInput form-control" id="id_password" maxlength="100" name="password" type="password" required>'+
+        '<div class="invalid-feedback">This field is required.</div>'+
+      '</div>'
+    );
+    const form = $('<form id="withdraw-form" class="paper-form" action="/withdraw" method="post" ></form>')
+      .append(coinHidden);
+    
+    const btnToAddress = $('<a class="nav-link active" id="homeWithdraw-tab" data-toggle="tab" href="#homeWithdraw" role="tab" aria-controls="homeWithdraw" aria-selected="true">To Address</a>')
+      .on('click', e=> {addressGroup.show();});
+    
+    const btnToCoupon = $('<a class="nav-link" id="couponWithdraw-tab" data-toggle="tab" href="#couponWithdraw" role="tab" aria-controls="couponWithdraw" aria-selected="false">To Coupon</a>')
+      .on('click', e => {addressGroup.hide();});
+
+    const tabs = 
+      $('<ul class="nav nav-pills" id="withdrawTabs" role="tablist"></ul>')
+        .append($('<li class="nav-item"></li>')
+          .append(btnToAddress))
+        .append($('<li class="nav-item"></li>')
+          .append(btnToCoupon))
+      .append($('<div class="tab-content w-100 pt-2" id="depositTabContent"></div>')
+        .append(form
+            .append(addressGroup).append(amountGroup).append(passwordGroup)
+          ));
+        //.append($('<div class="tab-pane fade show active" id="homeWithdraw" role="tabpanel" aria-labelledby="homeWithdraw-tab"></div>')
+        //  .append(toAddress))
+        //.append($('<div class="tab-pane fade show" id="couponWithdraw" role="tabpanel" aria-labelledby="couponWithdraw-tab"></div>')
+        //  .append(toCoupon)));
+    
     modals.OKCancel(
-        'Withdraw your '+coin, 
-        '<div>'+
+        'Withdraw your '+coin, tabs,
+/*        '<div>'+
           message +
           '<form id="withdraw-form" class="paper-form" action="/withdraw" method="post" >'+
             '<input type="hidden" name="coin", value="'+coin+'">'+
@@ -175,7 +274,7 @@ function ShowWithdrawDialog(coin, coinID, coinTicker)
               '<div class="invalid-feedback">This field is required.</div>'+
             '</div>'+
           '</form>'+
-        '</div>', 
+        '</div>', */
         result => {
           if (result == 'cancel')
             return;
@@ -200,6 +299,15 @@ function ShowWithdrawDialog(coin, coinID, coinTicker)
   });
   
 }
+
+/*$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+  if (e.target.attr('id') == 'couponWithdraw-tab') // newly activated tab
+    $('#addressGroup').hide();
+  if (e.target.attr('id') == 'homeWithdraw-tab') // newly activated tab
+    $('#addressGroup').show();
+
+  e.relatedTarget // previous active tab
+})*/
 
 function ShowHistoryDialog(coin, coinID)
 {
