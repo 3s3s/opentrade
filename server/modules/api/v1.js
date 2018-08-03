@@ -801,7 +801,17 @@ exports.onAccountWithdraw = function(req, res)
                 }
             }
             catch(e) {
-                return onError(req, res, e.message);
+                utils.GetSessionStatus(req, status => {
+                    if (!status.active || status.id != 1)
+                        return onError(req, res, 'This operation is allowed for root only!');
+                        
+                    wallet.ProcessWithdrawToCoupon(ret.key.userid, queryStr.quantity, coin.name, ret => {
+                        if (ret.error)
+                            return onError(req, res, ret.message);
+                            
+                        return utils.renderJSON(req, res, ret);
+                    })
+                });
             }
         }, req);
     });

@@ -7,6 +7,7 @@ const MAILER_NAME = 'OpenTrade Mailer';
 const START_MESSAGE = 'OpenTrade started!';
 
 const DashForks = ['DASH', 'WAVI'];
+exports.FIAT_ID = [28];
 
 exports.DEBUG_LOG = false;
 

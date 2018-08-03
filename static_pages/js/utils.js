@@ -102,6 +102,17 @@ const utils =
     MAIN_COIN: MAIN_COIN,
     DEFAULT_PAIR: DEFAULT_PAIR,
     COMISSION: 0.001,
+    
+    USD_NAME: "US Dollar",
+    USD_TICKER: "USD",
+    
+    IsFiat: function(coin)
+    {
+        if (coin == utils.USD_NAME) return true;
+        
+        return false;
+    },
+    
     ValidateEmail: function(text)
     {
         if (!text || !text.length)

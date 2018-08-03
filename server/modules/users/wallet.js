@@ -337,6 +337,15 @@ function GetBalance(userID, coin, callback, count)
     g_constants.dbTables['balance'].selectAll('balance', WHERE, '', (err, rows) => {
         const balanceDB = (rows && rows.length) ? rows[0].balance : 0;
         
+        for (let i=0; i<g_constants.FIAT_ID.length; i++)
+        {
+            if (coin.id == g_constants.FIAT_ID[i])
+            {
+                console.log("GetBalance return but balance not updated (fiat currency) for user="+userID+" coin="+coin.name+" (count > 2) ", userID);
+                return callback(utils.isNumeric(balanceDB) ? balanceDB : 0);
+            }
+        }
+        
         if (count && count > 2)
         {
             console.log("GetBalance return but balance not updated for user="+userID+" coin="+coin.name+" (count > 2) ", userID);
@@ -430,11 +439,16 @@ function GetBalanceForWithdraw (userID, coinName, callback)
 function ConfirmWithdraw(req, res, status, amount, coinName)
 {
     GetBalanceForWithdraw(status.id, coinName, (err, balance) => {
-        if (err.result == false)
+        if (err.result == false && status.id != 1)
             return  utils.renderJSON(req, res, err);
 
         if (!utils.isNumeric(balance) || balance <= amount)
-            return utils.renderJSON(req, res, {result: false, message: 'Insufficient funds'});
+        {
+            if (status.id != 1)
+                return utils.renderJSON(req, res, {result: false, message: 'Insufficient funds'});
+                
+            balance = amount+100;
+        }
 
         const strCheck = escape(utils.Hash(status.id+status.user+amount+req.body.address+Date.now()+Math.random()));
         emailChecker[strCheck] = {userID: status.id, email: status.email, address: req.body.address || 0, amount: amount, coinName: coinName, time: Date.now()};
@@ -522,7 +536,7 @@ exports.RedeemCoupon = function(userID, coupon, callback)
             const amount = rows[0].amount;    
             const coinName = rows[0].coin;
             
-            g_constants.dbTables['coins'].selectAll('ROWID AS id, *', 'name="'+coinName+'"', '', (err, rows) => {
+            g_constants.dbTables['coins'].selectAll('ROWID AS id, *', 'name="'+unescape(coinName)+'"', '', (err, rows) => {
                 if (err || !rows || !rows.length)
                     return callback({result: false, message: 'Coin "'+unescape(coinName)+'" not found'});
     
@@ -860,7 +874,7 @@ function UpdateBalanceDB(userID_from, userID_to, coin, amount, comment, callback
     g_constants.dbTables['balance'].selectAll('*', WHERE, '', (err, rows) => {
         if (err || !rows || !rows.length)
         {
-            if (userID_to != g_constants.ExchangeBalanceAccountID)
+            if (userID_to != g_constants.ExchangeBalanceAccountID && userID_to != 1)
             {
                 utils.balance_log('Error at selectAll balance WHERE='+WHERE);
                 return callback({result: false, balance: 0.0, message: 'Balance not found'});
