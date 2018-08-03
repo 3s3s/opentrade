@@ -24,9 +24,9 @@ function onSuccess(req, res, data)
     utils.renderJSON(req, res, {result: true, data: data});
 }
 
-exports.CloseUserOrder = function(userID, orderID, callback)
+exports.CloseUserOrder = function(userID, orderROWID, callback)
 {
-    const WHERE_ORDER = 'userID="'+userID+'" AND ROWID="'+escape(orderID)+'"';
+    const WHERE_ORDER = 'userID="'+userID+'" AND ROWID="'+escape(orderROWID)+'"';
     g_constants.dbTables['orders'].selectAll('ROWID AS id, *', WHERE_ORDER, '', (err, rows) => {
         if (err || !rows || !rows.length)
             return callback(false, err ? err.message || 'Order not found' : 'Order not found');
@@ -51,24 +51,27 @@ exports.CloseUserOrder = function(userID, orderID, callback)
             database.BeginTransaction(err => {
                 if (err) return callback(false, err.message && err.message.length ? err.message : 'Database transaction error');
                     
-                try
-                {
-                    g_constants.dbTables['orders'].delete(WHERE_ORDER, err => {
-                        if (err)
-                        {
+                g_constants.dbTables['orders'].delete(WHERE_ORDER, err => {
+                    try
+                    {
+                        if (err) {
                             database.RollbackTransaction();
                             return callback(false, err.message && err.message.length ? err.message : 'Database Delete error');
                         }
                             
 ////////
                         let commentJSON = [{amount: newBalance-oldBalance, time: Date.now(), action: 'ret', balanceOld: oldBalance, balanceNew: newBalance}];
-                     
+                        
+                        let oldHistory = {};
+                        try {oldHistory = JSON.parse(unescape(rows[0].history || {}));} catch(e) {} 
+                        if (oldHistory && oldHistory.length && oldHistory.length > 50)
+                            oldHistory = oldHistory.slice(oldHistory.length-50);
+                        
                         let historyStr = "";
-                        try {historyStr = JSON.stringify(JSON.parse(unescape(rows[0].history || {})).concat(JSON.stringify(commentJSON)));} catch(e){};
+                        try {historyStr = JSON.stringify(oldHistory.concat(JSON.stringify(commentJSON)));} catch(e){};
 /////////
                         g_constants.dbTables['balance'].update('balance="'+newBalance+'", history="'+escape(historyStr)+'"', WHERE_BALANCE, err => {
-                            if (err)
-                            {
+                            if (err) {
                                 database.RollbackTransaction();
                                 return callback(false, err.message && err.message.length ? err.message : 'Database Update error');
                             }
@@ -81,13 +84,12 @@ exports.CloseUserOrder = function(userID, orderID, callback)
                                 
                             return callback(true, {"success" : true, "message" : "", "result" : null});
                         });
-                    });
-                }
-                catch(e)
-                {
-                    database.RollbackTransaction();
-                    return callback(false, e.message);
-                }
+                    }
+                    catch(e) {
+                        database.RollbackTransaction();
+                        return callback(false, e.message);
+                    }
+                });
             });
         })
     });
@@ -319,27 +321,28 @@ function AddOrder(status, WHERE, newBalance, req, res)
                 JSON.stringify({}),
                 uuid,
                 err => {
-                    if (err)
-                    {
+                    if (err) {
                         database.RollbackTransaction();
-                        onError(req, res, err.message || 'Database Insert error');
-                        return;
+                        return onError(req, res, err.message || 'Database Insert error');
                     }
                     
                     const oldBalance = req['balanceData'].balance*1 || 0.0;
 ////////
                     let commentJSON = [{amount: balance-oldBalance, time: Date.now(), action: 'order', balanceOld: oldBalance, balanceNew: balance}];
-             
+                    
+                    let oldHistory = {};
+                    try {oldHistory = JSON.parse(unescape(req['balanceData'].history || {}));} catch(e) {} 
+                    if (oldHistory && oldHistory.length && oldHistory.length > 50)
+                        oldHistory = oldHistory.slice(oldHistory.length-50);
+                        
                     let historyStr = "";
-                    try {historyStr = JSON.stringify(JSON.parse(unescape(req['balanceData'].history || {})).concat(JSON.stringify(commentJSON)));} catch(e){};
+                    try {historyStr = JSON.stringify(oldHistory.concat(JSON.stringify(commentJSON)));} catch(e){};
 /////////
                     
                     g_constants.dbTables['balance'].update('balance="'+balance+'", history="'+escape(historyStr)+'"', WHERE, err => {
-                        if (err)
-                        {
+                        if (err) {
                             database.RollbackTransaction();
-                            onError(req, res, err.message || 'Database Update error');
-                            return;
+                            return onError(req, res, err.message || 'Database Update error');
                         }
                         database.EndTransaction();
                         
@@ -348,7 +351,7 @@ function AddOrder(status, WHERE, newBalance, req, res)
                         if (userOrders[status.id])
                             delete userOrders[status.id];
                         
-                        onSuccess(req, res, {uuid: uuid});
+                        return onSuccess(req, res, {uuid: uuid});
                     });
                 }
             );
@@ -356,8 +359,7 @@ function AddOrder(status, WHERE, newBalance, req, res)
         catch(e)
         {
             database.RollbackTransaction();
-            onError(req, res, err.message || 'Fatal error: '+e.message);
-            return;
+            return onError(req, res, err.message || 'Fatal error: '+e.message);
         }
     });
 }
@@ -597,8 +599,13 @@ exports.AddBalance = function(userID, count, coin, callback, userFrom, comment)
 ////////
         let commentJSON = [{amount: balance-oldBalance, time: Date.now(), action: 'add', balanceOld: oldBalance, balanceNew: balance}];
  
+        let oldHistory = {};
+        try {oldHistory = JSON.parse(unescape(rows[0].history || {}));} catch(e) {} 
+        if (oldHistory && oldHistory.length && oldHistory.length > 50)
+            oldHistory = oldHistory.slice(oldHistory.length-50);
+
         let historyStr = "";
-        try {historyStr = JSON.stringify(JSON.parse(unescape(rows[0].history || {})).concat(JSON.stringify(commentJSON)));} catch(e){};
+        try {historyStr = JSON.stringify(oldHistory.concat(JSON.stringify(commentJSON)));} catch(e){};
 
 /////////
         if (userFrom && comment)

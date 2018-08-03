@@ -12,6 +12,11 @@ pre {
     border-radius: 4px;
 }
 
+.disabledbutton {
+    pointer-events: none;
+    opacity: 0.4;
+}
+
 .staff_area {
   display: none;
 }

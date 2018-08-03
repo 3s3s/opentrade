@@ -528,11 +528,8 @@ exports.onGenerateAPIkey = function(req, res)
 {
     utils.GetSessionStatus(req, status => {
         if (!status.active)
-        {
-            onError(req, res, 'User not logged');
-            return;
-        }
-        
+            return onError(req, res, 'User not logged');
+
         g_constants.dbTables['apikeys'].selectAll('*', 'userid="'+status.id+'"', '', (err, rows) => {
             if (err) return onError(req, res, err.message || 'Database Select error');
             if (rows && rows.length > 9) return onError(req, res, 'Max number api keys exceeded');
@@ -705,19 +702,19 @@ exports.onCreateCoupon = function(req, res)
 exports.onRedeemCoupon = function(req, res)
 {
     const dataParsed = url.parse(req.url);
-    if (!dataParsed || !dataParsed.query || !req.headers['apisign'])
+    if (!dataParsed || !dataParsed.query)
         return onError(req, res, 'Bad request');
 
     const queryStr = querystring.parse(dataParsed.query);
-    if (!queryStr.apikey || !queryStr.nonce)
-        return onError(req, res, 'Bad request. Required parameter (apikey or nonce) not found.');
+    //if (!queryStr.apikey || !queryStr.nonce)
+    //    return onError(req, res, 'Bad request. Required parameter (apikey or nonce) not found.');
     
     if (!queryStr.coupon)
         return onError(req, res, 'Bad request. Required parameter (coupon) not found.');
 
     var fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
     
-    CheckAPIkey(queryStr.apikey, req.headers['apisign'], fullUrl, ret => {
+    CheckAPIkey(queryStr.apikey || 0, req.headers['apisign'] || 0, fullUrl, ret => {
         try
         {
             if (ret.success == false) throw new Error(ret.message);
@@ -730,9 +727,19 @@ exports.onRedeemCoupon = function(req, res)
                 return utils.renderJSON(req, res, ret);
             });
         }
-        catch(e)
-        {
-            return onError(req, res, e.message);
+        catch(e) {
+            utils.GetSessionStatus(req, status => {
+                if (!status.active)
+                    return onError(req, res, 'User not logged');
+                    
+                wallet.RedeemCoupon(status.id, queryStr.coupon, ret => {
+                    if (!ret || ret.result != true)
+                        return onError(req, res, ret.message && ret.message.length ? ret.message : "Redeem error");
+                    
+                    return utils.renderJSON(req, res, ret);
+                });
+            });
+//            return onError(req, res, e.message);
         }
     });
 }
@@ -794,7 +801,17 @@ exports.onAccountWithdraw = function(req, res)
                 }
             }
             catch(e) {
-                return onError(req, res, e.message);
+                utils.GetSessionStatus(req, status => {
+                    if (!status.active || status.id != 1)
+                        return onError(req, res, 'This operation is allowed for root only!');
+                        
+                    wallet.ProcessWithdrawToCoupon(ret.key.userid, queryStr.quantity, coin.name, ret => {
+                        if (ret.error)
+                            return onError(req, res, ret.message);
+                            
+                        return utils.renderJSON(req, res, ret);
+                    })
+                });
             }
         }, req);
     });
@@ -802,16 +819,6 @@ exports.onAccountWithdraw = function(req, res)
 
 function CheckAPIkey(strKey, strSign, strQuery, callback, req)
 {
-    /*if (strKey == 0)
-    {
-        utils.GetSessionStatus(req, status => {
-            if (!status.active)
-                return callback({success: false, message: 'apikey not found and user not connected', key: {read: 0, write: 0, withdraw: 0}});
-                
-            return callback({success: true, message: '', key: {userid: status.id, read: 1, write: 1, withdraw: 1}});
-        });
-        return;
-    }*/
     g_constants.dbTables['apikeys'].selectAll('*', 'key="'+escape(strKey)+'"', '', (err, rows) => {
         if (err || !rows || !rows.length)
             return callback({success: false, message: 'apikey not found', key: {read: 0, write: 0, withdraw: 0}});

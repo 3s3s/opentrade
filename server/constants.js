@@ -7,6 +7,7 @@ const MAILER_NAME = 'OpenTrade Mailer';
 const START_MESSAGE = 'OpenTrade started!';
 
 const DashForks = ['DASH', 'WAVI'];
+exports.FIAT_ID = [28];
 
 exports.DEBUG_LOG = false;
 
@@ -29,6 +30,8 @@ exports.SESSION_TIME = 3600*1000; //one hour
 
 exports.recaptcha_pub_key = "6LeX5SQUAAAAAKTieM68Sz4MECO6kJXsSR7_sGP1";
 const MAX_IP_CONNECTIONS = 100;
+
+const DATABASE_PATH = './database/sqlite.db';
 
 exports.dbTables = [
    {
@@ -211,17 +214,17 @@ exports.ExchangeBalanceAccountID = 0;
 
 exports.Roles = ['Administrator', 'Support', 'User'];
 
-exports.dbName = './database/sqlite.db';
-
 ////////////////////////////////////////////////////////////////////////////////////
 // Private constants
 const PRIVATE = require("./modules/private_constants");
+exports.dbName = PRIVATE.DATABASE_PATH || DATABASE_PATH;
 exports.password_private_suffix = PRIVATE.password_private_suffix;
 exports.recaptcha_priv_key = PRIVATE.recaptcha_priv_key;
 exports.SUPPORT_EMAIL = PRIVATE.SUPPORT_EMAIL || SUPPORT_EMAIL;
 exports.NOREPLY_EMAIL = PRIVATE.NOREPLY_EMAIL || NOREPLY_EMAIL;
 exports.START_MESSAGE = PRIVATE.START_MESSAGE || START_MESSAGE;
 exports.MAILER_NAME = PRIVATE.MAILER_NAME || MAILER_NAME;
+
 
 exports.DONATORS = [
     {userID: 1, percent: 99},

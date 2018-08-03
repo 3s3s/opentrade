@@ -20,7 +20,7 @@ function send(userID, coin, command, params, callback)
     }
 
     const address = utils.Decrypt(coin.address);
-    
+
     const parsed = url.parse(address, true);
     
     console.log('rpcPostJSON ' + strJSON, userID);
@@ -71,6 +71,11 @@ let mapUsersToRPC = {};
 let bWaitCoin = {};
 exports.send3 = function(userID, coinID, command, params, callback, counter)
 {
+    for (let i=0; i<g_constants.FIAT_ID.length; i++)
+    {
+        if (coinID == g_constants.FIAT_ID[i])
+            return callback({result: false, message: 'Fiat currency no need RPC calls'});
+    }
     if (command == 'move' && params[2]*1 <= 0)
         return callback({result: false, message: 'Invalid move amount'});
         

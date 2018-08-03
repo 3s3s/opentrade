@@ -420,6 +420,10 @@ exports.postString = function(host, port, path, headers, strBody, callback)
         headers: headers
     }; 
     
+    if (!port.name)
+    {
+        var i=0;
+    }
     var proto = (port.nPort == 443 || port.name.indexOf('https')==0) ? https : http;
         
     var req = proto.request(options, function(res) { 

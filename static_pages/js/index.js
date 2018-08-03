@@ -309,6 +309,7 @@ function UpdateMarket(message)
     return;
   
   $('#table-market').empty();  
+  let markets = [];
   for (var i=0; i<message.coins.length; i++)
   {
     const coinName = unescape(message.coins[i].name);
@@ -333,6 +334,9 @@ function UpdateMarket(message)
       storage.setItem("MC_BTC_Price", price);
     }
 
+    const MC = coinNameToTicker[utils.MAIN_COIN] ? coinNameToTicker[utils.MAIN_COIN].ticker || 'MC' : 'MC';
+    const BTC = coinNameToTicker[coinName].ticker;
+
     const tr = $('<tr></tr>')
       .append($('<td>'+message.coins[i].ticker+'</td>'))
       .append($('<td>'+price+'</td>'))
@@ -343,16 +347,20 @@ function UpdateMarket(message)
         if (coinName == g_CurrentPair)
           return;
           
-        const MC = coinNameToTicker[utils.MAIN_COIN] ? coinNameToTicker[utils.MAIN_COIN].ticker || 'MC' : 'MC';
-        const BTC = coinNameToTicker[coinName].ticker;
-        
         utils.ChangeUrl(document.title + "(" + coinName + ' market)', '/market/'+MC+'-'+BTC);
         storage.setItemS('CurrentPair', coinName);
         location.reload(); 
       });
       
-    $('#table-market').append(tr);
+    //$('#table-market').append(tr);
+    if (BTC == "USD")
+      markets.unshift(tr);
+    else
+      markets.push(tr);
   }
+  
+  for (let j=0; j<markets.length; j++)
+    $('#table-market').append(markets[j]);
   
   storage.setItem('coinNameToTicker', coinNameToTicker);
   storage.setItem('coinTickerToName', coinTickerToName);
