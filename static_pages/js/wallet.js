@@ -170,7 +170,7 @@ function ShowDepositAddress(coin)
       if (!coupon || !coupon.length)
         return;
         
-      $.getJSON("https://trade.multicoins.org/api/v1/account/redeemcoupon?coupon="+coupon, ret => {
+      $.getJSON("/api/v1/account/redeemcoupon?coupon="+coupon, ret => {
         if (!ret || ret.result != true)
           return utils.alert_fail('<b>ERROR:</b> ' + (ret.message || 'Uncnown coupon error'));
         
@@ -202,8 +202,8 @@ function ShowWithdrawDialog(coin, coinID, coinTicker)
     const coinHidden = $('<input type="hidden" name="coin", value="'+coin+'">');
     const addressGroup = $(
       '<div id="addressGroup" class="form-group">'+
-        '<label for="id_address" class="control-label  requiredField">Your address<span class="asteriskField">*</span> </label>'+
-        '<input class="textinput textInput form-control" id="id_address" maxlength="100" name="address" type="text" required>'+
+        '<label for="id_address" class="control-label  requiredField">Your wallet address<span class="asteriskField">*</span> </label>'+
+        '<input class="textinput textInput form-control" id="id_address" maxlength="100" name="address" type="text" required placeholder="1QB6ukBxmboWgxroc8zzjffaGWwsMuQCCL">'+
         '<div class="invalid-feedback">This field is required.</div>'+
       '</div>'
     );
@@ -217,7 +217,7 @@ function ShowWithdrawDialog(coin, coinID, coinTicker)
     );
     const passwordGroup = $(
       '<div class="form-group">'+
-        '<label for="id_password" class="control-label  requiredField">Password<span class="asteriskField">*</span> </label>'+
+        '<label for="id_password" class="control-label  requiredField">'+utils.OPENTRADE+' password<span class="asteriskField">*</span> </label>'+
         '<input class="textinput textInput form-control" id="id_password" maxlength="100" name="password" type="password" required>'+
         '<div class="invalid-feedback">This field is required.</div>'+
       '</div>'
@@ -280,16 +280,18 @@ function ShowHistoryDialog(coin, coinID)
 {
   $('#alert-fail').hide();
   $('#alert-success').hide();
+  
+  if (utils.IsFiat(coin))
+    return utils.alert_fail('History is not allowed for fiat currency');
+    
 
   $('#loader').show();
   $("html, body").animate({ scrollTop: 0 }, "slow");
   $.getJSON( "/history", {coinID: coinID}, ret => {
     $('#loader').hide();
     if (ret.result != true)
-    {
-      utils.alert_fail(ret.message);
-      return;
-    }
+      return utils.alert_fail(ret.message);
+
     ShowHistory(coin, ret.data);
   });
   

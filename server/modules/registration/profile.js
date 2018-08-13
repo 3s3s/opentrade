@@ -68,6 +68,9 @@ function UpdateProfile(request, responce, status)
     
     const savedStatus = status;
     
+    if (!g_constants.ALLOW_EMAIL_CHANGING && newEmail != status.email)
+        return onError(request, responce, 'Error: can not change email. Forbidden!');
+    
     g_constants.dbTables['users'].update("login='"+newLogin+"'", "ROWID='"+savedStatus.id+"'", (err)=>{
         if (err && savedStatus.user != newLogin)
             return onError(request, responce, 'Error: user already exist');

@@ -6,12 +6,8 @@ var g_CurrentLang = 'ru';
 var g_bFirstChatFilling = true;
 const chat_languages = ['ru', 'en'];
 
-//var pairData = {};
-
 var coinNameToTicker = {};
 var coinTickerToName = {};
-
-//var chartData = [];
 
 var g_role = 'User';
 
@@ -60,7 +56,6 @@ $(() => {
 
   $('.staff_area').hide();
   
-  //setInterval(UpdateMCFromLB, 30000);
 });
 
 $('#inputBuyTotal').change(e => {
@@ -237,15 +232,6 @@ function onSocketMessage(event)
   if (data.request == 'pairdata')
     return UpdatePairData(data.message)
 
-  /*if (data.request == 'chartdata')
-  {
-    if (data.message.data.chart)
-    {
-      chartData = data.message.data.chart;
-      drawChart();
-    }
-    return;
-  }*/
   if (data.request == 'pairbalance')
     return UpdatePairBalance(data.message)
 
@@ -303,6 +289,8 @@ function RedirectToCurrentPair()
   return false;
 }
 
+let g_LastPrices = {};
+let g_LastVolumes = {};
 function UpdateMarket(message)
 {
   if (!message || !message.coins || !message.coins.length)
@@ -336,8 +324,23 @@ function UpdateMarket(message)
 
     const MC = coinNameToTicker[utils.MAIN_COIN] ? coinNameToTicker[utils.MAIN_COIN].ticker || 'MC' : 'MC';
     const BTC = coinNameToTicker[coinName].ticker;
+    
+    const prevPrice = g_LastPrices[MC+'-'+BTC] || 0;
+    g_LastPrices[MC+'-'+BTC] = price;
+    
+    const prevVolume = g_LastVolumes[MC+'-'+BTC] || 0;
+    g_LastVolumes[MC+'-'+BTC] = vol;
+    
+    const rowClass = 
+      (prevVolume*1 != vol*1) ? (ch*1 < 0 ? "table-danger" : "table-success") :
+      prevPrice == 0 ? "" :
+      prevPrice*1 > price*1 ? "table-success" : 
+      prevPrice*1 < price*1 ? "table-danger" : "";
+      
+//    if (rowClass.length != 0) bNeedUpdate = true;
+   // else if (rowClass == chColor) chColor = "";
 
-    const tr = $('<tr></tr>')
+    const tr = $('<tr class="'+rowClass+'"></tr>')
       .append($('<td>'+message.coins[i].ticker+'</td>'))
       .append($('<td>'+price+'</td>'))
       .append($('<td>'+vol+'</td>'))
@@ -380,6 +383,9 @@ function UpdateMarket(message)
   const BTC = coinNameToTicker[g_CurrentPair].ticker;
 
   utils.ChangeUrl(document.title + "(" + g_CurrentPair+' market)', '/market/'+MC+'-'+BTC+(window.location.search || ""));
+  
+//  if (bNeedUpdate)
+//    setTimeout(UpdateMarket, 2000, message);
 }
 
 function UpdateBuySellTickers()
