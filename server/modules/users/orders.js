@@ -33,7 +33,7 @@ exports.CloseUserOrder = function(userID, orderROWID, callback)
 
         const order = rows[0];
         const fullAmount = order.buysell == 'buy' ?
-                (order.amount*order.price+g_constants.TRADE_COMISSION*order.amount*order.price).toFixed(7)*1 :
+                (order.amount*order.price+g_constants.share.TRADE_COMISSION*order.amount*order.price).toFixed(7)*1 :
                 (order.amount*1).toFixed(7)*1;
                     
         const coinBalance = order.buysell == 'buy' ? order.price_pair : order.coin;
@@ -130,7 +130,7 @@ exports.SubmitOrder = function(req, res)
                 if (err || !rows || !rows.length) return onError(req, res, (err && err.message) ? err.message : 'User balance not found');
 
                 const fullAmount = req.body.order == 'buy' ?
-                    (req.body.amount*req.body.price+g_constants.TRADE_COMISSION*req.body.amount*req.body.price).toFixed(7)*1 :
+                    (req.body.amount*req.body.price+g_constants.share.TRADE_COMISSION*req.body.amount*req.body.price).toFixed(7)*1 :
                     (req.body.amount*1).toFixed(7)*1;
                 
                 if (fullAmount*1 < 0.00001) return onError(req, res, 'Bad order total ( total < 0.00001 ) '+'( '+fullAmount*1+' < 0.00001 )');
@@ -452,7 +452,7 @@ function ProcessExchange(data)
         //if (fromSellerToBuyer*1 == 0 || fromBuyerToSeller*1 == 0 )
         //    return;
         
-        const comission = (fromBuyerToSeller*g_constants.TRADE_COMISSION*1).toPrecision(8);
+        const comission = (fromBuyerToSeller*g_constants.share.TRADE_COMISSION*1).toPrecision(8);
         
         const buyerChange = (priority == 'buyer') ? 
             ((buyOrder.price*1 - sellOrder.price*1)*fromSellerToBuyer).toPrecision(8) :

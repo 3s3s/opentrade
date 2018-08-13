@@ -129,6 +129,9 @@ function drawChart(chartData)
       (g_currentChartPeriod == 1000) ? 14400000 :
       (g_currentChartPeriod == 6000) ? 86400000 : 360000;
 
+    var globalMax = 0;
+    var globalMin = 1000000000;
+    var globalVolMax = 0;
     var table = [];
     for (var i=0; i<chartData.length; i++)  
     {
@@ -140,6 +143,7 @@ function drawChart(chartData)
       var init = chartData[i].avg_10min;
       var final = chartData[i].avg_10min;
       var max = chartData[i].avg_10min;
+      var volume = chartData[i].volume*1;
       
       for (var j=i+1; j<chartData.length; j++)
       {
@@ -152,15 +156,28 @@ function drawChart(chartData)
           max = chartData[j].avg_10min;
           
         final = chartData[j].avg_10min;
+        volume += chartData[j].volume*1;
         i++;
       }
       
-      table.push([time, min/1000000, init/1000000, final/1000000, max/1000000]);
+      if (globalMax < max/1000000)  globalMax = max/1000000;
+      if (globalMin > min/1000000)  globalMin = min/1000000;
+      if (globalVolMax < volume) globalVolMax = volume;
+      
+      table.push([time, volume, min/1000000, init/1000000, final/1000000, max/1000000]);
+      //table.push([time, min/1000000, init/1000000, final/1000000, max/1000000]);
     }
     
     if (!table.length || table.length < g_TableLengthPrev-2)
       return;
-      
+    
+    var vAxisMin = 2*globalMin > globalMax ? 2*globalMin - globalMax : 0;
+    /*var scale = (globalMin) / (globalVolMax + vAxisMin);   
+    for (var i=0; i<table.length; i++)
+    {
+      table[i][1] = (table[i][1] + vAxisMin) * scale;
+    }*/
+
     g_TableLengthPrev = table.length;
       
     if (table.length > 24)
@@ -176,14 +193,19 @@ function drawChart(chartData)
         },*/
         //width: 800,
         legend: 'none',
-        explorer: {
+        colors: ['blue'],
+        //vAxis: {viewWindow: {min: vAxisMin} },
+        /*explorer: {
                 axis: 'horizontal',
                 keepInBounds: true,
                 maxZoomIn: 4.0
-        }
+        },*/
+        seriesType: 'candlesticks',
+        series: {0: {type: 'bars', targetAxisIndex: 1, color: '#eaeaea'}}
     };
     
-    var chart = new google.visualization.CandlestickChart(document.getElementById('chart_div'));
+    var chart = new google.visualization.ComboChart(document.getElementById('chart_div'));
+    //var chart = new google.visualization.CandlestickChart(document.getElementById('chart_div'));
     chart.draw(data, options);
     
   }

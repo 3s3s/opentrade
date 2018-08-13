@@ -8,12 +8,16 @@ const START_MESSAGE = 'OpenTrade started!';
 
 const DashForks = ['DASH', 'WAVI'];
 exports.FIAT_ID = [28];
+exports.ALLOW_EMAIL_CHANGING = false;
 
 exports.DEBUG_LOG = false;
 
 exports.share = {
    tradeEnabled: true,
    recaptchaEnabled: true,
+   
+   TRADE_COMISSION: 0.001,
+   DUST_VOLUME: 0.000001,
    
    my_portSSL: 40443,
    
@@ -22,7 +26,7 @@ exports.share = {
    TRADE_DEFAULT_PAIR: "Litecoin"
 };
 
-exports.TRADE_COMISSION = 0.001;
+//exports.TRADE_COMISSION = 0.001;
 
 exports.my_port = process.env.PORT || 40080;
 
