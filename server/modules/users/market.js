@@ -15,7 +15,7 @@ exports.Init = function()
     setTimeout(UpdateExchangeSummary, 10000);
     setInterval(UpdateExchangeSummary, 3600000);
     
-    setInterval(require("./orders").DeleteDustOrders, 60000);
+    setInterval(require("../admin/trades").DeleteDustOrders, 60000);
 };
 
 let g_History24 = {};
