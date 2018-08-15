@@ -23,6 +23,11 @@ function UpdatePageWithRole()
   }
   if (g_role == 'Support')
     $('.staff_area').show();
+  if (g_role == 'Chat-admin')
+  {
+    $('.del_message_button').show();
+    $('.chat_admin_area').show();
+  }
 }
 
 function IsNeadScroll()
@@ -55,6 +60,7 @@ $(() => {
   setInterval(IsNeadScroll, 5000);
 
   $('.staff_area').hide();
+  $('.chat_admin_area').hide();
   
 });
 
@@ -410,12 +416,32 @@ function UpdateBuySellTickers()
 
 }
 
+function IsIgnoredUser(user)
+{
+  const saved = storage.getItem('ignore_'+user);
+  if (!saved || !saved.value || saved.value != 'true') return false;
+  
+  return true;
+}
+
 function AddChatMessage(message, noscroll, method)
 {
   const userName = unescape(message.user);
   const user = $('<a href="#"></a>').text(userName+":");
   const text = $('<span class="p-2"></span>').text(message.message.text);
   
+  const ignorButton = $('<a href="#" title="Ignore this user" style="text-decoration: none">&#10006;&nbsp</a>')
+    .on('click', e => {
+      e.preventDefault();
+      storage.setItem('ignore_'+userName, 'true');
+      location.reload(); 
+    });
+  const unignorButton = $('<a href="#" title="Ignored user" style="text-decoration: none">&#9785;&nbsp</a>')
+    .on('click', e => {
+      e.preventDefault();
+      storage.setItem('ignore_'+userName, 'false');
+      location.reload(); 
+    });
   const privMessage = $('<a href="#" style="text-decoration: none">&#9743;&nbsp</a>')
   const delButton = $('<a href="#" title="Delete message" class="del_message_button" style="text-decoration: none">&#10006;&nbsp</a>').hide();
   const banButton = $('<a href="#" title="Ban user" class="del_message_button" style="text-decoration: none">&#9760;&nbsp</a>').hide();
@@ -457,12 +483,20 @@ function AddChatMessage(message, noscroll, method)
     
   const append = method || 'append';
   
-  const row = $('<div class="row chat_row"></div>').append($('<div class="col-md-12"></div>')
-    .append(banButton)
-    .append(privMessage)
-    .append(user)
-    .append(text)
-    .append(delButton));
+  const row = (!IsIgnoredUser(userName)) ?
+    $('<div class="row chat_row"></div>').append($('<div class="col-md-12"></div>')
+      .append(banButton)
+      .append(ignorButton)
+      .append(privMessage)
+      .append(user)
+      .append(text)
+      .append(delButton)) :
+    $('<div class="row chat_row"></div>').append($('<div class="col-md-12"></div>')
+      .append(banButton)
+      .append(unignorButton))
+      ;
+      
+  
 
   $('#chat-container_'+message.message.lang)[append](row);
   

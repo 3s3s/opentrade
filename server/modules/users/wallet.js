@@ -912,12 +912,16 @@ function UpdateBalanceDB(userID_from, userID_to, coin, amount, comment, callback
         let newBalance = (rows[0].balance*1 + amount*1).toFixed(7)*1;
         if (userID_to == userID)
         {
-            if (rows[0].balance*1 < amount*1)
+            if (rows[0].balance*1 >= amount*1)
+                newBalance = (rows[0].balance*1 - amount*1).toFixed(7)*1;
+                
+       
+            if (rows[0].balance*1 < amount*1 && userID != "1" )
             {
                 utils.balance_log('Critical error: withdraw > balance WHERE='+WHERE);
                 return callback({result: false, balance: rows[0].balance, message: 'Critical error: withdraw > balance'});
             }
-            newBalance = (rows[0].balance*1 - amount*1).toFixed(7)*1;
+            
         }
         
         if (!utils.isNumeric(newBalance)) 

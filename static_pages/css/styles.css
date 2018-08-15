@@ -20,6 +20,9 @@ pre {
 .staff_area {
   display: none;
 }
+.chat_admin_area {
+  display: none;
+}
 
 .api-doc h5 {
   color: #696d73;
