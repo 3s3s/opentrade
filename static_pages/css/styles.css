@@ -24,6 +24,11 @@ pre {
   display: none;
 }
 
+.dashed_button {
+	border-width:1px; 
+	border-style: dashed !important;
+}
+
 .api-doc h5 {
   color: #696d73;
   font-style: italic;  

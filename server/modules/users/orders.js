@@ -249,7 +249,10 @@ exports.GetAllOrders = function(coinsOrigin, callback)
                 allOrders[coin0] = {time: Date.now(), data: data, };
                 callback({result: true, data: data});
                 
-                ProcessExchange(data);
+                ProcessExchange(data, ret => {
+                    if (ret == 0) return;
+                    setTimeout(exports.GetAllOrders, 1, coinsOrigin, () => {});
+                });
             })
         });
     });
@@ -364,35 +367,35 @@ function AddOrder(status, WHERE, newBalance, req, res)
     });
 }
 
-function ProcessExchange(data)
+function ProcessExchange(data, callback)
 {
     if (!data.buy.length || !data.sell.length)
-        return;
+        return callback(0);
         
     if (!utils.isNumeric(data.buy[0].price) || !utils.isNumeric(data.sell[0].price))
-        return;
+        return callback(0);
 
     const higestBid = data.buy[0];
     const higestAsk = data.sell[0];
     
     if (higestBid.price*100000000 - higestAsk.price*100000000 < -1)
-        return
+        return callback(0);
     
     const WHERE = 'coin="'+higestBid.coin+'"  AND amount>0 AND ((buysell="sell" AND (price*100000000 - '+higestBid.price*100000000+' < 1)) OR (buysell="buy" AND price*100000000 - '+higestAsk.price*100000000+' > -1))';    
     g_constants.dbTables['orders'].selectAll('ROWID AS id, *', WHERE, 'ORDER BY price*1, time*1', (err, rows) => {
         if (err || !rows || !rows.length)
-            return;
+            return callback(0);
         
         const first = GetFirst(rows);//rows[0]; //give newest order
         const second = GetPair(first, rows);
         
         if (second == null)
-            return;
+            return callback(0);
         
         if (first.buysell == 'buy')    
-            RunExchange(first, second);
+            RunExchange(first, second, callback);
         else
-            RunExchange(second, first);
+            RunExchange(second, first, callback);
     });
     
     function GetFirst(rows)
@@ -437,7 +440,7 @@ function ProcessExchange(data)
         return ret;
     }
     
-    function RunExchange(buyOrder, sellOrder)
+    function RunExchange(buyOrder, sellOrder, callback)
     {
         const newBuyAmount = buyOrder.amount*1 < sellOrder.amount*1 ? 0 : (buyOrder.amount*1 - sellOrder.amount*1).toPrecision(8);
         const newSellAmount = buyOrder.amount*1 < sellOrder.amount*1 ? (sellOrder.amount*1 - buyOrder.amount*1).toPrecision(8) : 0;
@@ -459,18 +462,30 @@ function ProcessExchange(data)
             0.0;
 
         database.BeginTransaction(err => {
-            if (err) return;
+            if (err) return callback(0);
             
             try
             {
                 UpdateOrders(newBuyAmount, newSellAmount, buyOrder.id, sellOrder.id, err => {
-                    if (err) return database.RollbackTransaction();
+                    if (err) 
+                    {
+                        database.RollbackTransaction();
+                        return callback(0);
+                    }
                     
                     UpdateBalances(buyOrder, sellOrder, fromSellerToBuyer, fromBuyerToSeller, buyerChange, comission, err => {
-                        if (err) return database.RollbackTransaction();
+                        if (err) 
+                        {
+                            database.RollbackTransaction();
+                            return callback(0);
+                        }
                         
                         UpdateHistory(buyOrder, sellOrder, fromSellerToBuyer, fromBuyerToSeller, buyerChange, comission, err => {
-                            if (err) return database.RollbackTransaction();
+                            if (err) 
+                            {
+                                database.RollbackTransaction();
+                                return callback(0);
+                            }
                             
                             database.EndTransaction();
                             
@@ -488,12 +503,15 @@ function ProcessExchange(data)
                                 if (client.readyState === WebSocket.OPEN) 
                                     try {client.send(msgString);} catch(e) {client.terminate();}
                             });
+                            
+                            return callback(1);
                         });
                     });
                 });
             }
             catch(e) {
-                return database.RollbackTransaction();
+                database.RollbackTransaction();
+                return callback(0);
             }
                 
         });

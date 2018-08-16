@@ -456,6 +456,13 @@ function ConfirmWithdraw(req, res, status, amount, coinName)
         setTimeout((key) => {if (key && emailChecker[key]) delete emailChecker[key];}, 3600*1000, strCheck);
         
         const urlCheck = "https://"+req.headers.host+"/confirmwithdraw/"+strCheck;
+        
+        if (g_constants.share.emailVerificationEnabled == 'disabled')
+        {
+            req.url = urlCheck;
+            return exports.onConfirmWithdraw(req, res);
+        }
+        
         mailer.SendWithdrawConfirmation(status.email, status.user, "https://"+req.headers.host, urlCheck, ret => {
             if (ret.error)
                 return utils.renderJSON(req, res, {result: false, message: ret.message});
