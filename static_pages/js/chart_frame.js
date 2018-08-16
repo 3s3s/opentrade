@@ -64,6 +64,8 @@ function UpdateMCFromLB()
       const EUR = g_LB_Data.EUR.rates.last/(g_MC_BTC_Price+1);
       const RUB = g_LB_Data.RUB.rates.last/(g_MC_BTC_Price+1);
       
+      storage.setItem("LB_DATA", {USD: USD, BTC: BTC, EUR: EUR, RUB: RUB});
+      
       $('#id_MC_info').empty();
       if (MC != 'BTC')
       {

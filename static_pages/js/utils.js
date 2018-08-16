@@ -131,10 +131,17 @@ const utils =
     {
         return !isNaN(parseFloat(n)) && isFinite(n);
     },
+    MakePrice2: function(str)
+    {
+        const roundFull = (3-Math.log10(str*1)).toFixed(0)*1;
+        const round = roundFull < 0 ? 0 : (roundFull > 8) ? 8 : roundFull;
+        return (utils.MakePrice(str)*1).toFixed(round)*1;
+    },
     MakePrice: function(str)
     {
         if (!utils.isNumeric(str))
             return 0.0;
+        
         if ((str*1.0).toFixed(8)*1.0 == str*1.0)
             return str*1.0;
         

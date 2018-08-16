@@ -258,9 +258,15 @@ exports.RunTransactions = function()
     }
 };
 
-exports.BeginTransaction = function (callback)
+let g_gotTransaction = false;
+exports.BeginTransaction = function (callback, count)
 {
+    const counter = count || 0;
+    if (g_gotTransaction && counter <= 3)
+        return setTimeout(exports.BeginTransaction, 5000, callback, counter+1);
+        
     g_db.run('BEGIN TRANSACTION', function(err){
+        if (!err) g_gotTransaction = true;
         //if (err) throw ("BeginTransaction error: " + err.message);
         if (callback) callback(err);
     });
@@ -268,7 +274,8 @@ exports.BeginTransaction = function (callback)
 
 exports.EndTransaction = function(callback)
 {
-    g_db.run('END TRANSACTION', function(err){
+    g_db.run('END TRANSACTION', err => {
+        if (!err) g_gotTransaction = false;
         //if (err) throw ("EndTransaction error: " + err.message);
         if (callback) callback(err);
      });
@@ -276,7 +283,8 @@ exports.EndTransaction = function(callback)
 
 exports.RollbackTransaction = function(callback)
 {
-    g_db.run('ROLLBACK', function(err){
+    g_db.run('ROLLBACK', err => {
+        if (!err) g_gotTransaction = false;
         //if (err) throw ("EndTransaction error: " + err.message);
         if (callback) callback(err);
      });

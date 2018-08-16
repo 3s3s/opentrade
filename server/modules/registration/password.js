@@ -76,6 +76,13 @@ function ConfirmPasswordReset(req, res, user)
     setTimeout((key) => {if (key && emailChecker[key]) delete emailChecker[key];}, 3600*1000, strCheck);
     
     const urlCheck = "https://"+req.headers.host+"/confirmpasswordreset/"+strCheck;
+    
+    if (g_constants.share.emailVerificationEnabled == 'disabled')
+    {
+        req.url = urlCheck;
+        return exports.onConfirmReset(req, res);
+    }
+    
     mailer.SendPasswordResetConfirmation(req.body['email'], user, "https://"+req.headers.host, urlCheck, ret => {
         if (ret.error)
         {

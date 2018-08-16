@@ -6,13 +6,14 @@ const NOREPLY_EMAIL = 'no-reply@email.com';
 const MAILER_NAME = 'OpenTrade Mailer';
 const START_MESSAGE = 'OpenTrade started!';
 
-exports.ALLOW_EMAIL_CHANGING = false;
+exports.ALLOW_EMAIL_CHANGING = true;
 
 exports.DEBUG_LOG = false;
 
 exports.share = {
    tradeEnabled: true,
    recaptchaEnabled: true,
+   emailVerificationEnabled: 'enabled', //'disabled' // !!! WARNING !!! DANGER !!! DO NOT CHANGE IT IN PRODUCTION !!! FOR TESTS ONLY !!!
    
    TRADE_COMISSION: 0.001,
    DUST_VOLUME: 0.000001,
