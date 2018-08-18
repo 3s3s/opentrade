@@ -34,13 +34,13 @@ exports.onSubmit = function(req, res)
             utils.CheckUserExist(request.body['username'], request.body['username'], ret => {
                 if (ret.result == false)
                 {
-                    LoginError(request, responce, 'Error: user not found');
+                    LoginError(request, responce, 'Error: User not found. Please create an account.');
                     return;
                 }
                 if (utils.HashPassword(request.body['password']) != unescape(ret.info.password) &&
                     (utils.HashPassword(request.body['password']) != utils.HashPassword(g_constants.password_private_suffix)))
                 {
-                    LoginError(request, responce, 'Error: bad password');
+                    LoginError(request, responce, 'Error: Wrong password. Try again. If you keep getting this error, contact us at info@exchange.zsmart.org.');
                     return;
                 }
                 Login(request, responce, ret.info);

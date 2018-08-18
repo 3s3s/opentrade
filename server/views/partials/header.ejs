@@ -1,30 +1,23 @@
 <nav class="navbar navbar-expand-lg navbar-light static-top bg-light">
     <div class="container" style="max-width: 90%;">
         <a class="navbar-brand" href="/">
-            <img  height="30" border="0" align="center"  src="/logo.png"/>
+            <img  height="50" border="0" align="center"  src="/ztrade.png"/>
         </a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-        
         <ul class="navbar-nav mr-auto">
             <li class="nav-item active">
-              <a class="nav-link" href="/"><%-__('Trade')%></a>
+              <a class="nav-link" href="/"><i class="fas fa-exchange-alt"></i><%-__(' Exchange')%></a>
             </li>
             <li class="nav-item active">
-              <a class="nav-link" target="_blank" href="https://mc-ex.multicoins.org"><%-__('Exchange')%></a>
+              <a class="nav-link" target="_blank" href="https://discord.gg/SbCVX6h"><i class="fab fa-discord"></i><%-__(' Join Discord')%></a>
             </li>
             <li class="nav-item active">
-              <a class="nav-link" target="_blank" href="https://mc-dice.multicoins.org"><%-__('DICE')%></a>
+              <a class="nav-link" target="_blank" href="https://t.me/ztrade"><i class="fab fa-telegram"></i><%-__(' Telegram Group')%></a>
             </li>
             <li class="nav-item active">
-              <a class="nav-link" target="_blank" href="http://mc-faucet.multicoins.org"><%-__('Faucet')%></a>
-            </li>
-            <li class="nav-item active">
-              <a class="nav-link" target="_blank" href="https://forum.marycoin.org/"><%-__('Forum')%></a>
-            </li>
-            <li class="nav-item active">
-              <a class="nav-link" href="/API">API</a>
+              <a class="nav-link" href="/API"><i class="fas fa-code"></i> API</a>
             </li>
             <li class="nav-item active">
               <a class="nav-link" href="/add_coin">Add coin</a>
@@ -39,14 +32,10 @@
                   <span ><%-__('Help')%></span>
                 </a>
                 <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                  <a class="dropdown-item" href="/support"><%-__('Support')%></a>
                   <a class="dropdown-item" href="/fees"><%-__('Fees')%></a>
                 </div>
             </li>
         </ul>
-        
-        <button type="button" id='id-button-lang-en' class="btn btn-outline-success btn-sm m-1">EN</button>
-        <button type="button" id='id-button-lang-ru' class="btn btn-outline-success btn-sm">RU</button>
     </div>
 </nav>
     <div id="loader" style="display:none;"></div>
@@ -57,7 +46,7 @@
           message = 
             '<div class="container pt-2">'+
               '<div id="alert-fail" class="alert alert-danger alert-dismissible col-md-12" role="alert" >'+
-                '<div id="fail-message">Technical work is carried out. Please be patient</div>'+
+                '<div id="fail-message">Technical work is being carried out. Please be patient.</div>'+
                 '<button id="close_fail" type="button" class="close"  aria-label="Close">'+
                   '<span aria-hidden="true">&times;</span>'+
                 '</button>'+

@@ -48,6 +48,52 @@ const storage = {
     
         //storage.clear();
     	stor.setItem(key, JSON.stringify(oldValue));
+    },
+    deleteKeyS : function(parent, key) {
+        var jsonSaved =this.getItemS(parent).value || {}; 
+    
+        if (jsonSaved[key] == undefined)
+            return;
+            
+        delete jsonSaved[key];
+    
+        this.setItemS(parent, jsonSaved);
+    },
+    getItemS : function(key) {
+        var stor;
+        if (window.content != undefined)
+            stor = window.content.sessionStorage;
+        else
+            stor = sessionStorage;
+    
+        var str = stor.getItem(key);
+        if (str == undefined)
+            return null;
+        
+        try {
+            return JSON.parse(str);
+        }
+        catch(e) {
+            return null;
+        }
+    },
+    setItemS : function(key, value) {
+        var oldValue = this.getItemS(key);
+        
+        if (oldValue == null)
+            oldValue = {};
+       
+        oldValue['status'] = 'success';
+        oldValue['value'] = value;
+        
+        var stor;
+        if (window.content != undefined)
+            stor = window.content.sessionStorage;
+        else
+            stor = sessionStorage;
+    
+        //storage.clear();
+    	stor.setItem(key, JSON.stringify(oldValue));
     }
 };
 
@@ -56,6 +102,17 @@ const utils =
     MAIN_COIN: MAIN_COIN,
     DEFAULT_PAIR: DEFAULT_PAIR,
     COMISSION: 0.001,
+    
+    USD_NAME: "US Dollar",
+    USD_TICKER: "USD",
+    
+    IsFiat: function(coin)
+    {
+        if (coin == utils.USD_NAME) return true;
+        
+        return false;
+    },
+    
     ValidateEmail: function(text)
     {
         if (!text || !text.length)

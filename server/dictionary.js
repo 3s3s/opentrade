@@ -28,8 +28,6 @@ exports.object = {
         'Buy' : ['Buy', 'Купить'],
         'Sell' : ['Sell', 'Продать'],
         'buy' : ['buy', 'купить'],
-        'Faucet' : ['Faucet', 'Кран'],
-        'Forum' : ['Forum', 'Форум'],
         'sell' : ['sell', 'продать'],
         'Buying' : ['Buying', 'Покупка'],
         'Selling' : ['Selling', 'Продажа'],
@@ -44,8 +42,8 @@ exports.object = {
         'Your history' : ['Your history', 'Ваши исполненные заявки'],
         'Trade history' : ['Trade history', 'История торгов'],
         'Forgot your password?' : ['Forgot your password?', 'Забыли пароль?'],
-        'New to ZTrade?' : ['New to ZTrade?', 'Еще не зарегистрированы на ZTrade?'],
+        'New to OpenTrade?' : ['New to ZTrade?', 'Еще не зарегистрированы на ZTrade?'],
         'Sign up now!' : ['Sign up now!', 'Зарегистрироваться сейчас!'],
-        'ZTrade - Open Source Cryptocurrency Exchange' : ['ZTrade - Open Source Cryptocurrency Exchange', 'ZTrade - Биржа криптовалют с открытым кодом']
+        'ZTrade - Cryptocurrency Exchange' : ['ZTrade - Cryptocurrency Exchange', 'ZTrade - Биржа криптовалют с открытым кодом']
     }
 };

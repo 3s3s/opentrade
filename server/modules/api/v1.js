@@ -6,6 +6,7 @@ const g_constants = require("../../constants.js");
 const trade = require("../users/trade.js");
 const wallet = require("../users/wallet.js");
 const orders = require("../users/orders.js");
+const market = require("../users/market.js");
 
 const url = require('url');
 const querystring = require('querystring');
@@ -61,24 +62,38 @@ exports.ResetCache = function(method)
 {
     
 }*/
+exports.onGetLastMarketData = function(req, res)
+{
+    market.GetMarketData(data => {
+        onSuccess(req, res, data);
+    });
+}
+
+exports.onGetExchangeSummary = function(req, res)
+{
+    market.GetMarketSummary24(data => {
+        let TotalMarkets = 0;
+        let v24 = 0;
+        for (let key in data)
+        {
+            v24 += data[key].Volume*1;
+            TotalMarkets++;
+        }
+        return onSuccess(req, res, {TotalMarkets: TotalMarkets, v24: v24, data: data});
+    });
+}
 
 exports.onGetMarkets = function(req, res)
 {
     let ret = GetCache('GetMarkets');
     if (ret)
-    {
-        onSuccess(req, res, ret);
-        return;
-    }
+        return onSuccess(req, res, ret);
+
     g_constants.dbTables['coins'].selectAll('name, ticker, info', '', '', (err, rows) => {
         if (err || !rows)
-        {
-            onError(req, res, err && err.message ? err.message : 'unknown database error');
-            return;
-        }
-        
-        try
-        {
+            return onError(req, res, err && err.message ? err.message : 'unknown database error');
+
+        try {
             let data = [];
             for (var i=0; i<rows.length; i++)
             {
@@ -99,8 +114,7 @@ exports.onGetMarkets = function(req, res)
             onSuccess(req, res, data);
             SetCache('GetMarkets', 3600000, data);
         }
-        catch(e)
-        {
+        catch(e) {
             onError(req, res, e.message);
         }
     });
@@ -110,33 +124,21 @@ exports.onGetOrderbook = function(req, res)
 {
     const dataParsed = url.parse(req.url);
     if (!dataParsed || !dataParsed.query)
-    {
-        onError(req, res, 'Bad request');
-        return;
-    }
-    
+        return onError(req, res, 'Bad request');
+
     const queryStr = querystring.parse(dataParsed.query);
     if (!queryStr.market)
-    {
-        onError(req, res, 'Bad request. Parameter "market" not found');
-        return;
-    }
-    
+        return onError(req, res, 'Bad request. Parameter "market" not found');
+
     const data = queryStr.market.split('-');
     if (!data)
-    {
-        onError(req, res, 'Bad request. Parameter "market" is invalid');
-        return;
-    }
-    
+        return onError(req, res, 'Bad request. Parameter "market" is invalid');
+
     const type = queryStr.type || 'both'
     trade.GetAllOrders(data, ret => {
         if (!ret || ret.result == 'false' || !ret.data || !ret.data.buy || !ret.data.sell)
-        {
-            onError(req, res, ret.message ? ret.message : 'Database error');
-            return;
-        }
-        
+            return onError(req, res, ret.message ? ret.message : 'Database error');
+
         let retData = {buy: [], sell: []};
         if (type == 'both' || type == 'buy')
         {
@@ -170,46 +172,38 @@ exports.onGetMarketSummary = function(req, res)
 {
     const dataParsed = url.parse(req.url);
     if (!dataParsed || !dataParsed.query)
-    {
-        onError(req, res, 'Bad request');
-        return;
-    }
-    
+        return onError(req, res, 'Bad request');
+
     const queryStr = querystring.parse(dataParsed.query);
     if (!queryStr.market)
-    {
-        onError(req, res, 'Bad request. Parameter "market" not found');
-        return;
-    }
+        return onError(req, res, 'Bad request. Parameter "market" not found');
+        
+    const period = (queryStr.period && (queryStr.period == 24 || queryStr.period == 250 || queryStr.period == 1000 || queryStr.period == 6000)) ? queryStr.period*1 : 24;
+
+    console.log('period='+period+" queryStr="+JSON.stringify(queryStr));
+    if (!utils.isNumeric(period))
+        return onError(req, res, 'Bad request. Period is not numeric');
     
     const data = queryStr.market.split('-');
     if (!data || !data.length || data.length != 2)
-    {
-        onError(req, res, 'Bad request. Parameter "market" is invalid');
-        return;
-    }
-    
+        return onError(req, res, 'Bad request. Parameter "market" is invalid');
+
     const MarketName = queryStr.market;
     
     g_constants.dbTables['coins'].selectAll('name, ticker, info, icon', 'ticker="'+data[1]+'"', '', (err, rows) => {
         if (err || !rows)
-        {
-            onError(req, res, err && err.message ? err.message : 'unknown database error');
-            return;
-        }
+            return onError(req, res, err && err.message ? err.message : 'unknown database error');
+
         if (!rows.length)
-        {
-            onError(req, res, 'ticker '+data[1]+' not found');
-            return;
-        }
-        
+            return onError(req, res, 'ticker '+data[1]+' not found');
+
         const COIN = rows[0];
         const coin_icon_src = rows[0].icon;
         const coin_info = JSON.parse(utils.Decrypt(rows[0].info));
         
-        const WHERE = 'coin="'+COIN.name+'" AND time > ('+Date.now()+'-24*3600*1000)';
+        const WHERE = 'coin="'+COIN.name+'" AND time > ('+Date.now()+'-'+period+'*3600*1000)';
         
-        const METHOD = 'onGetMarketSummary_'+MarketName+COIN.name;
+        const METHOD = 'onGetMarketSummary_'+WHERE;
         
         let ret = GetCache(METHOD);
         if (ret)
@@ -534,11 +528,8 @@ exports.onGenerateAPIkey = function(req, res)
 {
     utils.GetSessionStatus(req, status => {
         if (!status.active)
-        {
-            onError(req, res, 'User not logged');
-            return;
-        }
-        
+            return onError(req, res, 'User not logged');
+
         g_constants.dbTables['apikeys'].selectAll('*', 'userid="'+status.id+'"', '', (err, rows) => {
             if (err) return onError(req, res, err.message || 'Database Select error');
             if (rows && rows.length > 9) return onError(req, res, 'Max number api keys exceeded');
@@ -652,8 +643,8 @@ exports.onAccountGetOrder = function(req, res)
         if (!dataParsed || !dataParsed.query || !req.headers['apisign']) throw new Error('Bad request');
 
         const queryStr = querystring.parse(dataParsed.query);
-        if (!queryStr.apikey || !queryStr.nonce || !queryStr.uuid) throw 'Bad request. Required parameter (apikey or nonce or uuid) not found.';
-        if (!queryStr.uuid.length) throw 'Bad uuid';
+        if (!queryStr.apikey || !queryStr.nonce || !queryStr.uuid) throw new Error('Bad request. Required parameter (apikey or nonce or uuid) not found.');
+        if (!queryStr.uuid.length) throw new Error('Bad uuid');
         
         var fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
     
@@ -671,13 +662,13 @@ exports.onAccountGetOrder = function(req, res)
                         if (err || !r || r.length != 2)
                             return onError(req, res, 'Coin name error');
                             
-                        const ZSX = r[0].name == rows[0].price_pair ? r[0].ticker : r[1].ticker;
-                        const BTC = r[0].name == rows[0].price_pair ? r[1].ticker : r[0].ticker;
+                        const BTC = r[0].name == rows[0].price_pair ? r[0].ticker : r[1].ticker;
+                        const LTC = r[0].name == rows[0].price_pair ? r[1].ticker : r[0].ticker;
                         const time = new Date(rows[0].time*1);
 
                         return onSuccess(req, res, {
                             "OrderUuid" : rows[0].uuid || 0,
-                            "Exchange" : ZSX+"-"+BTC,
+                            "Exchange" : BTC+"-"+LTC,
                             "QuantityRemaining" : rows[0].amount,
                             "Price" : rows[0].price,
                             "Opened" : new Date(time).toISOString().slice(0, -1),
@@ -703,6 +694,57 @@ exports.onAccountGetOrderHistory = function(req, res)
     onError(req, res, 'getorderhistory under construction');
 }
 
+exports.onCreateCoupon = function(req, res)
+{
+    return exports.onAccountWithdraw(req, res);
+}
+
+exports.onRedeemCoupon = function(req, res)
+{
+    const dataParsed = url.parse(req.url);
+    if (!dataParsed || !dataParsed.query)
+        return onError(req, res, 'Bad request');
+
+    const queryStr = querystring.parse(dataParsed.query);
+    //if (!queryStr.apikey || !queryStr.nonce)
+    //    return onError(req, res, 'Bad request. Required parameter (apikey or nonce) not found.');
+    
+    if (!queryStr.coupon)
+        return onError(req, res, 'Bad request. Required parameter (coupon) not found.');
+
+    var fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
+    
+    CheckAPIkey(queryStr.apikey || 0, req.headers['apisign'] || 0, fullUrl, ret => {
+        try
+        {
+            if (ret.success == false) throw new Error(ret.message);
+            if (ret.key.withdraw == 0) throw new Error('apikey disabled for withdraw');
+            
+            wallet.RedeemCoupon(ret.key.userid, queryStr.coupon, ret => {
+                if (!ret || ret.result != true)
+                    return onError(req, res, ret.message && ret.message.length ? ret.message : "Redeem error");
+                
+                return utils.renderJSON(req, res, ret);
+            });
+        }
+        catch(e) {
+            utils.GetSessionStatus(req, status => {
+                if (!status.active)
+                    return onError(req, res, 'User not logged');
+                    
+                wallet.RedeemCoupon(status.id, queryStr.coupon, ret => {
+                    if (!ret || ret.result != true)
+                        return onError(req, res, ret.message && ret.message.length ? ret.message : "Redeem error");
+                    
+                    return utils.renderJSON(req, res, ret);
+                });
+            });
+//            return onError(req, res, e.message);
+        }
+    });
+}
+
+
 exports.onAccountWithdraw = function(req, res)
 {
     const dataParsed = url.parse(req.url);
@@ -710,11 +752,14 @@ exports.onAccountWithdraw = function(req, res)
         return onError(req, res, 'Bad request');
 
     const queryStr = querystring.parse(dataParsed.query);
-    if (!queryStr.apikey || !queryStr.nonce || !queryStr.currency)
-        return onError(req, res, 'Bad request. Required parameter (apikey or nonce or currency) not found.');
-    
-    if (!queryStr.quantity || !queryStr.address)
-        return onError(req, res, 'Bad request. Required parameter (quantity or address) not found.');
+
+    if (!queryStr.quantity || !queryStr.currency)
+        return onError(req, res, 'Bad request. Required parameter (quantity or currency) not found.');
+        
+    if (!utils.isNumeric(queryStr.quantity))
+        return onError(req, res, 'Bad request. quantity is not numeric value');
+    if (queryStr.quantity < 0.00001)
+        return onError(req, res, 'Bad request. quantity < 0.00001 (is too low)');
 
     utils.GetCoinFromTicker(queryStr.currency, coin => {
         if (!coin || !coin.name) 
@@ -722,31 +767,61 @@ exports.onAccountWithdraw = function(req, res)
 
         var fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
     
+        if (!queryStr.apikey || !queryStr.nonce)
+        {
+            if (!req.body || !req.body.password)
+                return onError(req, res, 'Bad request. Required parameter (apikey or nonce or password) not found.');
+
+            return wallet.onWithdraw(req, res)
+        }
+            
         CheckAPIkey(queryStr.apikey, req.headers['apisign'], fullUrl, ret => {
             try
             {
                 if (ret.success == false) throw new Error(ret.message);
                 if (ret.key.withdraw == 0) throw new Error('apikey disabled for withdraw');
                 
-                wallet.ProcessWithdraw(ret.key.userid, queryStr.address, queryStr.quantity, coin.name, ret => {
-                    if (ret.error)
-                        return onError(req, res, ret.message);
-                        
-                    return onSuccess(req, res, {uuid: ret.data});
-                })
+                if (queryStr.address)
+                {
+                    wallet.ProcessWithdraw(ret.key.userid, queryStr.address, queryStr.quantity, coin.name, ret => {
+                        if (ret.error)
+                            return onError(req, res, ret.message);
+                            
+                        return onSuccess(req, res, {uuid: ret.data});
+                    })
+                }
+                else
+                {
+                    wallet.ProcessWithdrawToCoupon(ret.key.userid, queryStr.quantity, coin.name, ret => {
+                        if (ret.error)
+                            return onError(req, res, ret.message);
+                            
+                        return utils.renderJSON(req, res, ret);
+                    })
+                }
             }
             catch(e) {
-                return onError(req, res, e.message);
+                utils.GetSessionStatus(req, status => {
+                    if (!status.active || status.id != 1)
+                        return onError(req, res, 'This operation is allowed for root only!');
+                        
+                    wallet.ProcessWithdrawToCoupon(ret.key.userid, queryStr.quantity, coin.name, ret => {
+                        if (ret.error)
+                            return onError(req, res, ret.message);
+                            
+                        return utils.renderJSON(req, res, ret);
+                    })
+                });
             }
-        });
+        }, req);
     });
 }
 
-function CheckAPIkey(strKey, strSign, strQuery, callback)
+function CheckAPIkey(strKey, strSign, strQuery, callback, req)
 {
     g_constants.dbTables['apikeys'].selectAll('*', 'key="'+escape(strKey)+'"', '', (err, rows) => {
         if (err || !rows || !rows.length)
-            return callback({success: false, message: 'apikey not found', read: 0, write: 0, withdraw: 0});
+            return callback({success: false, message: 'apikey not found', key: {read: 0, write: 0, withdraw: 0}});
             
         try {
             const info = JSON.parse(unescape(rows[0].info));

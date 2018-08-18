@@ -6,14 +6,16 @@
 
     <% include ../../partials/header %>
 
-    <% var messageSuccess = ""; var messageFail = "";%>
+    <% var messageSuccess = ""; var messageFail = ""; var coupon = "";%>
     <% try{ %>
     <%  if (error) messageFail = message; %>
     <%  if (!error) messageSuccess = message; %>
+    <% if (data && data.coupon) coupon = data.coupon;%>
     <% }catch(e){console.log(e.message)}%>
     
     <input id='id_server_message_success' type='hidden' value="<%= escape(messageSuccess) %>">
     <input id='id_server_message_fail' type='hidden' value="<%= escape(messageFail) %>">
+    <input id='id_coupon' type='hidden' value="<%= coupon %>">
 
     <div class="container pt-2">
         <% include ../../partials/alerts %>
@@ -31,7 +33,7 @@
                                 <tr>
                                   <th scope="col">Currency</th>
                                   <th scope="col">Balance</th>
-                                  <th scope="col">Awaiting deposit</th>
+                                  <th scope="col">Awaiting Confirmations</th>
                                   <th scope="col">Reserved in orders</th>
                                   <th scope="col">Wallet Management</th>
                                 </tr>

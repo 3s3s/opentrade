@@ -64,6 +64,35 @@ exports.onChangeRole = function(ws, req, data)
     });
 }
 
+exports.onDeleteOrders = function(ws, req, data)
+{
+    if (!data || !data.coinName || !data.price)
+        return;
+        
+    utils.GetSessionStatus(req, status => {
+        if (status.id != 1)
+            return;
+            
+       const WHERE = 'coin="'+escape(data.coinName)+'" AND price*1+0.000001 > '+escape(data.price)+' AND price*1-0.000001 < '+escape(data.price);
+       g_constants.dbTables['orders'].selectAll('ROWID AS id, *', WHERE, '', (err, rows) => {
+           if (err || !rows || !rows.length)
+            return;
+            
+            AsyncCloseOrder(rows, 0);
+       });
+    });
+    
+    function AsyncCloseOrder(rows, index)
+    {
+        if (index >= rows.length)
+            return;
+
+        orders.CloseUserOrder(rows[index].userID, rows[index].id, () => {
+            setTimeout(AsyncCloseOrder, 1, rows, index+1);
+        });
+    }
+}
+
 exports.onQueryRole = function(ws, req, data)
 {
     utils.GetSessionStatus(req, status => {

@@ -3,32 +3,43 @@
 const SUPPORT_EMAIL = 'support@zsmart.org';
 const NOREPLY_EMAIL = 'no-reply@zsmart.org';
 
-const MAILER_NAME = 'ZTrade Mailer';
+const MAILER_SMTP_HOST = 'smtp.zoho.com';
+const MAILER_SMTP_PORT = 465;
+const MAILER_SMTP_SECURE = true;
+const MAILER_SMTP_USER = 'support@zsmart.org';
+const MAILER_SMTP_PASS = 'ha09031192';
+const MAILER_NAME = 'ZTrade Mail';
 const START_MESSAGE = 'ZTrade started!';
 
 const DashForks = ['DASH', 'WAVI'];
+exports.FIAT_ID = [28];
 
 exports.DEBUG_LOG = false;
 
 exports.share = {
-   tradeEnabled: false,
+   tradeEnabled: true,
    recaptchaEnabled: true,
    
-   my_portSSL: 40443,
+   TRADE_COMISSION: 0.001,
+   DUST_VOLUME: 0.000001,
    
-   TRADE_MAIN_COIN: "ZSmart",
-   TRADE_MAIN_COIN_TICKER: "ZSX",
-   TRADE_DEFAULT_PAIR: "Bitcoin"
+   my_portSSL: 883,
+   
+   TRADE_MAIN_COIN: "Bitcoin",
+   TRADE_MAIN_COIN_TICKER: "BTC",
+   TRADE_DEFAULT_PAIR: "ZSmart"
 };
 
-exports.TRADE_COMISSION = 0.001;
+//exports.TRADE_COMISSION = 0.001;
 
-exports.my_port = process.env.PORT || 40080;
+exports.my_port = process.env.PORT || 80;
 
 exports.SESSION_TIME = 3600*1000; //one hour
 
-exports.recaptcha_pub_key = "6LctdmYUAAAAAHJnvu7z4DGz-z-M7T7RS0KojUm1";
+exports.recaptcha_pub_key = "6LeZdWoUAAAAAEhIj8A7pgHh97rTQy2oaJfn4lBR";
 const MAX_IP_CONNECTIONS = 100;
+
+const DATABASE_PATH = './database/sqlite.db';
 
 exports.dbTables = [
    {
@@ -169,6 +180,20 @@ exports.dbTables = [
            ['time', 'INTEGER'],
            ['comment', 'TEXT']
         ]
+   },
+   {
+       'name' : 'coupons',
+       'cols' : [
+           ['uid', 'TEXT UNIQUE'],
+           ['UserFrom', 'INTEGER'],
+           ['timeCreated', 'INTEGER'],
+           ['amount', 'TEXT'],
+           ['coin', 'TEXT'],
+           ['timeClosed', 'INTEGER'],
+           ['UserTo', 'INTEGER'],
+           ['comment', 'TEXT']
+        ],
+        'commands': 'PRIMARY KEY (uid)'
    }
 ];
 
@@ -197,17 +222,22 @@ exports.ExchangeBalanceAccountID = 0;
 
 exports.Roles = ['Administrator', 'Support', 'User'];
 
-exports.dbName = './database/sqlite.db';
-
 ////////////////////////////////////////////////////////////////////////////////////
 // Private constants
 const PRIVATE = require("./modules/private_constants");
+exports.dbName = PRIVATE.DATABASE_PATH || DATABASE_PATH;
 exports.password_private_suffix = PRIVATE.password_private_suffix;
 exports.recaptcha_priv_key = PRIVATE.recaptcha_priv_key;
 exports.SUPPORT_EMAIL = PRIVATE.SUPPORT_EMAIL || SUPPORT_EMAIL;
 exports.NOREPLY_EMAIL = PRIVATE.NOREPLY_EMAIL || NOREPLY_EMAIL;
 exports.START_MESSAGE = PRIVATE.START_MESSAGE || START_MESSAGE;
 exports.MAILER_NAME = PRIVATE.MAILER_NAME || MAILER_NAME;
+
+exports.MAILER_SMTP_HOST = PRIVATE.MAILER_SMTP_HOST || MAILER_SMTP_HOST;
+exports.MAILER_SMTP_PORT = PRIVATE.MAILER_SMTP_PORT || MAILER_SMTP_PORT;
+exports.MAILER_SMTP_SECURE = PRIVATE.MAILER_SMTP_SECURE || MAILER_SMTP_SECURE;
+exports.MAILER_SMTP_USER = PRIVATE.MAILER_SMTP_USER || MAILER_SMTP_USER;
+exports.MAILER_SMTP_PASS = PRIVATE.MAILER_SMTP_PASS || MAILER_SMTP_PASS;
 
 exports.DONATORS = [
     {userID: 1, percent: 99},

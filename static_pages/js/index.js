@@ -1,37 +1,19 @@
 'use strict';
 
-try
-{
-google.charts.load('current', {packages: ['corechart']});
-google.charts.setOnLoadCallback(drawChart);
-}
-catch(e)
-{
-  
-}
-
-let g_LB_Data = {};
-let g_ZSX_BTC_Price = 1000000;
-
 var g_CurrentPair = utils.DEFAULT_PAIR;
 var g_CurrentLang = 'ru';
 
 var g_bFirstChatFilling = true;
 const chat_languages = ['ru', 'en'];
 
-var pairData = {};
+//var pairData = {};
 
 var coinNameToTicker = {};
 var coinTickerToName = {};
 
-var chartData = [];
+//var chartData = [];
 
 var g_role = 'User';
-
-/*function checkInView(elem, container)
-{
-  return container[0].clientHeight + container.offset().top - container[0].offsetTop < 500;
-}*/
 
 function UpdatePageWithRole()
 {
@@ -39,7 +21,10 @@ function UpdatePageWithRole()
     return;
   
   if (g_role == 'root')
+  {
     $('.del_message_button').show();
+    $('.del_order_button').show();
+  }
   if (g_role == 'Support')
     $('.staff_area').show();
 }
@@ -57,8 +42,8 @@ function IsNeadScroll()
 
 $(() => {
   if (RedirectToCurrentPair())
-    return;
-
+      return;
+      
   utils.CreateSocket(onSocketMessage, onOpenSocket);
   
   for (var i=0; i<chat_languages.length; i++)
@@ -72,10 +57,11 @@ $(() => {
   UpdateBuySellText();  
 
   setInterval(IsNeadScroll, 5000);
+  setInterval(UpdateHelpers, 10000);
 
   $('.staff_area').hide();
   
-  setInterval(UpdateZSXFromLB, 30000);
+  //setInterval(UpdateBTCFromLB, 30000);
 });
 
 $('#inputBuyTotal').change(e => {
@@ -87,6 +73,15 @@ $('#inputSellTotal').change(e => {
 });
 function UpdateBuySellText()
 {
+  if (g_CurrentPair == "ZSmart") {
+	  var cccoiname = "ZSX";
+  }
+  if (g_CurrentPair == "Dogecoin") {
+	  var cccoinamez = "DOGE";
+  }
+  if (utils.MAIN_COIN == "Bitcoin") {
+	  var maincoinz = "BTC";
+  }
   $('#header_sell').text('Sell '+g_CurrentPair);
   $('#header_buy').text('Buy '+g_CurrentPair);
   
@@ -99,63 +94,9 @@ function UpdateBuySellText()
     $('#id_buy_balance').text("0");
   }
   
-  $('#id_buy_coin').text(utils.MAIN_COIN);
-  $('#id_sell_coin').text(g_CurrentPair);
+  $('#id_buy_coin').text(maincoinz);
+  $('#id_sell_coin').text(cccoiname);
   
-}
-
-function UpdateZSXFromLB()
-{
-  const ZSX = coinNameToTicker[utils.MAIN_COIN] ? coinNameToTicker[utils.MAIN_COIN].ticker || 'ZSX' : 'ZSX';
-  
-  fetch('/bitcoinaverage/ticker-all-currencies/')
-    .then(response => {
-      if (response.status !== 200)
-        return;
-      return response.json();
-    })
-    .then( data => {
-      g_LB_Data = data;
-      UpdateZSXInfo();
-    });
-    
-    function UpdateZSXInfo() {
-      if (!g_LB_Data || !g_LB_Data.USD || !g_LB_Data.RUB)
-        return;
-      
-      if (ZSX == 'BTC') g_ZSX_BTC_Price = 0;
-        
-      const USD = g_LB_Data.USD.rates.last/(g_ZSX_BTC_Price+1);
-      const BTC = 1/(g_ZSX_BTC_Price+1);
-      const EUR = g_LB_Data.EUR.rates.last/(g_ZSX_BTC_Price+1);
-      const RUB = g_LB_Data.RUB.rates.last/(g_ZSX_BTC_Price+1);
-      
-      $('#id_ZSX_info').empty();
-      if (ZSX != 'BTC')
-      {
-        $('#id_ZSX_info').append($('<li class="breadcrumb-item">1 ' + ZSX + ' = '+BTC.toFixed(8)+' BTC</li>'));
-        $('#id_ZSX_info').append($('<li class="breadcrumb-item">'+USD.toFixed(3)+' USD</li>'));
-        $('#id_ZSX_info').append($('<li class="breadcrumb-item">'+EUR.toFixed(3)+' EUR</li>'));
-      }
-      else
-      {
-        $('#id_ZSX_info').append($('<li class="breadcrumb-item">1 ' + ZSX + ' = '+USD.toFixed(2)+' USD</li>'));
-        $('#id_ZSX_info').append($('<li class="breadcrumb-item">'+EUR.toFixed(2)+' EUR</li>'));
-      }
-      
-      $('#id_ZSX_info').append($('<li class="breadcrumb-item">'+RUB.toFixed(2)+' RUB</li>'));
-    }
-}
-
-function AddCoinInfo(info)
-{
-  if (!info.result || !info.result.coin_info || !info.result.coin_info.page)
-    return;
-    
-  $('#coin_legend').text(g_CurrentPair);
-  
-  const p1 = $('<p><strong>Forum</strong> ANN: <a target="_blank" href="'+(info.result.coin_info.page || "")+'">'+g_CurrentPair+' @ bitcointalk</a></p>');
-  $('#coin_info').empty().append(p1);
 }
 
 function ShowLanguageChat()
@@ -222,7 +163,7 @@ $('#form_sell').submit(e => {
 
 function AddOrder(order)
 {
-  const ZSX = coinNameToTicker[utils.MAIN_COIN] ? coinNameToTicker[utils.MAIN_COIN].ticker || 'ZSX' : 'ZSX'; 
+  const BTC = coinNameToTicker[utils.MAIN_COIN] ? coinNameToTicker[utils.MAIN_COIN].ticker || 'BTC' : 'BTC'; 
   const bodyModal = 
     '<table class="table">'+
       '<tr>'+
@@ -235,7 +176,7 @@ function AddOrder(order)
         '<td>'+order.order+'</td>'+
         '<td>'+order.amount.toFixed(8)*1+'</td>'+
         '<td>'+order.coin+'</td>'+
-        '<td>'+order.price.toFixed(8)*1+" "+ZSX+'</td>'+
+        '<td>'+order.price.toFixed(8)*1+" "+BTC+'</td>'+
       '</tr>'
     '</table>';
   
@@ -268,13 +209,13 @@ function SendChatMessage()
 function onOpenSocket()
 {
   socket.send(JSON.stringify({request: 'getchat'}));
-  socket.send(JSON.stringify({request: 'getchart', message: [utils.MAIN_COIN, g_CurrentPair]}));
+  //socket.send(JSON.stringify({request: 'getchart', message: [utils.MAIN_COIN, g_CurrentPair, g_currentChartPeriod]}));
   socket.send(JSON.stringify({request: 'getpair', message: [utils.MAIN_COIN, g_CurrentPair]}));
   
   socket.send(JSON.stringify({request: 'getrole'}))
 
   setInterval(()=>{socket.send(JSON.stringify({request: 'getpair', message: [utils.MAIN_COIN, g_CurrentPair]}));}, 5000)
-  setInterval(() => {  socket.send(JSON.stringify({request: 'getchart', message: [utils.MAIN_COIN, g_CurrentPair]}));}, 60000)
+  //setInterval(() => {  socket.send(JSON.stringify({request: 'getchart', message: [utils.MAIN_COIN, g_CurrentPair, g_currentChartPeriod]}));}, 60000)
 }
 
 function onSocketMessage(event)
@@ -287,15 +228,12 @@ function onSocketMessage(event)
     return;
     
   if (data.request == 'chat-message')
-  {
-    AddChatMessage(data.message)
-    return;
-  }
+    return AddChatMessage(data.message)
+
   if (data.request == 'user-role')
   {
     g_role = data.message;
-    UpdatePageWithRole();
-    return;
+    return UpdatePageWithRole();
   }
   if (data.request == 'chat-messages')
   {
@@ -304,16 +242,12 @@ function onSocketMessage(event)
     const messagesAll = data.message || [];
     ShowLanguageChat();
     
-    setTimeout(AsyncAddChatMessage, 0, messagesAll, messagesAll.length-1);
-    
-    return;
+    return setTimeout(AsyncAddChatMessage, 0, messagesAll, messagesAll.length-1);
   }
   if (data.request == 'pairdata')
-  {
-    UpdatePairData(data.message)
-    return;
-  }
-  if (data.request == 'chartdata')
+    return UpdatePairData(data.message)
+
+  /*if (data.request == 'chartdata')
   {
     if (data.message.data.chart)
     {
@@ -321,36 +255,24 @@ function onSocketMessage(event)
       drawChart();
     }
     return;
-  }
+  }*/
   if (data.request == 'pairbalance')
-  {
-    UpdatePairBalance(data.message)
-    return;
-  }
+    return UpdatePairBalance(data.message)
+
   if (data.request == 'wallet')
-  {
-    UpdateBalance(data.message);
-    return;
-  }
+    return UpdateBalance(data.message);
+
   if (data.request == 'market')
-  {
-    UpdateMarket(data.message)
-    return;
-  }
+    return UpdateMarket(data.message)
+
   if (data.request == 'exchange-updated')
-  {
-    UpdateExchange(data.message);
-    return;
-  }
+    return UpdateExchange(data.message);
 }
 
 function AsyncAddChatMessage(messages, index)
 {
   if (index < 0) 
-  {
-    g_bFirstChatFilling = false;
-    return;
-  }
+    return g_bFirstChatFilling = false;
 
   AddChatMessage(messages[index], true, 'prepend');
   setTimeout(AsyncAddChatMessage, 0, messages, index-1);
@@ -366,7 +288,7 @@ function UpdateExchange(message)
 
 function RedirectToCurrentPair()
 {
-  const currentPair = storage.getItem('CurrentPair');
+  const currentPair = storage.getItemS('CurrentPair');
   if (currentPair != null)
     g_CurrentPair = currentPair.value;
 
@@ -384,7 +306,7 @@ function RedirectToCurrentPair()
     
   if (coinNameToTicker[g_CurrentPair] && coinTickerToName[pair] && pair != coinNameToTicker[g_CurrentPair].ticker)
   {
-    storage.setItem('CurrentPair', coinTickerToName[pair].name);
+    storage.setItemS('CurrentPair', coinTickerToName[pair].name);
     location.reload(); 
     return true;
   }
@@ -397,9 +319,11 @@ function UpdateMarket(message)
     return;
   
   $('#table-market').empty();  
+  let markets = [];
   for (var i=0; i<message.coins.length; i++)
   {
     const coinName = unescape(message.coins[i].name);
+	const coinIcon = '<img style="float:left;" width="16px" src="'+unescape(message.coins[i].icon)+'" />';
     
     coinNameToTicker[coinName] = {ticker: message.coins[i].ticker};
     coinTickerToName[message.coins[i].ticker] = {name: coinName};
@@ -416,30 +340,39 @@ function UpdateMarket(message)
     
     if (coinName == 'Bitcoin')
     {
-      g_ZSX_BTC_Price = price;
-      setTimeout(UpdateZSXFromLB, 1);
+      /*g_BTC_LTC_Price = price;
+      setTimeout(UpdateBTCFromLB, 1);*/
+      storage.setItem("BTC_LTC_Price", price);
     }
 
+    const BTC = coinNameToTicker[utils.MAIN_COIN] ? coinNameToTicker[utils.MAIN_COIN].ticker || 'BTC' : 'BTC';
+    const LTC = coinNameToTicker[coinName].ticker;
+
     const tr = $('<tr></tr>')
+      .append($('<td class="align-middle">'+coinIcon+'</td>'))
       .append($('<td>'+message.coins[i].ticker+'</td>'))
       .append($('<td>'+price+'</td>'))
       .append($('<td>'+vol+'</td>'))
-      .append($('<td><span class="'+chColor+'">'+(ch*1).toFixed(2)+'</span></td>'))
+      .append($('<span class="'+chColor+'">'+(ch*1).toFixed(2)+'</span>'))
       .css( 'cursor', 'pointer' )
       .on('click', e => {
         if (coinName == g_CurrentPair)
           return;
           
-        const ZSX = coinNameToTicker[utils.MAIN_COIN] ? coinNameToTicker[utils.MAIN_COIN].ticker || 'ZSX' : 'ZSX';
-        const BTC = coinNameToTicker[coinName].ticker;
-        
-        utils.ChangeUrl(document.title + "(" + coinName + ' market)', '/market/'+ZSX+'-'+BTC);
-        storage.setItem('CurrentPair', coinName);
+        utils.ChangeUrl(document.title + "(" + coinName + ' market)', '/market/'+BTC+'-'+LTC);
+        storage.setItemS('CurrentPair', coinName);
         location.reload(); 
       });
       
-    $('#table-market').append(tr);
+    //$('#table-market').append(tr);
+    if (BTC == "USD")
+      markets.unshift(tr);
+    else
+      markets.push(tr);
   }
+  
+  for (let j=0; j<markets.length; j++)
+    $('#table-market').append(markets[j]);
   
   storage.setItem('coinNameToTicker', coinNameToTicker);
   storage.setItem('coinTickerToName', coinTickerToName);
@@ -449,16 +382,16 @@ function UpdateMarket(message)
 
   if (!$('#id_buy_orders_header_price').length)
   {
-    $('#id_buy_orders_header').append($('<th id="id_buy_orders_header_price">Price</th><th>'+coinNameToTicker[utils.MAIN_COIN].ticker+'</th><th>'+coinNameToTicker[g_CurrentPair].ticker+'</th>'))
-    $('#id_sell_orders_header').append($('<th>Price</th><th>'+coinNameToTicker[utils.MAIN_COIN].ticker+'</th><th>'+coinNameToTicker[g_CurrentPair].ticker+'</th>'))
+    $('#id_buy_orders_header').append($('<th class="text-center" id="id_buy_orders_header_price">Price</th><th class="text-center">'+coinNameToTicker[utils.MAIN_COIN].ticker+'</th><th class="text-center">'+coinNameToTicker[g_CurrentPair].ticker+'</th>'))
+    $('#id_sell_orders_header').append($('<th class="text-center">Price</th><th class="text-center">'+coinNameToTicker[utils.MAIN_COIN].ticker+'</th><th class="text-center">'+coinNameToTicker[g_CurrentPair].ticker+'</th>'))
   }
   
   UpdateBuySellTickers();
   
-  const ZSX = coinNameToTicker[utils.MAIN_COIN] ? coinNameToTicker[utils.MAIN_COIN].ticker || 'ZSX' : 'ZSX';
-  const BTC = coinNameToTicker[g_CurrentPair].ticker;
+  const BTC = coinNameToTicker[utils.MAIN_COIN] ? coinNameToTicker[utils.MAIN_COIN].ticker || 'BTC' : 'BTC';
+  const LTC = coinNameToTicker[g_CurrentPair].ticker;
 
-  utils.ChangeUrl(document.title + "(" + g_CurrentPair+' market)', '/market/'+ZSX+'-'+BTC+(window.location.search || ""));
+  utils.ChangeUrl(document.title + "(" + g_CurrentPair+' market)', '/market/'+BTC+'-'+LTC+(window.location.search || ""));
 }
 
 function UpdateBuySellTickers()
@@ -466,20 +399,20 @@ function UpdateBuySellTickers()
   if (!coinNameToTicker[g_CurrentPair])
     return;
   
-  const ZSX = coinNameToTicker[utils.MAIN_COIN] ? coinNameToTicker[utils.MAIN_COIN].ticker || 'ZSX' : 'ZSX';
-  const BTC = coinNameToTicker[g_CurrentPair].ticker;
+  const BTC = coinNameToTicker[utils.MAIN_COIN] ? coinNameToTicker[utils.MAIN_COIN].ticker || 'BTC' : 'BTC';
+  const LTC = coinNameToTicker[g_CurrentPair].ticker;
   
   $('#id_amount_buy').text(BTC);
   $('#id_amount_sell').text(BTC);
   
-  $('#id_price_buy').text(ZSX);
-  $('#id_price_sell').text(ZSX);
+  $('#id_price_buy').text(BTC);
+  $('#id_price_sell').text(BTC);
   
-  $('#id_comission_buy').text(ZSX);
-  $('#id_comission_sell').text(ZSX);
+  $('#id_comission_buy').text(BTC);
+  $('#id_comission_sell').text(BTC);
   
-  $('#id_total_buy').text(ZSX);
-  $('#id_total_sell').text(ZSX);
+  $('#id_total_buy').text(BTC);
+  $('#id_total_sell').text(BTC);
 
 }
 
@@ -503,12 +436,23 @@ function AddChatMessage(message, noscroll, method)
   let oldMessage = message;
   delButton.on('click', e => {
     e.preventDefault();
-    socket.send(JSON.stringify({request: 'del_chat_message', message: oldMessage}));
+    
+    modals.OKCancel("Confirmation", $('<p>'+"Delete message: '"+oldMessage.message.text+"'"+'</p>'), ret => {
+      if (ret != 'ok')
+        return;
+        
+      socket.send(JSON.stringify({request: 'del_chat_message', message: oldMessage}));
+    });
   });
   banButton.on('click', e => {
     e.preventDefault();
-    oldMessage['info'] = {endTime: Date.now()+1000*60*60*24*365, comment: {role: g_role, comment: 'User '+oldMessage.user+' banned on 365 days'}};
-    socket.send(JSON.stringify({request: 'ban_chat_user', message: oldMessage}));
+    modals.OKCancel("Confirmation", $('<p>'+"Ban user: '"+oldMessage.message.user+"'"+'</p>'), ret => {
+      if (ret != 'ok')
+        return;
+        
+      oldMessage['info'] = {endTime: Date.now()+1000*60*60*24*365, comment: {role: g_role, comment: 'User '+oldMessage.user+' banned on 365 days'}};
+      socket.send(JSON.stringify({request: 'ban_chat_user', message: oldMessage}));
+    });
   });
   
   user.on('click', e => {
@@ -521,10 +465,10 @@ function AddChatMessage(message, noscroll, method)
   
   const row = $('<div class="row chat_row"></div>').append($('<div class="col-md-12"></div>')
     .append(banButton)
-    .append(delButton)
     .append(privMessage)
     .append(user)
-    .append(text));
+    .append(text)
+    .append(delButton));
 
   $('#chat-container_'+message.message.lang)[append](row);
   
@@ -622,11 +566,18 @@ function UpdateOrders(orders)
     const price = utils.MakePrice(orders.buy[i].price);//(orders.buy[i].price*1.0).toFixed(8)*1;
     const amountMain = utils.MakePrice(orders.buy[i].price*orders.buy[i].amount); //(orders.buy[i].price*orders.buy[i].amount*1.0).toFixed(8)*1;
     const amountPair = utils.MakePrice(orders.buy[i].amount); //(orders.buy[i].amount*1.0).toFixed(8)*1;
+
+    const delButton = $('<a href="#" title="Delete orders" class="del_order_button" style="text-decoration: none">&#10006;&nbsp</a>').hide();
+    delButton.on('click', e => {
+      e.preventDefault();
+      socket.send(JSON.stringify({request: 'del_orders', message: {coinName: g_CurrentPair, price: price}}));
+    });
     
     const tr = $('<tr></tr>')
       .append($('<td>'+price+'</td>'))
       .append($('<td>'+amountMain+'</td>'))
-      .append($('<td>'+amountPair+'</td>'));
+      .append($('<td>'+amountPair+'</td>'))
+      .append(delButton);
       
     volumeBuy += amountMain*1;
     volumeBuyPair += amountPair*1;
@@ -657,10 +608,17 @@ function UpdateOrders(orders)
     const amountMain = utils.MakePrice(orders.sell[i].price*orders.sell[i].amount); //(orders.sell[i].price*orders.sell[i].amount*1.0).toFixed(8)*1;
     const amountPair = utils.MakePrice(orders.sell[i].amount); //(orders.sell[i].amount*1.0).toFixed(8)*1;
     
+    const delButton = $('<a href="#" title="Delete orders" class="del_order_button" style="text-decoration: none">&#10006;&nbsp</a>').hide();
+    delButton.on('click', e => {
+      e.preventDefault();
+      socket.send(JSON.stringify({request: 'del_orders', message: {coinName: g_CurrentPair, price: price}}));
+    });
+    
     const tr = $('<tr></tr>')
       .append($('<td>'+price+'</td>'))
       .append($('<td>'+amountMain+'</td>'))
-      .append($('<td>'+amountPair+'</td>'));
+      .append($('<td>'+amountPair+'</td>'))
+      .append(delButton);
       
     volumeSell += amountPair*1;
     volumeSellPair += amountMain*1;
@@ -706,6 +664,8 @@ function UpdateOrders(orders)
   
   $('#id_max_bid_coin').text(utils.MAIN_COIN);
   $('#id_max_ask_coin').text(utils.MAIN_COIN);
+  
+  UpdatePageWithRole();
   
 }
 
@@ -859,118 +819,4 @@ function UpdateSellComission()
   }
   catch(e) {}
   
-}
-
-let g_TableLengthPrev = 0;
-function drawChart()
-{
-  try
-  {
-    if (!chartData.length)
-      return;
-    if (!google.visualization || !google.visualization['arrayToDataTable'])
-      return;// setTimeout(drawChart, 1000);
-    
-    SetChartLegend()
-      
-    var tmp = [];
-    for (var j=chartData.length-1; j>=0; j--)
-      tmp.push(chartData[j]);
-      
-    chartData = tmp;
-    
-    var table = [];
-    for (var i=0; i<chartData.length; i++)  
-    {
-      const time = utils.timeConverter(chartData[i].t10min*360000, true);
-      //const time = new Date(chartData[i].t10min*360000);
-      const timeStart = chartData[i].t10min;
-      
-      var min = chartData[i].avg_10min;
-      var init = chartData[i].avg_10min;
-      var final = chartData[i].avg_10min;
-      var max = chartData[i].avg_10min;
-      
-      for (var j=i+1; j<chartData.length; j++)
-      {
-        if (chartData[j].t10min*1 > timeStart*1+10)
-          break;
-        
-        if (chartData[j].avg_10min*1 < min)
-          min = chartData[j].avg_10min;
-        if (chartData[j].avg_10min*1 > max)
-          max = chartData[j].avg_10min;
-          
-        final = chartData[j].avg_10min;
-        i++;
-      }
-      
-      table.push([time, min/1000000, init/1000000, final/1000000, max/1000000]);
-    }
-    
-    if (!table.length || table.length < g_TableLengthPrev-2)
-      return;
-      
-    g_TableLengthPrev = table.length;
-      
-    if (table.length > 24)
-      table = table.slice(table.length - 24);
-      
-    var data = google.visualization.arrayToDataTable(table, true);
-    var options = {
-        //title: g_CurrentPair,
-        /*hAxis: {
-          minValue: 0,
-          maxValue: 24,
-          ticks: [0, 4, 8, 12, 16, 20, 24]
-        },*/
-        //width: 800,
-        legend: 'none',
-        explorer: {
-                axis: 'horizontal',
-                keepInBounds: true,
-                maxZoomIn: 4.0
-        }
-    };
-    
-    var chart = new google.visualization.CandlestickChart(document.getElementById('chart_div'));
-    chart.draw(data, options);
-    
-  }
-  catch(e)
-  {
-    
-  }
-}
-
-function SetChartLegend()
-{
-  if (!coinNameToTicker[g_CurrentPair] || !coinNameToTicker[g_CurrentPair].ticker || !coinNameToTicker[utils.MAIN_COIN])
-  {
-    setTimeout(SetChartLegend, 1000);
-    return;
-  }
-    
-  const ZSX = coinNameToTicker[utils.MAIN_COIN].ticker; 
-  const COIN = coinNameToTicker[g_CurrentPair].ticker
-  
-
-  $.getJSON( "/api/v1/public/getmarketsummary?market="+ZSX+"-"+COIN, ret => {
-    if (!ret || !ret.success || ret.success != true || ZSX != coinNameToTicker[utils.MAIN_COIN].ticker || COIN != coinNameToTicker[g_CurrentPair].ticker) 
-      return;
-    
-    AddCoinInfo(ret);
-    
-    const legend = $(
-      '<ul class="nav">'+
-        '<li class="nav-item mr-3"><img src="'+unescape(ret.result.coin_icon_src)+'" width=40 /></li>'+
-        '<li class="nav-item mr-3"><h4>'+COIN+' / '+ZSX+'</h4></li>'+
-        '<li class="nav-item mr-2 ml-3">24High: '+ret.result.High+'</li>'+
-        '<li class="nav-item mr-2 ml-3">24Low: '+ret.result.Low+'</li>'+
-        '<li class="nav-item mr-2 ml-3">24V: '+ret.result.Volume+'</li>'+
-      '</ul>'
-      )//('<h4>'+COIN+' / '+ZSX+'</h4>');
-    $('#chart_legend').empty();
-    $('#chart_legend').append(legend);
-  });
 }

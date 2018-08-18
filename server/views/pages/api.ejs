@@ -10,17 +10,17 @@
     <div class="container">
         <div class='row m-4'>
             <div class='col-md-12 '>
-                <center><h1>Developer's Guide - Api</h1></center>
+                <center><h1>Developer's Guide - API</h1></center>
                 <h3>Overview</h3>
                 <p>
 
                     ZTrade provides a simple and powerful REST API to allow you to programatically perform nearly all actions you can from our web interface.  All requests use the <code>application/json</code>
-                    content type and go over <code>https</code>.  The base url is <code>https://trade.multicoins.org/api/{version}/</code>.  All requests are GET requests and all responses come in a default response object with
+                    content type and go over <code>https</code>.  The base url is <code>https://exchange.zsmart.org/api/{version}/</code>.  All requests are GET requests and all responses come in a default response object with
                     the result in the result field.  Always check the <code>success</code> flag to ensure that your API call succeeded.<br>
                     <br>
                     We are currently restricting orders to 500 open orders and 200,000 orders a day.  We reserve the right to change these settings as we tune the system.
                     <br><br>
-                    If you have any questions, feedback or recommendation for API support you can post a question in our support center.
+                    If you have any questions, feedback or recommendation for API support you can email us at info@exchange.zsmart.org.
                             
                 </p>
                 <hr>
@@ -35,7 +35,7 @@
                 <h3>General</h3>
                 We provide a simple RESTful API. All calls are GETs and should be called via <code>https</code>. We will support n-1 versions of the API. Our current stable API is v1. The endpoints have a standard format as follows:
                 <br><br>
-                <pre>https://trade.multicoins.org/api/{version}/{method}?param=value</pre>
+                <pre>https://exchange.zsmart.org/api/{version}/{method}?param=value</pre>
                 <hr>
                 <h3>Authentication</h3>
                 In the spirit of keeping things simple, we offer an easy to manage API Key authentication method. 
@@ -59,13 +59,13 @@
 &lt?php
 
 $request = '/account/getbalance';
-$currency = 'ZSX';
+$currency = 'MC';
 
 $apikey='__API_KEY__';
 $apisecret='__API_SECRET__';
 $nonce=time();
 
-$uri='https://trade.multicoins.org/api/v1'.$request .'?apikey='.$apikey.'&ampnonce='.$nonce.'&ampmarket='.$market.'&ampcurrency='.$currency;
+$uri='https://exchange.zsmart.org/api/v1'.$request .'?apikey='.$apikey.'&ampnonce='.$nonce.'&ampmarket='.$market.'&ampcurrency='.$currency;
 $sign=hash_hmac('sha512',$uri,$apisecret);
 $ch = curl_init($uri);
 curl_setopt($ch, CURLOPT_HTTPHEADER, array('apisign:'.$sign));
@@ -88,12 +88,12 @@ $obj = json_decode($execResult);
 const API_PUB_KEY = "__YOUR_API_PUBLIC_KEY__";
 const API_PRIV_KEY = "__YOUR_API_PRIVATE_KEY__";
 
-GetOpenOrders('ZSX-DOGE', data => { console.log(JSON.stringify(data.result || data)); });
+GetOpenOrders('MC-DOGE', data => { console.log(JSON.stringify(data.result || data)); });
 
 function GetOpenOrders(market, callback)
 {
     const nonce = Date.now()+Math.floor(Math.random() * (1000)) + 1;
-    const uri = 'https://trade.multicoins.org/api/v1/market/getopenorders?apikey='+API_PUB_KEY+'&ampnonce='+nonce+'&ampmarket='+market;
+    const uri = 'https://exchange.zsmart.org/api/v1/market/getopenorders?apikey='+API_PUB_KEY+'&ampnonce='+nonce+'&ampmarket='+market;
     const parsed = require('url').parse(uri, true);
     const signature = require('crypto').createHmac('sha512', API_PRIV_KEY).update(new Buffer(uri, 'utf-8')).digest('hex');
     
@@ -124,7 +124,7 @@ function GetOpenOrders(market, callback)
                 <h4>Public Api</h4>
                 <div class="api-doc">
                     <h5>/public/getmarkets</h5>
-                    <p>Used to get the open and available trading markets at ZTrade along with other meta data. </p>
+                    <p>Used to get the open and available trading markets at OpenTrade along with other meta data. </p>
                     Parameters 
                     <p>None</p>
                     Request: 
@@ -135,28 +135,29 @@ function GetOpenOrders(market, callback)
 	"success" : true,
 	"message" : "",
 	"result" : [{
-			"MarketCurrency" : "BTC",
-			"BaseCurrency" : "ZSX",
-			"MarketCurrencyLong" : "Bitcoin",
-			"BaseCurrencyLong" : "ZSmart",
+			"MarketCurrency" : "LTC",
+			"BaseCurrency" : "MC",
+			"MarketCurrencyLong" : "Litecoin",
+			"BaseCurrencyLong" : "Marycoin",
 			"MinTradeSize" : "0",
-			"MarketName" : "ZSX-BTC",
+			"MarketName" : "MC-LTC",
 			"IsActive" : true,
-			"Created" : "2018-07-27T00:00:00"
+			"Created" : "2014-02-13T00:00:00"
 		}, {
 			"MarketCurrency" : "DOGE",
-			"BaseCurrency" : "ZSX",
+			"BaseCurrency" : "MC",
 			"MarketCurrencyLong" : "Dogecoin",
-			"BaseCurrencyLong" : "ZSmart",
+			"BaseCurrencyLong" : "Marycoin",
 			"MinTradeSize" : "0",
-			"MarketName" : "ZSX-DOGE",
+			"MarketName" : "MC-DOGE",
 			"IsActive" : true,
-			"Created" : "2018-07-27T00:00:00"
+			"Created" : "2014-02-13T00:00:00"
 		}
         ]
     }
 
                     </pre>
+                    
                     <h5>/public/getorderbook</h5>
                     <p>Used to get retrieve the orderbook for a given market </p>
                     Parameters 
@@ -169,7 +170,7 @@ function GetOpenOrders(market, callback)
                         <tr>
                             <td><code>market</code></td>
                             <td>required</td>
-                            <td>a string literal for the market (ex: ZSX-BTC)</td>
+                            <td>a string literal for the market (ex: MC-LTC)</td>
                         </tr>
                         <tr>
                             <td><code>type</code></td>
@@ -178,7 +179,7 @@ function GetOpenOrders(market, callback)
                         </tr>
                     </table>
                     Request: 
-                    <pre>https://trade.multicoins.org/api/v1/public/getorderbook?market=ZSX-BTC&amp;type=both </pre>
+                    <pre>https://trade.multicoins.org/api/v1/public/getorderbook?market=MC-LTC&amp;type=both </pre>
                     Response:
                     <pre>    {
 	"success" : true,
@@ -207,8 +208,29 @@ function GetOpenOrders(market, callback)
     }
 
                     </pre>
+                    <br>
+                    
+                    <h5>/public/getlastmarketdata</h5>
+                    <p>Used to get the last summary of all coins </p>
+                    Request: 
+                    <pre>https://trade.multicoins.org/api/v1/public/getlastmarketdata</pre>
+                    Response:
+                    <pre>
+{
+"success":true,
+"message":"",
+"result":{
+    "coins":[
+    {"id":1,"name":"Marycoin","ticker":"MC","icon":"https%3A//trade.multicoins.org/mc8.png","info":{"active":true,"minconf":3,"hold":0.002,"page":"1","withdraw":"Enabled","orders":"Enabled"},"volume":0,"price":0,"fromBuyerToSeller":0,"buysell":"buy","prev_price":0,"prev_frombuyertoseller":0,"prev_buysell":"buy"},
+    {"id":2,"name":"Bitcoin","ticker":"BTC","icon":"https%3A//raw.githubusercontent.com/bitcoin/bitcoin/master/src/qt/res/icons/bitcoin.png","info":{"active":true,"minconf":3,"hold":0.0002,"page":"https://bitcointalk.org/index.php?topic=5.0","withdraw":"Enabled","orders":"Enabled"},"volume":"0.000014000000","price":"1441881.0","fromBuyerToSeller":"20.186334","buysell":"buy","prev_price":"1437854.0","prev_frombuyertoseller":1437854,"prev_buysell":"buy"},
+    {"id":3,"name":"Dogecoin","ticker":"DOGE","icon":"https%3A//raw.githubusercontent.com/dogecoin/dogecoin/master/src/qt/res/icons/bitcoin.png","info":{"minconf":3,"hold":2,"active":true,"page":"https://bitcointalk.org/index.php?topic=361813.0"},"volume":"8.8580000","price":"0.71999990","fromBuyerToSeller":"6.3777591","buysell":"sell","prev_price":"0.71999990","prev_frombuyertoseller":0.7199999034455098,"prev_buysell":"sell"},
+    ***]
+    }
+}                    
+                    </pre>
+
                     <h5>/public/getmarketsummary</h5>
-                    <p>Used to get the last 24 hour summary of all active exchanges </p>
+                    <p>Used to get the last 24 hour summary of one active exchange </p>
                     Parameters 
                     <table class='table'>
                         <tr>
@@ -219,18 +241,23 @@ function GetOpenOrders(market, callback)
                         <tr>
                             <td><code>market</code></td>
                             <td>required</td>
-                            <td>a string literal for the market (ex: ZSX-BTC)</td>
+                            <td>a string literal for the market (ex: MC-LTC)</td>
+                        </tr>
+                        <tr>
+                            <td><code>period</code></td>
+                            <td>optional</td>
+                            <td>period in hours. Can be: 24, 250, 1000 or 6000. By default period=24</td>
                         </tr>
                     </table>
                     Request: 
-                    <pre>https://trade.multicoins.org/api/v1/public/getmarketsummary?market=ZSX-BTC</pre>
+                    <pre>https://trade.multicoins.org/api/v1/public/getmarketsummary?market=MC-LTC&amp;period=250</pre>
                     Response:
                     <pre>
     {
 	"success" : true,
 	"message" : "",
-	"result" : [{
-			"MarketName" : "ZSX-BTC",
+	"result" : {
+			"MarketName" : "MC-LTC",
 			"High" : 0.01350000,
 			"Low" : 0.01200000,
 			"Volume" : 3833.97619253,
@@ -240,10 +267,32 @@ function GetOpenOrders(market, callback)
 			"OpenBuyOrders" : 45,
 			"OpenSellOrders" : 45
 		}
-        ]
+    }
+                    </pre>
+
+                    <h5>/public/getmarkets24</h5>
+                    <p>Used to get the last 24 hour summary of all active exchanges </p>
+                    Parameters 
+                    Request: 
+                    <pre>https://trade.multicoins.org/api/v1/public/getmarkets24</pre>
+                    Response:
+                    <pre>
+    {
+    "success":true,
+    "message":"",
+    "result":{
+        "TotalMarkets":22,
+        "v24":30545.55264574,
+        "data":{
+            "YTN":{"MarketName":"MC-YTN","High":"1.10000000","Low":"1.10000000","Volume":"21.74889000","Last":"1.1000000","Bid":"1.10000000","Ask":"1.99990000","OpenBuyOrders":5,"OpenSellOrders":15,"coin_icon_src":"https%3A//raw.githubusercontent.com/conan-equal-newone/yenten/master/src/qt/res/icons/bitcoin.png","coin_info":{"minconf":6,"hold":0.002,"active":true,"page":"https://bitcointalk.org/index.php?topic=2329470.0"}},
+            "WAVI":{"MarketName":"MC-WAVI","High":"1.01000000","Low":"0.49999999","Volume":"890.04802700","Last":"1.0100000","Bid":"0.31000001","Ask":"1.01000000","OpenBuyOrders":8,"OpenSellOrders":104,"coin_icon_src":"https%3A//raw.githubusercontent.com/wavidev-the-man/wavi/master/src/qt/res/icons/bitcoin.png","coin_info":{"minconf":3,"hold":0.002,"active":true,"page":"https://bitcointalk.org/index.php?topic=3146751.0"}},
+            ...
+            }
+        }
     }
                     </pre>
                     
+
                     <h5>/public/getmarkethistory</h5>
                     <p>Used to retrieve the latest trades that have occured for a specific market. </p>
                     Parameters 
@@ -256,11 +305,11 @@ function GetOpenOrders(market, callback)
                         <tr>
                             <td><code>market</code></td>
                             <td>required</td>
-                            <td>a string literal for the market (ex: ZSX-BTC)</td>
+                            <td>a string literal for the market (ex: MC-LTC)</td>
                         </tr>
                     </table>
                     Request: 
-                    <pre>https://trade.multicoins.org/api/v1/public/getmarkethistory?market=ZSX-BTC</pre>
+                    <pre>https://trade.multicoins.org/api/v1/public/getmarkethistory?market=MC-LTC</pre>
                     Response:
                     <pre>
     {
@@ -319,7 +368,7 @@ function GetOpenOrders(market, callback)
                         <tr>
                             <td><code>market</code></td>
                             <td>required</td>
-                            <td>a string literal for the market (ex: BTC-DOGE)</td>
+                            <td>a string literal for the market (ex: BTC-LTC)</td>
                         </tr>
                         <tr>
                             <td><code>quantity</code></td>
@@ -333,7 +382,7 @@ function GetOpenOrders(market, callback)
                         </tr>
                     </table>
                     Request: 
-                    <pre>https://trade.multicoins.org/api/v1/market/buylimit?apikey=API_KEY&amp;nonce=NONCE&amp;market=ZSX-LTC&amp;quantity=1.2&amp;rate=1.3</pre>
+                    <pre>https://trade.multicoins.org/api/v1/market/buylimit?apikey=API_KEY&amp;nonce=NONCE&amp;market=MC-LTC&amp;quantity=1.2&amp;rate=1.3</pre>
                     Response - Returns you the order uuid:
                     <pre>
     {
@@ -356,7 +405,7 @@ function GetOpenOrders(market, callback)
 const API_PUB_KEY = "__YOUR_API_PUBLIC_KEY__";
 const API_PRIV_KEY = "__YOUR_API_PRIVATE_KEY__";
 
-BuyLimit('ZSX-BTC', 0.00001, 1135000, data => { console.log(JSON.stringify(data.result || data)); });
+BuyLimit('MC-BTC', 0.00001, 1135000, data => { console.log(JSON.stringify(data.result || data)); });
 
 function BuyLimit(market, quantity, rate, callback)
 {
@@ -409,7 +458,7 @@ function BuyLimit(market, quantity, rate, callback)
                         </tr>
                     </table>
                     Request: 
-                    <pre>https://trade.multicoins.org/api/v1/market/selllimit?apikey=API_KEY&amp;nonce=NONCE&amp;market=ZSX-LTC&quantity=1.2&amp;rate=1.3</pre>
+                    <pre>https://trade.multicoins.org/api/v1/market/selllimit?apikey=API_KEY&amp;nonce=NONCE&amp;market=MC-LTC&quantity=1.2&amp;rate=1.3</pre>
                     Response - Returns you the order uuid:
                     <pre>
     {
@@ -432,7 +481,7 @@ function BuyLimit(market, quantity, rate, callback)
 const API_PUB_KEY = "__YOUR_API_PUBLIC_KEY__";
 const API_PRIV_KEY = "__YOUR_API_PRIVATE_KEY__";
 
-SellLimit('ZSX-BTC', 0.00001, 11350000, data => { console.log(JSON.stringify(data.result || data)); });
+SellLimit('MC-BTC', 0.00001, 11350000, data => { console.log(JSON.stringify(data.result || data)); });
 
 function SellLimit(market, quantity, rate, callback)
 {
@@ -537,11 +586,11 @@ function CancelOrder(uuid, callback)
                         <tr>
                             <td><code>market</code></td>
                             <td>required</td>
-                            <td>a string literal for the market (ie. ZSX-LTC)</td>
+                            <td>a string literal for the market (ie. MC-LTC)</td>
                         </tr>
                     </table>
                     Request: 
-                    <pre>https://trade.multicoins.org/api/v1/market/getopenorders?apikey=API_KEY&amp;nonce=NONCE&amp;market=ZSX-LTC  </pre>
+                    <pre>https://trade.multicoins.org/api/v1/market/getopenorders?apikey=API_KEY&amp;nonce=NONCE&amp;market=MC-LTC  </pre>
                     Response - Returns you the order uuid:
                     <pre>
     {
@@ -549,13 +598,13 @@ function CancelOrder(uuid, callback)
 	"message" : "",
 	"result" : [{
 			"OrderUuid" : "09aa5bb6-8232-41aa-9b78-a5a1093e0211",
-			"Exchange" : "ZSX-LTC",
+			"Exchange" : "MC-LTC",
 			"QuantityRemaining" : 5.00000000,
 			"Price" : 2.00000000,
 			"Opened" : "2018-01-01T03:55:48.77",
 		}, {
 			"OrderUuid" : "8925d746-bc9f-4684-b1aa-e507467aaa99",
-			"Exchange" : "ZSX-LTC",
+			"Exchange" : "MC-LTC",
 			"QuantityRemaining" : 100000.00000000,
 			"Price" : 0.00000001,
 			"Opened" : "2018-01-01T03:55:48.583",
@@ -576,7 +625,7 @@ function CancelOrder(uuid, callback)
 const API_PUB_KEY = "__YOUR_API_PUBLIC_KEY__";
 const API_PRIV_KEY = "__YOUR_API_PRIVATE_KEY__";
 
-GetOpenOrders('ZSX-BTC', data => { console.log(JSON.stringify(data.result || data)); });
+GetOpenOrders('MC-BTC', data => { console.log(JSON.stringify(data.result || data)); });
 
 function GetOpenOrders(market, callback)
 {
@@ -650,7 +699,7 @@ function GetOpenOrders(market, callback)
 const API_PUB_KEY = "__YOUR_API_PUBLIC_KEY__";
 const API_PRIV_KEY = "__YOUR_API_PRIVATE_KEY__";
 
-GetBalance('ZSX', data => { console.log(JSON.stringify(data.result || data)); });
+GetBalance('MC', data => { console.log(JSON.stringify(data.result || data)); });
 
 
 function GetBalance(currency, callback)
@@ -733,7 +782,7 @@ function GetBalance(currency, callback)
     	"message" : "",
     	"result" : {
     		"OrderUuid" : "0cb4c4e4-bdc7-4e13-8c13-430e587d2cc1",
-    		"Exchange" : "ZSX-BTC",
+    		"Exchange" : "MC-BTC",
     		"QuantityRemaining" : 1000.00000000,
     		"Price" : 0.00000001,
     		"Opened" : "2018-01-01T07:45:46.27",
@@ -794,11 +843,11 @@ function GetOrder(uuid, callback)
                         <tr>
                             <td><code>market</code></td>
                             <td>required</td>
-                            <td>a string literal for the market (ie. ZSX-LTC).</td>
+                            <td>a string literal for the market (ie. MC-LTC).</td>
                         </tr>
                     </table>
                     Request: 
-                    <pre>https://trade.multicoins.org/api/v1/account/getorderhistory?apikey=API_KEY&amp;nonce=NONCE&amp;market=ZSX-LTC</pre>
+                    <pre>https://trade.multicoins.org/api/v1/account/getorderhistory?apikey=API_KEY&amp;nonce=NONCE&amp;market=MC-LTC</pre>
                     Response:
                     <pre>
     {
@@ -831,7 +880,7 @@ function GetOrder(uuid, callback)
                         <tr>
                             <td><code>currency</code></td>
                             <td>required</td>
-                            <td>a string literal for the market (ie. ZSX-LTC).</td>
+                            <td>a string literal for the market (ie. MC-LTC).</td>
                         </tr>
                         <tr>
                             <td><code>quantity</code></td>
@@ -845,7 +894,7 @@ function GetOrder(uuid, callback)
                         </tr>
                     </table>
                     Request: 
-                    <pre>https://trade.multicoins.org/api/v1/account/withdraw?apikey=API_KEY&amp;nonce=NONCE&amp;currency=ZSX&amp;quantity=20.40&amp;address=ZSX_ADDRESS</pre>
+                    <pre>https://trade.multicoins.org/api/v1/account/withdraw?apikey=API_KEY&amp;nonce=NONCE&amp;currency=MC&amp;quantity=20.40&amp;address=MC_ADDRESS</pre>
                     Response:
                     <pre>
 {
@@ -869,10 +918,9 @@ function GetOrder(uuid, callback)
 const API_PUB_KEY = "__YOUR_API_PUBLIC_KEY__";
 const API_PRIV_KEY = "__YOUR_API_PRIVATE_KEY__";
 
-Withdraw('ZSX', 5, 'MVe3eoMq7TeGMzPw9EpXGpKQzW2aMvJNAa', data => { console.log(JSON.stringify(data.result || data)); });
+Withdraw('MC', 5, 'MVe3eoMq7TeGMzPw9EpXGpKQzW2aMvJNAa', data => { console.log(JSON.stringify(data.result || data)); });
 
-function Withdraw(currency, quantity, address, callback)
-{
+function Withdraw(currency, quantity, address, callback) {
     const nonce = Date.now()+Math.floor(Math.random() * (1000)) + 1;
     const uri = 'https://trade.multicoins.org/api/v1/account/withdraw?apikey='+API_PUB_KEY+'&nonce='+nonce+'&currency='+currency+'&quantity='+quantity+'&address='+address;
     const parsed = require('url').parse(uri, true);
@@ -881,14 +929,155 @@ function Withdraw(currency, quantity, address, callback)
     const options = {
         host: parsed.host,
         path: parsed.path,
-        headers: { 'apisign': signature }
-    };
+        headers: { 'apisign': signature }};
     
     require("https").request(options, res => {
         let output = '';
         res.on('data', chunk => { output += chunk; });
         res.on('end', () => { return callback(JSON.parse(output)); }); }).end();
 }
+                </pre>
+        
+    </div>
+</div>
+
+<br><br>
+
+                    <h5>/account/createcoupon</h5>
+                    <p>This method allows you to create Coupons. </p>
+                    Parameters 
+                    <table class='table'>
+                        <tr>
+                            <th>parameter</th>
+                            <th>required</th>
+                            <th>description</th>
+                        </tr>
+                        <tr>
+                            <td><code>currency</code></td>
+                            <td>required</td>
+                            <td>a string literal for the market (ie. MC-LTC).</td>
+                        </tr>
+                        <tr>
+                            <td><code>quantity</code></td>
+                            <td>required</td>
+                            <td>the quantity of coins to withdraw</td>
+                        </tr>
+                    </table>
+                    Request: 
+                    <pre>https://trade.multicoins.org/api/v1/account/createcoupon?apikey=API_KEY&amp;nonce=NONCE&amp;currency=MC&amp;quantity=20.40</pre>
+                    Response:
+                    <pre>
+{
+    "result": true, 
+    "success":1,
+    "return":{
+        "coupon":"OT-2-1-0.01-1532875173145-f4f1b216f09507d6d987bhvgfbfc85ef36d0ba236e0983gslkjn196dafa9648",
+        "funds":{"MC":430.4460447}
+    }
+}                    
+                    </pre>
+                    
+
+<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#Node_Example31" aria-expanded="false" aria-controls="Node_Example31">
+    node.js example
+</button>   
+<div class="collapse" id="Node_Example31">
+    <div class="card card-body">
+                <pre>
+'use strict';
+
+const API_PUB_KEY = "__YOUR_API_PUBLIC_KEY__";
+const API_PRIV_KEY = "__YOUR_API_PRIVATE_KEY__";
+
+Create('MC', 0.01, ret => {console.log(JSON.stringify(ret))});
+
+function Create(currency, quantity, callback) {
+    const nonce = Date.now()+Math.floor(Math.random() * (1000)) + 1;
+    const uri = 'https://trade.multicoins.org/api/v1/account/createcoupon?apikey='+API_PUB_KEY+'&nonce='+nonce+'&currency='+currency+'&quantity='+quantity;
+    const parsed = require('url').parse(uri, true);
+    const signature = require('crypto').createHmac('sha512', API_PRIV_KEY).update(new Buffer(uri, 'utf-8')).digest('hex');
+    
+    const options = {
+        host: parsed.host,
+        path: parsed.path,
+        headers: { 'apisign': signature }};
+    
+    require("https").request(options, res => {
+        let output = '';
+        res.on('data', chunk => { output += chunk; });
+        res.on('end', () => { return callback(JSON.parse(output)); });
+    }).end();
+}
+
+                </pre>
+        
+    </div>
+</div>
+
+<br><br>
+
+                    <h5>/account/redeemcoupon</h5>
+                    <p>This method is used to redeem coupons.</p>
+                    Parameters 
+                    <table class='table'>
+                        <tr>
+                            <th>parameter</th>
+                            <th>required</th>
+                            <th>description</th>
+                        </tr>
+                        <tr>
+                            <td><code>coupon</code></td>
+                            <td>required</td>
+                            <td>a string literal for coupon</td>
+                        </tr>
+                    </table>
+                    Request: 
+                    <pre>https://trade.multicoins.org/api/v1/account/redeemcoupon?apikey=API_KEY&amp;nonce=NONCE&amp;coupon=OT-2-1-0.01-1532875173145-f4f1b216f09507bsld587ygsek7fc88903tydfsjk36e7c8633196dafa9648</pre>
+                    Response:
+                    <pre>
+{
+    "result":true,
+    "success":1,
+    "return": {
+        "couponAmount":"1",
+        "couponCurrency":"MC",
+        "funds":{"MC":431.9670079}
+    }
+}                    
+                    </pre>
+                    
+
+<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#Node_Example32" aria-expanded="false" aria-controls="Node_Example32">
+    node.js example
+</button>   
+<div class="collapse" id="Node_Example32">
+    <div class="card card-body">
+                <pre>
+'use strict';
+
+const API_PUB_KEY = "__YOUR_API_PUBLIC_KEY__";
+const API_PRIV_KEY = "__YOUR_API_PRIVATE_KEY__";
+
+Close("OT-2-1-0.01-1532875173145-f4f1b216f09507bsld587ygsek7fc88903tydfsjk36e7c8633196dafa9648", ret => { console.log(JSON.stringify(ret));}
+
+function Close(coupon, callback) {
+    const nonce = Date.now()+Math.floor(Math.random() * (1000)) + 1;
+    const uri = 'https://trade.multicoins.org/api/v1/account/redeemcoupon?apikey='+API_PUB_KEY+'&nonce='+nonce+'&coupon='+coupon;
+    const parsed = require('url').parse(uri, true);
+    const signature = require('crypto').createHmac('sha512', API_PRIV_KEY).update(new Buffer(uri, 'utf-8')).digest('hex');
+    
+    const options = {
+        host: parsed.host,
+        path: parsed.path,
+        headers: { 'apisign': signature }};
+    
+    require("https").request(options, res => {
+        let output = '';
+        res.on('data', chunk => { output += chunk; });
+        res.on('end', () => { return callback(JSON.parse(output)); });
+    }).end();
+}
+
                 </pre>
         
     </div>
