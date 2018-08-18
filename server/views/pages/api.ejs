@@ -10,17 +10,17 @@
     <div class="container">
         <div class='row m-4'>
             <div class='col-md-12 '>
-                <center><h1>Developer's Guide - Api</h1></center>
+                <center><h1>Developer's Guide - API</h1></center>
                 <h3>Overview</h3>
                 <p>
 
-                    OpenTrade provides a simple and powerful REST API to allow you to programatically perform nearly all actions you can from our web interface.  All requests use the <code>application/json</code>
-                    content type and go over <code>https</code>.  The base url is <code>https://trade.multicoins.org/api/{version}/</code>.  All requests are GET requests and all responses come in a default response object with
+                    ZTrade provides a simple and powerful REST API to allow you to programatically perform nearly all actions you can from our web interface.  All requests use the <code>application/json</code>
+                    content type and go over <code>https</code>.  The base url is <code>https://exchange.zsmart.org/api/{version}/</code>.  All requests are GET requests and all responses come in a default response object with
                     the result in the result field.  Always check the <code>success</code> flag to ensure that your API call succeeded.<br>
                     <br>
                     We are currently restricting orders to 500 open orders and 200,000 orders a day.  We reserve the right to change these settings as we tune the system.
                     <br><br>
-                    If you have any questions, feedback or recommendation for API support you can post a question in our support center.
+                    If you have any questions, feedback or recommendation for API support you can email us at info@exchange.zsmart.org.
                             
                 </p>
                 <hr>
@@ -35,7 +35,7 @@
                 <h3>General</h3>
                 We provide a simple RESTful API. All calls are GETs and should be called via <code>https</code>. We will support n-1 versions of the API. Our current stable API is v1. The endpoints have a standard format as follows:
                 <br><br>
-                <pre>https://trade.multicoins.org/api/{version}/{method}?param=value</pre>
+                <pre>https://exchange.zsmart.org/api/{version}/{method}?param=value</pre>
                 <hr>
                 <h3>Authentication</h3>
                 In the spirit of keeping things simple, we offer an easy to manage API Key authentication method. 
@@ -65,7 +65,7 @@ $apikey='__API_KEY__';
 $apisecret='__API_SECRET__';
 $nonce=time();
 
-$uri='https://trade.multicoins.org/api/v1'.$request .'?apikey='.$apikey.'&ampnonce='.$nonce.'&ampmarket='.$market.'&ampcurrency='.$currency;
+$uri='https://exchange.zsmart.org/api/v1'.$request .'?apikey='.$apikey.'&ampnonce='.$nonce.'&ampmarket='.$market.'&ampcurrency='.$currency;
 $sign=hash_hmac('sha512',$uri,$apisecret);
 $ch = curl_init($uri);
 curl_setopt($ch, CURLOPT_HTTPHEADER, array('apisign:'.$sign));
@@ -93,7 +93,7 @@ GetOpenOrders('MC-DOGE', data => { console.log(JSON.stringify(data.result || dat
 function GetOpenOrders(market, callback)
 {
     const nonce = Date.now()+Math.floor(Math.random() * (1000)) + 1;
-    const uri = 'https://trade.multicoins.org/api/v1/market/getopenorders?apikey='+API_PUB_KEY+'&ampnonce='+nonce+'&ampmarket='+market;
+    const uri = 'https://exchange.zsmart.org/api/v1/market/getopenorders?apikey='+API_PUB_KEY+'&ampnonce='+nonce+'&ampmarket='+market;
     const parsed = require('url').parse(uri, true);
     const signature = require('crypto').createHmac('sha512', API_PRIV_KEY).update(new Buffer(uri, 'utf-8')).digest('hex');
     

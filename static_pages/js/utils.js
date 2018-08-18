@@ -101,6 +101,12 @@ const utils =
 {
     MAIN_COIN: MAIN_COIN,
     DEFAULT_PAIR: DEFAULT_PAIR,
+<<<<<<< HEAD
+    COMISSION: 0.001,
+    
+    USD_NAME: "US Dollar",
+    USD_TICKER: "USD",
+=======
     COMISSION: TRADE_COMISSION,
     
     OPENTRADE: "OpenTrade",
@@ -108,13 +114,17 @@ const utils =
     USD_TICKER: "USD",
     RUB_NAME: "Ruble",
     RUB_TICKER: "RUB",
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
     
     IsFiat: function(coin)
     {
         if (coin == utils.USD_NAME) return true;
+<<<<<<< HEAD
+=======
         if (coin == utils.RUB_NAME) return true;
         if (coin == utils.USD_TICKER) return true;
         if (coin == utils.RUB_TICKER) return true;
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
         
         return false;
     },

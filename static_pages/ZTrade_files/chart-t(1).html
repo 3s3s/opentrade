@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<!-- saved from url=(0036)https://127.0.0.1:883/market/BTC-ZSX -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <script type="text/javascript" async="" src="./recaptcha__en.js.download"></script><script>
+      var debug = false;
+      if (!debug && window.location.protocol != "https:" && window.location.protocol != "file:")
+          window.location.href = "https:" + window.location.href.substring(window.location.protocol.length);
+    </script>
+    
+    <script type="text/javascript" src="./loader.js.download"></script>
+
+    
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>ZTrade</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="./css">
+	<link rel="stylesheet" href="./bootstrap-material-design.min.css" integrity="sha384-wXznGJNEXNG1NFsbm0ugrLFMQPWswR3lds2VeinahP8N0zJw9VWSopbjv2x7WCvX" crossorigin="anonymous">
+
+	<script src="./jquery-3.2.1.slim.min.js.download" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+	<script src="./popper.js.download" integrity="sha384-fA23ZRQ3G/J53mElWqVJEGJzU0sTs+SvzG8fXVWP+kJQ1lwFAOkcUOysnlKJC33U" crossorigin="anonymous"></script>
+	<script src="./bootstrap-material-design.js.download" integrity="sha384-CauSuKpEqAFajSpkdjv3z9t8E7RlpJ1UP0lKM/+NdtSarroVKu069AlsRPKkFBz9" crossorigin="anonymous"></script>
+	
+    <!-- Custom styles for this template -->
+    <link href="https://127.0.0.1:883/css/styles.css" rel="stylesheet">
+    
+    <script>
+      'use strict';
+    
+      const SHARE = JSON.parse('{"tradeEnabled":true,"recaptchaEnabled":true,"my_portSSL":883,"TRADE_MAIN_COIN":"Bitcoin","TRADE_MAIN_COIN_TICKER":"BTC","TRADE_DEFAULT_PAIR":"ZSmart"}');
+      
+      var grecaptcha;
+      if (!SHARE.recaptchaEnabled) grecaptcha = null;
+      
+      const PORT_SSL = SHARE.my_portSSL;
+      const MAIN_COIN = SHARE.TRADE_MAIN_COIN;
+      const DEFAULT_PAIR = SHARE.TRADE_DEFAULT_PAIR;
+    </script>
+    <script src="https://127.0.0.1:883/js/utils.js"></script>
+
+  </head>
+
+  <body>
+
+    <nav class="navbar navbar-expand-lg navbar-light static-top bg-light">
+    <div class="container" style="max-width: 90%;">
+        <a class="navbar-brand" href="https://127.0.0.1:883/">
+            <img height="50" border="0" align="center" src="https://127.0.0.1:883/ztrade.png">
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+              <a class="nav-link" href="https://127.0.0.1:883/">Exchange</a>
+            </li>
+            <li class="nav-item active">
+              <a class="nav-link" target="_blank" href="https://discord.gg/fEYMcvX">Join Discord</a>
+            </li>
+            <li class="nav-item active">
+              <a class="nav-link" target="_blank" href="https://t.me/ztrade">Telegram Group</a>
+            </li>
+            <li class="nav-item active">
+              <a class="nav-link" href="https://127.0.0.1:883/API">API</a>
+            </li>
+            <li class="nav-item active">
+              <a class="nav-link" href="https://127.0.0.1:883/add_coin">Add coin</a>
+            </li>
+        </ul>
+        <ul class="navbar-nav ml-auto">
+            
+            
+                        
+            
+            <li class="nav-item"><a class="nav-link" href="https://127.0.0.1:883/admin">Admin Area</a></li>
+            <li class="nav-item staff_area" style="display: none;"><a class="nav-link" href="https://127.0.0.1:883/staff">Staff Area</a></li>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="https://127.0.0.1:883/market/BTC-ZSX#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <span>ZSmartDev</span>
+                </a>
+                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                  <a class="dropdown-item" href="https://127.0.0.1:883/profile">Profile</a>
+                  <a class="dropdown-item" href="https://127.0.0.1:883/wallet">Wallet</a>
+                  <a class="dropdown-item" href="https://127.0.0.1:883/api_keys">API keys</a>
+                  <a class="dropdown-item" href="https://127.0.0.1:883/referals">Affiliate</a>
+                  <div class="dropdown-divider"></div>
+                  <a class="dropdown-item" href="https://127.0.0.1:883/logout">Logout</a>
+                </div>
+            </li>
+
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="https://127.0.0.1:883/market/BTC-ZSX#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <span>Help</span>
+                </a>
+                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                  <a class="dropdown-item" href="https://127.0.0.1:883/fees">Fees</a>
+                </div>
+            </li>
+        </ul>
+    </div>
+</nav>
+    <div id="loader" style="display:none;"></div>
+    <input id="id_lang" type="hidden" value="en">
+
+    
+    
+
+
+
+    <div class="container pt-2">
+            <div id="id-alerts" class="row">
+        <div id="alert-fail" class="alert alert-danger alert-dismissible col-md-12" role="alert" style="display:none;">
+          <div id="fail-message"></div>
+          <button id="close_fail" type="button" class="close" aria-label="Close">
+            <span aria-hidden="true">×</span>
+          </button>          
+        </div>
+        <div id="alert-success" class="alert alert-success alert-dismissible col-md-12" role="alert" style="display:none;">
+          <div id="success-message"></div>
+          <button id="close_success" type="button" class="close" aria-label="Close">
+            <span aria-hidden="true">×</span>
+          </button>          
+        </div>
+      </div>
+
+      <input id="id_token" type="hidden" value="2zc4gCVKon3hRBaNgVlVEIEaBkKwNMF8vsSOUhavCoQ%3D">
+      <div class="row">
+        <div class="col-md-2 p-0">
+          <div class="card">
+            <div class="card-header">
+              Market
+            </div>
+            <div class="card-body p-0">
+              <div id="market-flex" class="d-flex d-flex-market align-items-start bd-highlight mb-0">
+                <div id="market-container" class="container p-0">
+                  <table class="table table-sm  table-hover table-orders">
+                    <thead>
+                      <tr>
+                        <th scope="col">Coin</th>
+                        <th scope="col">Price</th>
+                        <th scope="col">Vol</th>
+                        <th scope="col">Ch (%)</th>
+                      </tr>
+                    </thead>
+                    <tbody id="table-market"><tr style="cursor: pointer;"><td>ZSX</td><td>0</td><td>0</td><td><span class="text-success">100.00</span></td></tr></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+		  <div class="card" style="margin-top: 1.5%">
+            <div id="id_chat_header" class="card-header"><span>Online: </span><strong>1</strong>&nbsp;&nbsp;(Registered: 1)</div>
+            <div class="card-body p-0">
+              <div id="chat-flex" class="d-flex d-flex-chat align-items-start bd-highlight mb-0" style="height: 265px">
+                <div id="chat-container_loading" class="container" style="display: none;">
+                  <div class="row"><div class="col-md-12">Loading...</div></div>
+                </div>
+                <div id="chat-container_ru" class="container font_14" style="display: none;">
+                </div>
+                <div id="chat-container_en" class="container font_14" style="">
+                </div>
+              </div>
+              <div class="input-group">
+                <input id="chat_message" type="text" class="form-control" maxlength="150">
+                <span class="input-group-btn">
+                  <button id="button_chat" class="btn btn-secondary" type="button">Send</button>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-7 pl-1.4">
+          <div class="container p-0">
+            <div class="row p-0">
+              <iframe frameborder="0" scrolling="no" style="height: 470px;" class="col-md-12" src="./chart-t(2).html"></iframe>
+            </div>
+          </div>
+          <!--<div class="embed-responsive" style='padding-top: 75%' >
+            <iframe style='height: 500px;' scrolling='no' class="embed-responsive-item" src='chart-t.html'></iframe>
+          </div>-->
+        </div>
+		<div class="col-md-3 p-1">
+            <div class="card">
+              <div class="card-header p-0">
+                <table class="table table-orders m-0">
+                  <tbody><tr>
+                    <td><strong>Sell orders</strong></td>
+                   <td class="form_title_volume" align="right">Volume:<span id="id_sell_volume"> 0 ZSX</span></td>
+                  </tr>
+                </tbody></table>
+                
+              </div>
+              <div class="card-body div-sell-buy p-0">
+                <table class="table table-striped table-sm table-orders table-hover">
+                  <thead>
+                    <tr id="id_sell_orders_header">
+                    <th>Price</th><th>BTC</th><th>ZSX</th></tr>
+                  </thead>
+                  <tbody id="id_sell_orders_body"></tbody>
+                </table>
+              </div>
+            </div>
+			<div class="card" style="margin-top: 1.5%">
+              <div class="card-header p-0">
+                <table class="table table-orders m-0">
+                  <tbody><tr>
+                    <td><strong>Buy orders</strong></td>
+                   <td class="form_title_volume" align="right">Volume:<span id="id_buy_volume"> 0 BTC</span></td>
+                  </tr>
+                </tbody></table>
+                
+              </div>
+              <div class="card-body div-sell-buy p-0">
+                <table class="table table-striped table-sm table-orders table-hover">
+                  <thead>
+                    <tr id="id_buy_orders_header">
+                    <th id="id_buy_orders_header_price">Price</th><th>BTC</th><th>ZSX</th></tr>
+                  </thead>
+                  <tbody id="id_buy_orders_body"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 p-1">
+          <div class="card">
+           <!-- <div class="card-header">
+              Your active orders:
+            </div>-->
+            <ul class="nav nav-tabs">
+              <li class="nav-item">
+                <a class="nav-link active only" id="active-orders-tab" data-toggle="tab" href="https://127.0.0.1:883/market/BTC-ZSX#active_orders" role="tab" aria-controls="active_orders" aria-selected="true">Your active orders</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" id="history-orders-tab" data-toggle="tab" href="https://127.0.0.1:883/market/BTC-ZSX#history-orders" role="tab" aria-controls="history-orders" aria-selected="false">Your history</a>
+              </li>
+			  <li class="nav-item">
+                <a class="nav-link" id="trade_history-tab" data-toggle="tab" href="https://127.0.0.1:883/market/BTC-ZSX#trade_history" role="tab" aria-controls="trade_history" aria-selected="false">Trade_History</a>
+              </li>
+            </ul>
+
+            <div class="card-body div-orders p-2" style="border-top: 1px solid #f0f0f0;">
+              <div class="tab-content" id="user-orders-tab-content">
+                <div class="tab-pane fade show active" id="active_orders" role="tabpanel" aria-labelledby="active-orders-tab">
+                  <table class="table table-striped table-sm">
+                    <thead>
+                      <tr>
+                        <th>Time</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Price</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="id_user_orders"></tbody>
+                  </table>
+                </div>
+                <div class="tab-pane fade" id="history-orders" role="tabpanel" aria-labelledby="history-orders-tab">
+                  <table class="table table-striped table-sm">
+                    <thead>
+                      <tr>
+                        <th>Time</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Price</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="id_user_orders_history"></tbody>
+                  </table>
+                </div>
+				<div class="tab-pane fade" id="trade_history" role="tabpanel" aria-labelledby="trade_history-tab">
+                  <table class="table table-striped table-sm">
+                    <thead>
+                      <tr>
+                        <th>Time</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Price</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="id_trade_history"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>          
+        </div>
+		<div class="col-md-3 p-1">
+          <div class="card">
+            <div id="header_buy" class="card-header">Buy ZSmart</div>
+            <div class="card-body p-1">
+              <div class="alert alert-secondary p-1" role="alert">
+                <div class="container">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <table>
+                        <thead>
+                          <tr><th>Your balance:<span id="id_buy_balance"><button type="button" class="p-0 btn btn-link">0</button></span></th><td id="id_buy_coin">BTC</td></tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>
+                              
+                              <div id="id_balance_spiner1" style="display: none;">
+                              	<div id="circularG_1" class="circularG"></div>
+                              	<div id="circularG_2" class="circularG"></div>
+                              	<div id="circularG_3" class="circularG"></div>
+                              	<div id="circularG_4" class="circularG"></div>
+                              	<div id="circularG_5" class="circularG"></div>
+                              	<div id="circularG_6" class="circularG"></div>
+                              	<div id="circularG_7" class="circularG"></div>
+                              	<div id="circularG_8" class="circularG"></div>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div class="col-md-6">
+                      <table>
+                        <thead>
+                          <tr><th>Highest Ask:</th><td id="id_max_ask"><button type="button" class="p-0 btn btn-link">0</button></td><td id="id_max_ask_coin">Bitcoin</td></tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <form id="form_buy" class="p-3">
+                <div class="form-group row">
+                  <label for="inputBuyAmount" class="col-md-4 col-form-label form-control-sm">Amount:</label>
+                  <div class="col-md-8">
+                    <input type="text" class="form-control" id="inputBuyAmount" placeholder="0.0" aria-describedby="id_amount_buy" onkeypress="return (event.charCode &gt;= 48 &amp;&amp; event.charCode &lt;= 57) || event.charCode == 46 || event.charCode == 0 ">
+                    <span class="currency" id="id_amount_buy">BTC</span>
+                  </div>
+                </div>
+                <div class="form-group row">
+                  <label for="inputBuyPrice" class="col-md-4 col-form-label form-control-sm">Price:</label>
+                  <div class="col-md-8">
+                    <input type="text" class="form-control" id="inputBuyPrice" placeholder="0.0" onkeypress="return (event.charCode &gt;= 48 &amp;&amp; event.charCode &lt;= 57) || event.charCode == 46 || event.charCode == 0 ">
+                    <span class="currency" id="id_price_buy">BTC</span>
+                  </div>
+                </div>
+                <div class="form-group row">
+                  <label for="inputBuyComission" class="col-md-4 col-form-label form-control-sm">Comission:</label>
+                  <div class="col-md-8">
+                    <input type="text" class="form-control" id="inputBuyComission" readonly="" placeholder="0.0">
+                    <span class="currency" id="id_comission_buy">BTC</span>
+                  </div>
+                </div>
+                <div class="form-group row">
+                  <label for="inputBuyTotal" class="col-md-4 col-form-label form-control-sm">Total:</label>
+                  <div class="col-md-8">
+                    <input type="text" class="form-control" id="inputBuyTotal" placeholder="0.0" onkeypress="return (event.charCode &gt;= 48 &amp;&amp; event.charCode &lt;= 57) || event.charCode == 46 || event.charCode == 0 ">
+                    <span class="currency" id="id_total_buy">BTC</span>
+                  </div>
+                </div>
+                <center><button type="submit" class="btn btn-primary btn-buy">Buy</button></center>
+              </form>
+              
+            </div>
+          </div>          
+        </div>
+        <div class="col-md-3 p-1">
+          <div class="card">
+                  <div id="header_sell" class="card-header">Sell ZSmart</div>
+                  <div class="card-body p-1">
+                    <div class="alert alert-secondary p-1" role="alert">
+                      <div class="container">
+                        <div class="row">
+                          <div class="col-md-6">
+                            <table>
+                              <thead>
+                                <tr><th>Your balance:<span id="id_sell_balance"><button type="button" class="p-0 btn btn-link">0</button></span></th><td id="id_sell_coin">ZSX</td></tr>
+                              </thead>
+                              <tbody>
+                                <tr>
+                                  <td>
+                                    <div id="id_balance_spiner2" style="display: none;">
+                                    	<div id="circularG_1" class="circularG"></div>
+                                    	<div id="circularG_2" class="circularG"></div>
+                                    	<div id="circularG_3" class="circularG"></div>
+                                    	<div id="circularG_4" class="circularG"></div>
+                                    	<div id="circularG_5" class="circularG"></div>
+                                    	<div id="circularG_6" class="circularG"></div>
+                                    	<div id="circularG_7" class="circularG"></div>
+                                    	<div id="circularG_8" class="circularG"></div>
+                                    </div>                                  
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                          <div class="col-md-6">
+                            <table>
+                              <thead>
+                                <tr><th>Highest Bid:</th><td id="id_max_bid"><button type="button" class="p-0 btn btn-link">0</button></td><td id="id_max_bid_coin">Bitcoin</td></tr>
+                              </thead>
+                              <tbody>
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                      <form id="form_sell" class="p-3">
+                        <div class="form-group row">
+                          <label for="inputSellAmount" class="col-md-4 col-form-label form-control-sm">Amount:</label>
+                          <div class="col-md-8">
+                            <input type="text" class="form-control" id="inputSellAmount" placeholder="0.0" onkeypress="return (event.charCode &gt;= 48 &amp;&amp; event.charCode &lt;= 57) || event.charCode == 46 || event.charCode == 0 ">
+                            <span class="currency" id="id_amount_sell">BTC</span>
+                          </div>
+                        </div>
+                        <div class="form-group row">
+                          <label for="inputSellPrice" class="col-md-4 col-form-label form-control-sm">Price:</label>
+                          <div class="col-md-8">
+                            <input type="text" class="form-control" id="inputSellPrice" placeholder="0.0" onkeypress="return (event.charCode &gt;= 48 &amp;&amp; event.charCode &lt;= 57) || event.charCode == 46 || event.charCode == 0 ">
+                            <span class="currency" id="id_price_sell">BTC</span>
+                          </div>
+                        </div>
+                        <div class="form-group row">
+                          <label for="inputSEllComission" class="col-md-4 col-form-label form-control-sm">Comission:</label>
+                          <div class="col-md-8">
+                            <input type="text" class="form-control" id="inputSellComission" readonly="" placeholder="0.0">
+                            <span class="currency" id="id_comission_sell">BTC</span>
+                          </div>
+                        </div>
+                        <div class="form-group row">
+                          <label for="inputSellTotal" class="col-md-4 col-form-label form-control-sm">Total:</label>
+                          <div class="col-md-8">
+                            <input type="text" class="form-control" id="inputSellTotal" placeholder="0.0" onkeypress="return (event.charCode &gt;= 48 &amp;&amp; event.charCode &lt;= 57) || event.charCode == 46 || event.charCode == 0 ">
+                            <span class="currency" id="id_total_sell">BTC</span>
+                          </div>
+                        </div>
+                        <center><button type="submit" class="btn-sell btn btn-primary">Sell</button></center>
+                      </form>
+                  </div>
+                </div>          
+        </div>
+      </div>
+    </div> <!-- /container -->
+
+
+    
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document" style="max-width:50%;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="myModalLabel"></h4>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+      </div>
+      <div class="modal-body">
+        
+      </div>
+      <div class="modal-footer">
+        <button id="id_modal_cancel" type="button" class="btn btn-default" data-dismiss="modal"><i class="fas fa-ban"></i> Cancel</button>
+        <button id="id_modal_ok" type="button" class="btn btn-primary">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="./jquery-3.2.1.min.js.download" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+<script src="./popper.min.js.download" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+<script src="./bootstrap.min.js.download" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+
+
+<script src="./api.js.download" async="" defer=""></script>
+
+<script src="https://127.0.0.1:883/js/common.js"></script>
+
+    <script src="https://127.0.0.1:883/js/index.js"></script>
+  
+
+</body></html>

@@ -33,7 +33,11 @@ exports.CloseUserOrder = function(userID, orderROWID, callback)
 
         const order = rows[0];
         const fullAmount = order.buysell == 'buy' ?
+<<<<<<< HEAD
+                (order.amount*order.price+g_constants.TRADE_COMISSION*order.amount*order.price).toFixed(7)*1 :
+=======
                 (order.amount*order.price+g_constants.share.TRADE_COMISSION*order.amount*order.price).toFixed(7)*1 :
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
                 (order.amount*1).toFixed(7)*1;
                     
         const coinBalance = order.buysell == 'buy' ? order.price_pair : order.coin;

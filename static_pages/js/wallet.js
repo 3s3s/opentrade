@@ -134,14 +134,22 @@ function ShowDepositAddress(coin)
     
     const couponArea = 
       $('<div ></div>')
+<<<<<<< HEAD
+        .append($('<br><b>To deposit into your account, please redeem the coupon:</b><br>'))
+=======
         .append($('<br><b>To load your account please redeem the coupon:</b><br>'))
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
         .append($('<div class="input-group col-md-12 pt-3"></div>')
           .append($('<input id="id_coupon_id" type="text" class="form-control">')
         ));
           
     const homeArea = 
       $('<div></div>')
+<<<<<<< HEAD
+        .append($('<br><b>To deposit into your account, please send coins to this address:</b><br>'))
+=======
         .append($('<br><b>To load your account please send the coins to your address :</b><br>'))
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
         .append($('<div class="row align-items-center"></div>')
           .append($('<div class="col-md-4"></div>')
             .append($('<canvas id="id_coinQR"></canvas>')))
@@ -177,7 +185,11 @@ function ShowDepositAddress(coin)
       if (!coupon || !coupon.length)
         return;
         
+<<<<<<< HEAD
+      $.getJSON("https://exchange.zsmart.org/api/v1/account/redeemcoupon?coupon="+coupon, ret => {
+=======
       $.getJSON("/api/v1/account/redeemcoupon?coupon="+coupon, ret => {
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
         if (!ret || ret.result != true)
           return utils.alert_fail('<b>ERROR:</b> ' + (ret.message || 'Uncnown coupon error'));
         
@@ -209,8 +221,13 @@ function ShowWithdrawDialog(coin, coinID, coinTicker)
     const coinHidden = $('<input type="hidden" name="coin", value="'+coin+'">');
     const addressGroup = $(
       '<div id="addressGroup" class="form-group">'+
+<<<<<<< HEAD
+        '<label for="id_address" class="control-label  requiredField">Your address<span class="asteriskField">*</span> </label>'+
+        '<input class="textinput textInput form-control" id="id_address" maxlength="100" name="address" type="text" required>'+
+=======
         '<label for="id_address" class="control-label  requiredField">Your wallet address<span class="asteriskField">*</span> </label>'+
         '<input class="textinput textInput form-control" id="id_address" maxlength="100" name="address" type="text" required placeholder="1QB6ukBxmboWgxroc8zzjffaGWwsMuQCCL">'+
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
         '<div class="invalid-feedback">This field is required.</div>'+
       '</div>'
     );
@@ -224,7 +241,11 @@ function ShowWithdrawDialog(coin, coinID, coinTicker)
     );
     const passwordGroup = $(
       '<div class="form-group">'+
+<<<<<<< HEAD
+        '<label for="id_password" class="control-label  requiredField">Password<span class="asteriskField">*</span> </label>'+
+=======
         '<label for="id_password" class="control-label  requiredField">'+utils.OPENTRADE+' password<span class="asteriskField">*</span> </label>'+
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
         '<input class="textinput textInput form-control" id="id_password" maxlength="100" name="password" type="password" required>'+
         '<div class="invalid-feedback">This field is required.</div>'+
       '</div>'

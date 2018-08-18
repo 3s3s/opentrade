@@ -1,11 +1,24 @@
 'use strict';
 
 const g_constants = require("../constants.js");
-const sendmail = require('sendmail')();
+var nodemailer = require('nodemailer');
+
+// Create the transporter with the required configuration for Zoho
+// Change the user and password!
+var mailerTransport = nodemailer.createTransport({
+    host: g_constants.MAILER_SMTP_HOST,
+    port: g_constants.MAILER_SMTP_PORT,
+    secure: g_constants.MAILER_SMTP_SECURE, // use SSL
+    auth: {
+        user: g_constants.MAILER_SMTP_USER,
+        pass: g_constants.MAILER_SMTP_PASS
+    }
+});
 
 
 exports.SendSignupConfirmation = function(email, url, urlCheck, callback)
 {
+    console.log('Sending confirmation mail...');
     const subject = g_constants.MAILER_NAME+' signup confirmation letter';
 
     const urlHREF = "<a href='"+url+"'>"+url+"</a>";
@@ -17,14 +30,14 @@ exports.SendSignupConfirmation = function(email, url, urlCheck, callback)
         "<p>If you didn't register there and received this message by mistake, please ignore and delete it. </p>"+
         "<p>"+confirmHREF+"</p>" +
 //        "<p>Registration code is valid for 1 hour</p>" +
-        "<p>This is an automated message. Please, do not reply to it.</p>" +
-        "<p>Welcome to OpenTrade!</br></br>Best Regards,<br>OpenTrade Team";
+        "<p>This is an automated message. Please, do not reply to it. If you do need help, please email info@exchange.zsmart.org</p>" +
+        "<p>Welcome to ZTrade! </br></br>Best Regards,<br>The DeltaX Team";
     
     try
     {
         let isSent = false;
-        sendmail({
-            from: 'OpenTrade Mailer <'+g_constants.NOREPLY_EMAIL+'>',
+        mailerTransport.sendMail({
+            from: 'ZTrade Mailer <'+g_constants.NOREPLY_EMAIL+'>',
             sender: g_constants.NOREPLY_EMAIL,
             to: unescape(email),
             subject: subject,
@@ -59,17 +72,17 @@ exports.SendPasswordResetConfirmation = function(email, user, url, urlCheck, cal
 
     const body = 
         "<h3>Hello "+unescape(user)+"</h3>" +
-        "<p>Someone requested that the password for your OpenTrade account be reset</p>" +
+        "<p>Someone requested that the password for your ZTrade account be reset</p>" +
         "<p>"+confirmHREF+"</p>" +
         "<p>If you didn't request this, you can ignore this e-mail or let us know. Your password won't change until you create a new password</p>" +
-        "<p>This is an automated message. Please, do not reply to it.</p>" +
-        "</br></br>Best Regards,<br>OpenTrade Team";
+        "<p>This is an automated message. Please, do not reply to it. If you do need help, please email info@exchange.zsmart.org</p>" +
+        "</br></br>Best Regards,<br>DeltaX Team";
     
     try
     {
         let isSent = false;
-        sendmail({
-            from: 'OpenTrade Mailer <'+g_constants.NOREPLY_EMAIL+'>',
+        mailerTransport.sendMail({
+            from: 'ZTrade Mailer <'+g_constants.NOREPLY_EMAIL+'>',
             to: unescape(email),
             subject: subject,
             html: body,
@@ -99,8 +112,8 @@ exports.SendTicket = function(ticket, callback)
     try
     {
         let isSent = false;
-        sendmail({
-            from: 'OpenTrade Mailer <'+g_constants.NOREPLY_EMAIL+'>',
+        mailerTransport.sendMail({
+            from: 'ZTrade Mailer <'+g_constants.NOREPLY_EMAIL+'>',
             sender: g_constants.NOREPLY_EMAIL,
             to: g_constants.SUPPORT_EMAIL,
             replyTo: unescape(ticket.email),
@@ -133,17 +146,17 @@ exports.SendWithdrawConfirmation = function(email, user, url, urlCheck, callback
 
     const body = 
         "<h3>Hello "+unescape(user)+"</h3>" +
-        "<p>Someone requested withdraw from your OpenTrade balance</p>" +
+        "<p>Someone requested withdraw from your ZTrade balance</p>" +
         "<p>"+confirmHREF+"</p>" +
         "<p>If you didn't request this, you can ignore this e-mail or let us know.</p>" +
-        "<p>This is an automated message. Please, do not reply to it.</p>" +
-        "</br></br>Best Regards,<br>OpenTrade Team";
+        "<p>This is an automated message. Please, do not reply to it. If you do need help, please email info@exchange.zsmart.org</p>" +
+        "</br></br>Best Regards,<br>DeltaX Team";
     
     try
     {
         let isSent = false;
-        sendmail({
-            from: 'OpenTrade Mailer <'+g_constants.NOREPLY_EMAIL+'>',
+        mailerTransport.sendMail({
+            from: 'ZTrade Mailer <'+g_constants.NOREPLY_EMAIL+'>',
             sender: g_constants.NOREPLY_EMAIL,
             to: unescape(email),
             subject: subject,
@@ -172,8 +185,8 @@ exports.SendStartAppNotification = function(callback)
     try
     {
         let isSent = false;
-        sendmail({
-            from: 'OpenTrade Mailer <'+g_constants.NOREPLY_EMAIL+'>',
+        mailerTransport.sendMail({
+            from: 'ZTrade Mailer <'+g_constants.NOREPLY_EMAIL+'>',
             sender: g_constants.NOREPLY_EMAIL,
             to: g_constants.SUPPORT_EMAIL,
             replyTo: unescape(g_constants.NOREPLY_EMAIL),
@@ -202,8 +215,8 @@ exports.SendAdminNotify = function(message, callback)
     try
     {
         let isSent = false;
-        sendmail({
-            from: 'OpenTrade Mailer <'+g_constants.NOREPLY_EMAIL+'>',
+        mailerTransport.sendMail({
+            from: 'ZTrade Mailer <'+g_constants.NOREPLY_EMAIL+'>',
             sender: g_constants.NOREPLY_EMAIL,
             to: g_constants.SUPPORT_EMAIL,
             replyTo: unescape(g_constants.NOREPLY_EMAIL),

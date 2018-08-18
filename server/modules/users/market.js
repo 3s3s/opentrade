@@ -14,14 +14,21 @@ exports.Init = function()
     
     setTimeout(UpdateExchangeSummary, 10000);
     setInterval(UpdateExchangeSummary, 3600000);
+<<<<<<< HEAD
+=======
     
     setInterval(require("../admin/trades").DeleteDustOrders, 60000);
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
 };
 
 let g_History24 = {};
 function UpdateExchangeSummary()
 {
+<<<<<<< HEAD
+    utils.getJSON('https://exchange.zsmart.org/api/v1/public/getmarkets', (status, data) => {
+=======
     utils.getJSON('https://trade.multicoins.org/api/v1/public/getmarkets', (status, data) => {
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
         if (status != 200 || !data || !data.result || data.success != true)
             return;
             
@@ -31,9 +38,15 @@ function UpdateExchangeSummary()
                 continue;
             
             const BTC = data.result[i].MarketCurrency;
+<<<<<<< HEAD
+            const LTC = data.result[i].BaseCurrency;
+            
+            utils.getJSON('https://exchange.zsmart.org/api/v1/public/getmarketsummary?market='+LTC+'-'+BTC+'&period=24', (status2, data2) => {
+=======
             const MC = data.result[i].BaseCurrency;
             
             utils.getJSON('https://trade.multicoins.org/api/v1/public/getmarketsummary?market='+MC+'-'+BTC+'&period=24', (status2, data2) => {
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
                 if (status2 != 200 || !data2 || data2.success != true || !data2.result)
                     return;
 

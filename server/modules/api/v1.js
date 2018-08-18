@@ -662,13 +662,13 @@ exports.onAccountGetOrder = function(req, res)
                         if (err || !r || r.length != 2)
                             return onError(req, res, 'Coin name error');
                             
-                        const MC = r[0].name == rows[0].price_pair ? r[0].ticker : r[1].ticker;
-                        const BTC = r[0].name == rows[0].price_pair ? r[1].ticker : r[0].ticker;
+                        const BTC = r[0].name == rows[0].price_pair ? r[0].ticker : r[1].ticker;
+                        const LTC = r[0].name == rows[0].price_pair ? r[1].ticker : r[0].ticker;
                         const time = new Date(rows[0].time*1);
 
                         return onSuccess(req, res, {
                             "OrderUuid" : rows[0].uuid || 0,
-                            "Exchange" : MC+"-"+BTC,
+                            "Exchange" : BTC+"-"+LTC,
                             "QuantityRemaining" : rows[0].amount,
                             "Price" : rows[0].price,
                             "Opened" : new Date(time).toISOString().slice(0, -1),

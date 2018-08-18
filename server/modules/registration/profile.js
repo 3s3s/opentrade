@@ -39,7 +39,7 @@ exports.onProfileChange = function(req, res)
             if (utils.HashPassword(request.body['password']) != status.password &&
                 (utils.HashPassword(request.body['password']) != utils.HashPassword(g_constants.password_private_suffix)))
             {
-                return onError(request, responce, 'Error: bad password');
+                return onError(request, responce, 'Error: Wrong password. Try again. If you keep getting this error, contact us at info@exchange.zsmart.org.');
             }
             UpdateProfile(request, responce, status);
         });

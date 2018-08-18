@@ -47,7 +47,7 @@ function send(userID, coin, command, params, callback)
         }
         else {
             result['success'] = false;
-            result['message'] = 'coin RPC is not returned data'
+            result['message'] = 'An Unknown Error Occurred.'
         }
 
         const ret = result.success ? 

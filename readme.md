@@ -1,10 +1,12 @@
-# OpenTrade is the best opensource cryptocurrency exchange!
+# ZTrade
 
-Life version https://trade.multicoins.org/
+Live version: https://exchange.zsmart.org
+
+** If you need any help, please email this address: tr0j4n9@flamecoin.co **
 
 Step-by-step install instructions:
 
-1. Register on the VPS hosting like this https://m.do.co/c/1ece5d76d5cd
+1. Register on the VPS hosting like this https://m.do.co/c/7dcf65e76b1b (Free $10 Credit if you use that link)
 2. Create "Droplet" Ubuntu 16 x64 / 1GB / 1vCPU / 25 GB SSD
 3. Log in to Droplet console over SSH
 4
@@ -23,7 +25,7 @@ cd opentrade
 
 sudo npm install 
 
-mkdir ~/opentrade/server/database
+mkdir ~/ZTrade/server/database
 ```
 
 ## Here is an example of file ~/opentrade/server/modules/private_constants.js Edit as per your config.
@@ -37,7 +39,6 @@ exports.SSL_KEY = '../ssl_certificates/privkey.pem'; //change to your ssl certif
 exports.SSL_CERT = '../ssl_certificates/fullchain.pem'; //change to your ssl certificates fullchain
 
 exports.walletspassphrase = {
-    'MC' : 'LONG_RANDOM_STRING2',
     'BTC' : 'LONG_RANDOM_STRING3',
     'DOGE' : 'LONG_RANDOM_STRING4'
 };
