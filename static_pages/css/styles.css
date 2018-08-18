@@ -29,6 +29,7 @@ pre {
     border-radius: 4px;
 }
 
+<<<<<<< HEAD
 .btn, .custom-file-control:before {
 	margin-bottom: 0px;
 }
@@ -144,6 +145,8 @@ form {
 	background-image: linear-gradient(0deg,#00968800 2px,rgba(0, 150, 136, 0) 0),linear-gradient(0deg,rgba(0, 0, 0, 0) 1px,transparent 0);
 }
 
+=======
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
 .disabledbutton {
     pointer-events: none;
     opacity: 0.4;
@@ -151,6 +154,14 @@ form {
 
 .staff_area {
   display: none;
+}
+.chat_admin_area {
+  display: none;
+}
+
+.dashed_button {
+	border-width:1px; 
+	border-style: dashed !important;
 }
 
 .api-doc h5 {

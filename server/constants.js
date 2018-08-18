@@ -11,14 +11,22 @@ const MAILER_SMTP_PASS = 'ha09031192';
 const MAILER_NAME = 'ZTrade Mail';
 const START_MESSAGE = 'ZTrade started!';
 
+<<<<<<< HEAD
 const DashForks = ['DASH', 'WAVI'];
 exports.FIAT_ID = [28];
+=======
+exports.ALLOW_EMAIL_CHANGING = true;
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
 
 exports.DEBUG_LOG = false;
 
 exports.share = {
    tradeEnabled: true,
    recaptchaEnabled: true,
+   emailVerificationEnabled: 'enabled', //'disabled' // !!! WARNING !!! DANGER !!! DO NOT CHANGE IT IN PRODUCTION !!! FOR TESTS ONLY !!!
+   
+   TRADE_COMISSION: 0.001,
+   DUST_VOLUME: 0.000001,
    
    TRADE_COMISSION: 0.001,
    DUST_VOLUME: 0.000001,
@@ -30,9 +38,13 @@ exports.share = {
    TRADE_DEFAULT_PAIR: "ZSmart"
 };
 
+<<<<<<< HEAD
 //exports.TRADE_COMISSION = 0.001;
 
 exports.my_port = process.env.PORT || 80;
+=======
+exports.my_port = process.env.PORT || 40080;
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
 
 exports.SESSION_TIME = 3600*1000; //one hour
 
@@ -40,6 +52,10 @@ exports.recaptcha_pub_key = "6LeZdWoUAAAAAEhIj8A7pgHh97rTQy2oaJfn4lBR";
 const MAX_IP_CONNECTIONS = 100;
 
 const DATABASE_PATH = './database/sqlite.db';
+<<<<<<< HEAD
+=======
+const PRIVATE_CONSTANTS_PATH = "./modules/private_constants";
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
 
 exports.dbTables = [
    {
@@ -215,16 +231,25 @@ exports.dbIndexes = [
   },
 ];
 
+const DashForks = ['DASH', 'WAVI'];
 
 exports.DEBUG_MODE = process.env.PORT ? true : false;
 exports.WEB_SOCKETS = null;
 exports.ExchangeBalanceAccountID = 0;
 
+<<<<<<< HEAD
 exports.Roles = ['Administrator', 'Support', 'User'];
 
 ////////////////////////////////////////////////////////////////////////////////////
 // Private constants
 const PRIVATE = require("./modules/private_constants");
+=======
+exports.Roles = ['Administrator', 'Support', 'Chat-admin', 'User'];
+
+////////////////////////////////////////////////////////////////////////////////////
+// Private constants
+const PRIVATE = require(require(PRIVATE_CONSTANTS_PATH).PRIVATE_PATH || PRIVATE_CONSTANTS_PATH);
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
 exports.dbName = PRIVATE.DATABASE_PATH || DATABASE_PATH;
 exports.password_private_suffix = PRIVATE.password_private_suffix;
 exports.recaptcha_priv_key = PRIVATE.recaptcha_priv_key;
@@ -233,11 +258,16 @@ exports.NOREPLY_EMAIL = PRIVATE.NOREPLY_EMAIL || NOREPLY_EMAIL;
 exports.START_MESSAGE = PRIVATE.START_MESSAGE || START_MESSAGE;
 exports.MAILER_NAME = PRIVATE.MAILER_NAME || MAILER_NAME;
 
+<<<<<<< HEAD
 exports.MAILER_SMTP_HOST = PRIVATE.MAILER_SMTP_HOST || MAILER_SMTP_HOST;
 exports.MAILER_SMTP_PORT = PRIVATE.MAILER_SMTP_PORT || MAILER_SMTP_PORT;
 exports.MAILER_SMTP_SECURE = PRIVATE.MAILER_SMTP_SECURE || MAILER_SMTP_SECURE;
 exports.MAILER_SMTP_USER = PRIVATE.MAILER_SMTP_USER || MAILER_SMTP_USER;
 exports.MAILER_SMTP_PASS = PRIVATE.MAILER_SMTP_PASS || MAILER_SMTP_PASS;
+=======
+exports.FIAT_ID = PRIVATE.FIAT_ID || [];
+
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
 
 exports.DONATORS = [
     {userID: 1, percent: 99},

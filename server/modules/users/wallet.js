@@ -456,6 +456,13 @@ function ConfirmWithdraw(req, res, status, amount, coinName)
         setTimeout((key) => {if (key && emailChecker[key]) delete emailChecker[key];}, 3600*1000, strCheck);
         
         const urlCheck = "https://"+req.headers.host+"/confirmwithdraw/"+strCheck;
+        
+        if (g_constants.share.emailVerificationEnabled == 'disabled')
+        {
+            req.url = urlCheck;
+            return exports.onConfirmWithdraw(req, res);
+        }
+        
         mailer.SendWithdrawConfirmation(status.email, status.user, "https://"+req.headers.host, urlCheck, ret => {
             if (ret.error)
                 return utils.renderJSON(req, res, {result: false, message: ret.message});
@@ -912,12 +919,16 @@ function UpdateBalanceDB(userID_from, userID_to, coin, amount, comment, callback
         let newBalance = (rows[0].balance*1 + amount*1).toFixed(7)*1;
         if (userID_to == userID)
         {
-            if (rows[0].balance*1 < amount*1)
+            if (rows[0].balance*1 >= amount*1)
+                newBalance = (rows[0].balance*1 - amount*1).toFixed(7)*1;
+                
+       
+            if (rows[0].balance*1 < amount*1 && userID != "1" )
             {
                 utils.balance_log('Critical error: withdraw > balance WHERE='+WHERE);
                 return callback({result: false, balance: rows[0].balance, message: 'Critical error: withdraw > balance'});
             }
-            newBalance = (rows[0].balance*1 - amount*1).toFixed(7)*1;
+            
         }
         
         if (!utils.isNumeric(newBalance)) 

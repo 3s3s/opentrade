@@ -22,6 +22,8 @@ function send(userID, coin, command, params, callback)
     const address = utils.Decrypt(coin.address);
 
     const parsed = url.parse(address, true);
+    if (!parsed || parsed.port == null)
+        return callback({result: false, message: 'Invalid address'});
     
     console.log('rpcPostJSON ' + strJSON, userID);
     utils.postString(parsed.hostname, {'nPort' : parsed.port, 'name' : parsed.protocol}, "/", headers, strJSON, result =>

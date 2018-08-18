@@ -64,6 +64,20 @@ exports.onChangeRole = function(ws, req, data)
     });
 }
 
+<<<<<<< HEAD
+=======
+exports.DeleteDustOrders = function()
+{
+    const WHERE = "amount*1 <= "+g_constants.share.DUST_VOLUME;
+    g_constants.dbTables['orders'].selectAll('ROWID AS id, *', WHERE, '', (err, rows) => {
+        if (err || !rows || !rows.length)
+            return;
+            
+        AsyncCloseOrder(rows, 0);
+    });
+}
+
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
 exports.onDeleteOrders = function(ws, req, data)
 {
     if (!data || !data.coinName || !data.price)
@@ -81,6 +95,7 @@ exports.onDeleteOrders = function(ws, req, data)
             AsyncCloseOrder(rows, 0);
        });
     });
+<<<<<<< HEAD
     
     function AsyncCloseOrder(rows, index)
     {
@@ -91,6 +106,18 @@ exports.onDeleteOrders = function(ws, req, data)
             setTimeout(AsyncCloseOrder, 1, rows, index+1);
         });
     }
+=======
+}
+
+function AsyncCloseOrder(rows, index)
+{
+    if (index >= rows.length)
+        return;
+
+    orders.CloseUserOrder(rows[index].userID, rows[index].id, () => {
+        setTimeout(AsyncCloseOrder, 1, rows, index+1);
+    });
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
 }
 
 exports.onQueryRole = function(ws, req, data)

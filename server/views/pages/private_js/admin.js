@@ -229,8 +229,8 @@ $('#id_finduser').submit(e => {
         for (var i=0; i<users.length; i++)
         {
             const tr = $('<tr></tr>')
-                .append($('<td>'+users[i].id+'</td>'))
-                .append($('<td>'+users[i].account+'</td>'))
+                .append($('<td >'+users[i].id+'</td>'))
+                .append($('<td >'+users[i].account+'</td>'))
                 .append($('<td>'+users[i].login+'</td>'))
                 .append($('<td>'+users[i].email+'</td>'))
                 .append($('<td></td>').append(GetRole(users[i].id, users[i].info)))
@@ -248,6 +248,7 @@ $('#id_finduser').submit(e => {
         const roles = {
             admin: $('<option value="Administrator">Administrator</option>'),
             support: $('<option value="Support">Support</option>'),
+            chat_admin: $('<option value="Chat-admin">Chat-admin</option>'),
             user: $('<option selected value="User">User</option>')
         };
         
@@ -261,6 +262,7 @@ $('#id_finduser').submit(e => {
 
         return $('<select class="form-control" id="users_role"></select>')
             .append(roles.admin)
+            .append(roles.chat_admin)
             .append(roles.support)
             .append(roles.user)
             .change(() => {

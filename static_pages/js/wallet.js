@@ -1,5 +1,6 @@
 'use strict';
 
+var coinNameToTicker = {};
 let mapCoinBalance = {};
 let coinsCount = 10000;
 let g_role = "User";
@@ -64,6 +65,7 @@ function UpdateWallet(data)
     const id_balance = coin+"_balance";
     const id_awaiting = coin+"_awaiting";
     const id_onhold = coin+"_onhold";
+    const MC = coinNameToTicker[utils.MAIN_COIN] ? coinNameToTicker[utils.MAIN_COIN].ticker || 'BTC' : 'BTC';
     
     mapCoinBalance[data.coin.ticker] = data.balance;
     
@@ -76,7 +78,12 @@ function UpdateWallet(data)
     }
     
     const icon = '<img src="'+unescape(data.coin.icon)+'" width=40 />';
-    const tdCoin = $('<td scope="col" class="align-middle">'+icon+unescape(data.coin.name)+'</td>');
+    let tdCoin = '';
+     if (data.coin.ticker == MC) {
+        tdCoin = $('<td scope="col" class="align-middle"> '+icon+unescape(data.coin.name)+'</td>');
+    } else {
+	    tdCoin = $('<td scope="col" class="align-middle"> <a href="/market/'+MC+'-'+data.coin.ticker+'">'+icon+unescape(data.coin.name)+'</a></td>');
+    }
     const tdBalance = $('<td id="'+id_balance+'" scope="col" class="align-middle">'+(data.balance*1).toFixed(8)*1+" "+data.coin.ticker+'</td>');
     const tdAwaiting = $('<td id="'+id_awaiting+'" scope="col" class="align-middle">'+(data.awaiting*1).toFixed(8)*1+" "+data.coin.ticker+'</td>');
     const tdHold = $('<td id="'+id_onhold+'" scope="col" class="align-middle">'+(data.hold*1).toFixed(8)*1+" "+data.coin.ticker+'</td>');
@@ -127,14 +134,22 @@ function ShowDepositAddress(coin)
     
     const couponArea = 
       $('<div ></div>')
+<<<<<<< HEAD
         .append($('<br><b>To deposit into your account, please redeem the coupon:</b><br>'))
+=======
+        .append($('<br><b>To load your account please redeem the coupon:</b><br>'))
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
         .append($('<div class="input-group col-md-12 pt-3"></div>')
           .append($('<input id="id_coupon_id" type="text" class="form-control">')
         ));
           
     const homeArea = 
       $('<div></div>')
+<<<<<<< HEAD
         .append($('<br><b>To deposit into your account, please send coins to this address:</b><br>'))
+=======
+        .append($('<br><b>To load your account please send the coins to your address :</b><br>'))
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
         .append($('<div class="row align-items-center"></div>')
           .append($('<div class="col-md-4"></div>')
             .append($('<canvas id="id_coinQR"></canvas>')))
@@ -170,7 +185,11 @@ function ShowDepositAddress(coin)
       if (!coupon || !coupon.length)
         return;
         
+<<<<<<< HEAD
       $.getJSON("https://exchange.zsmart.org/api/v1/account/redeemcoupon?coupon="+coupon, ret => {
+=======
+      $.getJSON("/api/v1/account/redeemcoupon?coupon="+coupon, ret => {
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
         if (!ret || ret.result != true)
           return utils.alert_fail('<b>ERROR:</b> ' + (ret.message || 'Uncnown coupon error'));
         
@@ -202,8 +221,13 @@ function ShowWithdrawDialog(coin, coinID, coinTicker)
     const coinHidden = $('<input type="hidden" name="coin", value="'+coin+'">');
     const addressGroup = $(
       '<div id="addressGroup" class="form-group">'+
+<<<<<<< HEAD
         '<label for="id_address" class="control-label  requiredField">Your address<span class="asteriskField">*</span> </label>'+
         '<input class="textinput textInput form-control" id="id_address" maxlength="100" name="address" type="text" required>'+
+=======
+        '<label for="id_address" class="control-label  requiredField">Your wallet address<span class="asteriskField">*</span> </label>'+
+        '<input class="textinput textInput form-control" id="id_address" maxlength="100" name="address" type="text" required placeholder="1QB6ukBxmboWgxroc8zzjffaGWwsMuQCCL">'+
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
         '<div class="invalid-feedback">This field is required.</div>'+
       '</div>'
     );
@@ -217,7 +241,11 @@ function ShowWithdrawDialog(coin, coinID, coinTicker)
     );
     const passwordGroup = $(
       '<div class="form-group">'+
+<<<<<<< HEAD
         '<label for="id_password" class="control-label  requiredField">Password<span class="asteriskField">*</span> </label>'+
+=======
+        '<label for="id_password" class="control-label  requiredField">'+utils.OPENTRADE+' password<span class="asteriskField">*</span> </label>'+
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
         '<input class="textinput textInput form-control" id="id_password" maxlength="100" name="password" type="password" required>'+
         '<div class="invalid-feedback">This field is required.</div>'+
       '</div>'
@@ -280,16 +308,18 @@ function ShowHistoryDialog(coin, coinID)
 {
   $('#alert-fail').hide();
   $('#alert-success').hide();
+  
+  if (utils.IsFiat(coin))
+    return utils.alert_fail('History is not allowed for fiat currency');
+    
 
   $('#loader').show();
   $("html, body").animate({ scrollTop: 0 }, "slow");
   $.getJSON( "/history", {coinID: coinID}, ret => {
     $('#loader').hide();
     if (ret.result != true)
-    {
-      utils.alert_fail(ret.message);
-      return;
-    }
+      return utils.alert_fail(ret.message);
+
     ShowHistory(coin, ret.data);
   });
   

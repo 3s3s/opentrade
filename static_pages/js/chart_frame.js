@@ -26,21 +26,36 @@ $(() => {
 
     utils.CreateSocket(onSocketMessage, onOpenSocket);
 
+<<<<<<< HEAD
     UpdateBTCFromLB();
     setInterval(UpdateBTCFromLB, 30000);
 });
 
 function UpdateBTCFromLB()
+=======
+    UpdateMCFromLB();
+    setInterval(UpdateMCFromLB, 30000);
+});
+
+function UpdateMCFromLB()
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
 {
   const cntObject = storage.getItem('coinNameToTicker');
   if (cntObject == null || !cntObject.value)
       return;
   const coinNameToTicker = cntObject.value;
 
+<<<<<<< HEAD
   const BTC_price = storage.getItem("BTC_LTC_Price");
   const g_BTC_LTC_Price = (BTC_price == null || !BTC_price.value) ? 1000000 : BTC_price.value;
   
   const BTC = coinNameToTicker[utils.MAIN_COIN] ? coinNameToTicker[utils.MAIN_COIN].ticker || 'BTC' : 'BTC';
+=======
+  const MC_price = storage.getItem("MC_BTC_Price");
+  const g_MC_BTC_Price = (MC_price == null || !MC_price.value) ? 1000000 : MC_price.value;
+  
+  const MC = coinNameToTicker[utils.MAIN_COIN] ? coinNameToTicker[utils.MAIN_COIN].ticker || 'MC' : 'MC';
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
   
   fetch('/bitcoinaverage/ticker-all-currencies/')
     .then(response => {
@@ -50,6 +65,7 @@ function UpdateBTCFromLB()
     })
     .then( data => {
       g_LB_Data = data;
+<<<<<<< HEAD
       UpdateBTCInfo();
     });
     
@@ -78,6 +94,38 @@ function UpdateBTCFromLB()
       }
       
       $('#id_BTC_info').append($('<li class="breadcrumb-item">'+RUB.toFixed(2)+' RUB</li>'));
+=======
+      UpdateMCInfo();
+    });
+    
+    function UpdateMCInfo() {
+      if (!g_LB_Data || !g_LB_Data.USD || !g_LB_Data.RUB)
+        return;
+      
+      if (MC == 'BTC') g_MC_BTC_Price = 0;
+        
+      const USD = g_LB_Data.USD.rates.last/(g_MC_BTC_Price+1);
+      const BTC = 1/(g_MC_BTC_Price+1);
+      const EUR = g_LB_Data.EUR.rates.last/(g_MC_BTC_Price+1);
+      const RUB = g_LB_Data.RUB.rates.last/(g_MC_BTC_Price+1);
+      
+      storage.setItem("LB_DATA", {USD: USD, BTC: BTC, EUR: EUR, RUB: RUB});
+      
+      $('#id_MC_info').empty();
+      if (MC != 'BTC')
+      {
+        $('#id_MC_info').append($('<li class="breadcrumb-item">1 ' + MC + ' = '+BTC.toFixed(8)+' BTC</li>'));
+        $('#id_MC_info').append($('<li class="breadcrumb-item">'+USD.toFixed(3)+' USD</li>'));
+        $('#id_MC_info').append($('<li class="breadcrumb-item">'+EUR.toFixed(3)+' EUR</li>'));
+      }
+      else
+      {
+        $('#id_MC_info').append($('<li class="breadcrumb-item">1 ' + MC + ' = '+USD.toFixed(2)+' USD</li>'));
+        $('#id_MC_info').append($('<li class="breadcrumb-item">'+EUR.toFixed(2)+' EUR</li>'));
+      }
+      
+      $('#id_MC_info').append($('<li class="breadcrumb-item">'+RUB.toFixed(2)+' RUB</li>'));
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
     }
 }
 
@@ -129,6 +177,12 @@ function drawChart(chartData)
       (g_currentChartPeriod == 1000) ? 14400000 :
       (g_currentChartPeriod == 6000) ? 86400000 : 360000;
 
+<<<<<<< HEAD
+=======
+    var globalMax = 0;
+    var globalMin = 1000000000;
+    var globalVolMax = 0;
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
     var table = [];
     for (var i=0; i<chartData.length; i++)  
     {
@@ -140,6 +194,10 @@ function drawChart(chartData)
       var init = chartData[i].avg_10min;
       var final = chartData[i].avg_10min;
       var max = chartData[i].avg_10min;
+<<<<<<< HEAD
+=======
+      var volume = chartData[i].volume*1;
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
       
       for (var j=i+1; j<chartData.length; j++)
       {
@@ -152,15 +210,39 @@ function drawChart(chartData)
           max = chartData[j].avg_10min;
           
         final = chartData[j].avg_10min;
+<<<<<<< HEAD
         i++;
       }
       
       table.push([time, min/1000000, init/1000000, final/1000000, max/1000000]);
+=======
+        volume += chartData[j].volume*1;
+        i++;
+      }
+      
+      if (globalMax < max/1000000)  globalMax = max/1000000;
+      if (globalMin > min/1000000)  globalMin = min/1000000;
+      if (globalVolMax < volume) globalVolMax = volume;
+      
+      table.push([time, volume, min/1000000, init/1000000, final/1000000, max/1000000]);
+      //table.push([time, min/1000000, init/1000000, final/1000000, max/1000000]);
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
     }
     
     if (!table.length || table.length < g_TableLengthPrev-2)
       return;
+<<<<<<< HEAD
       
+=======
+    
+    var vAxisMin = 2*globalMin > globalMax ? 2*globalMin - globalMax : 0;
+    /*var scale = (globalMin) / (globalVolMax + vAxisMin);   
+    for (var i=0; i<table.length; i++)
+    {
+      table[i][1] = (table[i][1] + vAxisMin) * scale;
+    }*/
+
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
     g_TableLengthPrev = table.length;
       
     if (table.length > 24)
@@ -176,6 +258,7 @@ function drawChart(chartData)
         },*/
         //width: 800,
         legend: 'none',
+<<<<<<< HEAD
         explorer: {
                 axis: 'horizontal',
                 keepInBounds: true,
@@ -184,6 +267,21 @@ function drawChart(chartData)
     };
     
     var chart = new google.visualization.CandlestickChart(document.getElementById('chart_div'));
+=======
+        colors: ['blue'],
+        //vAxis: {viewWindow: {min: vAxisMin} },
+        /*explorer: {
+                axis: 'horizontal',
+                keepInBounds: true,
+                maxZoomIn: 4.0
+        },*/
+        seriesType: 'candlesticks',
+        series: {0: {type: 'bars', targetAxisIndex: 1, color: '#eaeaea'}}
+    };
+    
+    var chart = new google.visualization.ComboChart(document.getElementById('chart_div'));
+    //var chart = new google.visualization.CandlestickChart(document.getElementById('chart_div'));
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
     chart.draw(data, options);
     
   }
@@ -204,7 +302,11 @@ function SetChartLegend()
         return setTimeout(SetChartLegend, 1000);
 
     
+<<<<<<< HEAD
   const BTC = coinNameToTicker[utils.MAIN_COIN].ticker; 
+=======
+  const MC = coinNameToTicker[utils.MAIN_COIN].ticker; 
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
   const COIN = coinNameToTicker[g_CurrentPair].ticker
   
 
@@ -254,6 +356,10 @@ function AddCoinInfo(info)
     
   $('#coin_legend').text(g_CurrentPair);
   
+<<<<<<< HEAD
   const p1 = $('<p><strong>Forum</strong> ANN thread <a target="_blank" href="'+(info.result.coin_info.page || "")+'">'+g_CurrentPair+' on Bitcointalk</a></p>');
+=======
+  const p1 = $('<p><strong>Forum</strong> ANN: <a target="_blank" href="'+(info.result.coin_info.page || "")+'">'+g_CurrentPair+' @ bitcointalk</a></p>');
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
   $('#coin_info').empty().append(p1);
 }

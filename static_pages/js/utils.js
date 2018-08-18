@@ -101,14 +101,30 @@ const utils =
 {
     MAIN_COIN: MAIN_COIN,
     DEFAULT_PAIR: DEFAULT_PAIR,
+<<<<<<< HEAD
     COMISSION: 0.001,
     
     USD_NAME: "US Dollar",
     USD_TICKER: "USD",
+=======
+    COMISSION: TRADE_COMISSION,
+    
+    OPENTRADE: "OpenTrade",
+    USD_NAME: "US Dollar",
+    USD_TICKER: "USD",
+    RUB_NAME: "Ruble",
+    RUB_TICKER: "RUB",
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
     
     IsFiat: function(coin)
     {
         if (coin == utils.USD_NAME) return true;
+<<<<<<< HEAD
+=======
+        if (coin == utils.RUB_NAME) return true;
+        if (coin == utils.USD_TICKER) return true;
+        if (coin == utils.RUB_TICKER) return true;
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
         
         return false;
     },
@@ -125,10 +141,17 @@ const utils =
     {
         return !isNaN(parseFloat(n)) && isFinite(n);
     },
+    MakePrice2: function(str)
+    {
+        const roundFull = (3-Math.log10(str*1)).toFixed(0)*1;
+        const round = roundFull < 0 ? 0 : (roundFull > 8) ? 8 : roundFull;
+        return (utils.MakePrice(str)*1).toFixed(round)*1;
+    },
     MakePrice: function(str)
     {
         if (!utils.isNumeric(str))
             return 0.0;
+        
         if ((str*1.0).toFixed(8)*1.0 == str*1.0)
             return str*1.0;
         

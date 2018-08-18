@@ -266,7 +266,11 @@ function GetChartData(data, callback)
             (data[2] == 6000) ? 86400000 : 360000;
             
         //g_constants.dbTables['history'].selectAll('fromSellerToBuyer AS volume, AVG(price*1000000) AS avg_10min, (time/360000) AS t10min', 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'"', 'GROUP BY t10min ORDER BY t10min DESC LIMIT 60', (err, rows) => {
+<<<<<<< HEAD
         g_constants.dbTables['history'].selectAll('fromSellerToBuyer AS volume, AVG((fromBuyerToSeller/fromSellerToBuyer)*1000000) AS avg_10min, (time/'+group+') AS t10min', 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'"', 'GROUP BY t10min ORDER BY t10min DESC LIMIT 200', (err, rows) => {
+=======
+        g_constants.dbTables['history'].selectAll('SUM(fromSellerToBuyer) AS volume, AVG((fromBuyerToSeller/fromSellerToBuyer)*1000000) AS avg_10min, (time/'+group+') AS t10min', 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'"', 'GROUP BY t10min ORDER BY t10min DESC LIMIT 200', (err, rows) => {
+>>>>>>> 3f3945edb09a465686502cabaf7db4b9ed2f0bbf
             if (err || !rows) callback({result: false, data: []});
             
             if (chartData[data[1]][data[2]]) delete chartData[data[1]][data[2]];

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+    
+    <% include ../../partials/head %>
+  <body>
+
+    <% include ../../partials/header %>
+
+    <% include ../../partials/alerts %>
+    
+    <ul class="nav nav-tabs" id="adminTabs" role="tablist">
+      <li class="nav-item">
+        <a class="nav-link active" id="chat-admin-tab" data-toggle="tab" href="#coins" role="tab" aria-controls="coins" aria-selected="true">Coins</a>
+      </li>
+    </ul>
+    <div class="tab-content p-4" id="adminTabsContent">
+      <div class="tab-pane fade" id="chat_admin" role="tabpanel" aria-labelledby="chat-admin">
+        <form id="id_find_chat_user" class="form-inline">
+          <div class="form-group row">
+            <label for="inputChatUser" class="col-sm-2 col-form-label">User</label>
+            <div class="col-sm-10">
+              <input type="text" name='user' class="form-control" id="inputChatUser" placeholder="*">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">Find</button>
+        </form>  
+        <table class="table m-2">
+          <thead>
+            <tr>
+              <th>
+                userID
+              </th>
+              <th>
+                Ban Start
+              </th>
+              <th>
+                Ban End
+              </th>
+              <th>
+                Comment
+              </th>
+              <th>
+                
+              </th>
+            </tr>
+          </thead>
+          <tbody id='table_ban_users'>
+          </tbody>
+        </table>
+      </div>    
+    </div>
+    
+    <% include ../../partials/footer %>
+    <script src='/private_js/chatadmin.js'></script>
+  </body>
+</html>
