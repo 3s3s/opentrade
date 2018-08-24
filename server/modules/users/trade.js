@@ -196,7 +196,7 @@ function GetUserTradeHistory(status, data, callback)
 
     const WHERE = 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'" AND (buyUserID='+status.id+' OR sellUserID='+status.id+')';
     g_constants.dbTables['history'].selectAll('buyUserID, sellUserID, fromSellerToBuyer AS volume, fromBuyerToSeller, price, buysell, time', WHERE, 'ORDER BY time DESC LIMIT 200', (err, rows) => {
-        if (err || !rows) callback({result: false, data: []});
+        if (err || !rows) return callback({result: false, data: []});
         
         let ret = [];
         for (let i=0; i<rows.length; i++)

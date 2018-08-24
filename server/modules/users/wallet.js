@@ -21,6 +21,7 @@ let emailChecker = {};
 
 let balances = {};
 let coinsBalance = {};
+let coinsBalanceN = {};
 let history = {};
 
 let g_ProcessWithdraw = {};
@@ -32,6 +33,14 @@ function onError(req, res, message)
 function onSuccess(req, res, data)
 {
     utils.renderJSON(req, res, {result: true, data: data});
+}
+
+exports.GetCoinBalanceByName = function(coinName)
+{
+    if (coinsBalanceN[coinName])
+        return coinsBalanceN[coinName].balance || 0;
+        
+    return 0;
 }
 
 exports.GetHistory = function(req, res)
@@ -165,17 +174,10 @@ exports.GetCoinWallet = function(socket, userID, coin, callback)
         balances[userID][coin.id] = {time:0, coinBalance:0};
     if (coinsBalance[coin.id] == undefined)
     {
-        coinsBalance[coin.id] = { balance: 0 };
-        
-        const coinID = coin.id;
-        setInterval(() => {
-            console.log('RPC call from GetCoinWallet1');
-            RPC.send3(0, coinID, commands.getbalance, ["*", 0], ret => {
-                if (!ret || !ret.result || ret.result != 'success') return;
-                    
-                coinsBalance[coinID].balance = (ret.data*1).toFixed(7)*1;
-            });
-        }, 120000);
+        coinsBalanceN[coin.name] = coinsBalance[coin.id] = { balance: 0 };
+
+        UpdateCoinBalance(coin.id, coin.name);
+        setInterval(UpdateCoinBalance, 120000, coin.id, coin.name);
     }
     
     if ((Date.now() - balances[userID][coin.id].time < 120000) || (balances[userID][coin.id].coinBalance == coinsBalance[coin.id].balance && coinsBalance[coin.id].balance != 0))
@@ -195,12 +197,26 @@ exports.GetCoinWallet = function(socket, userID, coin, callback)
             const hold = (reserved*1).toFixed(7)*1;
             const data = JSON.stringify({request: 'wallet', message: {coin: coin, balance: (balance*1).toFixed(7)*1, awaiting: 0.0, hold: hold} })
             
-            if (socket  && (socket.readyState === WebSocket.OPEN)) socket.send(data);    
+            if (socket  && (socket.readyState === WebSocket.OPEN)) socket.send(data); 
+            
+            if (!balances[userID] || !balances[userID][coin.id]) return;
+            
             if (balances[userID][coin.id]['timerID']) return callback ? setTimeout(callback, 1, data) : 0;
 
             balances[userID][coin.id]['timerID'] = setTimeout(UpdateAwaitingBalance, 6000, socket, userID, coin, balance, hold); 
         });
     });
+    
+    function UpdateCoinBalance(coinID, coinName)
+    {
+        console.log('RPC call from UpdateCoinBalance');
+        RPC.send3(0, coinID, commands.getbalance, ["*", 1], ret => {
+            if (!ret || !ret.result || ret.result != 'success') return;
+                
+            coinsBalance[coinID].balance = (ret.data*1).toFixed(7)*1;
+            coinsBalanceN[coinName].balance = coinsBalance[coinID].balance;
+        });
+    }
 }
 
 function UpdateAwaitingBalance(socket, userID, coin, balance, hold)

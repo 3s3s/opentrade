@@ -1,6 +1,7 @@
 'use strict';
 
 const utils = require("../../utils.js");
+const adminUtils = require("../admin/utils");
 const g_constants = require("../../constants.js");
 const WebSocket = require('ws');
 const wallet = require("./wallet");
@@ -290,14 +291,38 @@ function ValidateOrderRequest(req)
     return true;
 }
 
+function FinalCheckBalances(coinName, callback)
+{
+    const error = true;
+
+    g_constants.dbTables['coins'].selectAll('ROWID AS id', 'name="'+escape(coinName)+'"', '', (err, rows) => {
+        if (err || !rows || !rows.length)
+            return callback(error, '(1)');
+
+        for (let i=0; i<g_constants.FIAT_ID.length; i++)
+        {
+            if (rows[0].id == g_constants.FIAT_ID[i]) //Fiat currency no need to check
+                return callback(!error, '(2)');
+        }
+        
+        const coinBalance = wallet.GetCoinBalanceByName(escape(coinName));
+        if (!coinBalance || coinBalance < 0)
+            return callback(error, '(3)');
+        
+        adminUtils.GetCoinBalance(escape(coinName), ret => {
+            if (!ret || !utils.isNumeric(ret.balance) || !utils.isNumeric(ret.blocked))
+                return callback(error, '(4)');
+            
+            if (ret.balance + ret.blocked > coinBalance)   
+                return callback(error, '(5)');
+                
+            return callback(!error);
+        })
+    });
+}
+
 function AddOrder(status, WHERE, newBalance, req, res)
 {
-    /*if (g_constants.FATAL_ERROR)
-    {
-        onError(req, res, 'Operation is temporarily unavailable');
-        return;
-    }*/
-
     database.BeginTransaction(err => {
         if (err) return onError(req, res, err.message || 'Database transaction error');
         
@@ -307,10 +332,12 @@ function AddOrder(status, WHERE, newBalance, req, res)
             const price = (req.body.price*1).toFixed(8)*1;
             const balance = (newBalance*1).toFixed(8)*1;
             
-            if (!utils.isNumeric(amount) || !utils.isNumeric(price)) return onError(req, res, 'Bad amount or price');
-            if (amount < 0 || price < 0) return onError(req, res, 'Bad (negative) amount or price');
-            if (!utils.isNumeric(balance)) return onError(req, res, 'Bad balance ('+balance+')');
-    
+            if (!utils.isNumeric(amount) || !utils.isNumeric(price) || !utils.isNumeric(balance) ||
+                amount < 0 || price < 0 || balance < 0) 
+            {
+                return onError(req, res, 'Bad amount or price or balance');
+            }
+
             const uuid = Date.now()+"-"+status.id+"-"+Math.random();
             
             g_constants.dbTables['orders'].insert(
@@ -347,14 +374,21 @@ function AddOrder(status, WHERE, newBalance, req, res)
                             database.RollbackTransaction();
                             return onError(req, res, err.message || 'Database Update error');
                         }
-                        database.EndTransaction();
                         
-                        wallet.ResetBalanceCache(status.id);
-                        allOrders = {};
-                        if (userOrders[status.id])
-                            delete userOrders[status.id];
-                        
-                        return onSuccess(req, res, {uuid: uuid});
+                        FinalCheckBalances(req.body.coin, (err, msg) => {
+                            if (err) {
+                                database.RollbackTransaction();
+                                return onError(req, res, "Final check error! " + (msg || ""));
+                            }
+                            database.EndTransaction();
+                            
+                            wallet.ResetBalanceCache(status.id);
+                            allOrders = {};
+                            if (userOrders[status.id])
+                                delete userOrders[status.id];
+                            
+                            return onSuccess(req, res, {uuid: uuid});
+                        });
                     });
                 }
             );
@@ -461,6 +495,13 @@ function ProcessExchange(data, callback)
             ((buyOrder.price*1 - sellOrder.price*1)*fromSellerToBuyer).toPrecision(8) :
             0.0;
 
+        if (!utils.isNumeric(newBuyAmount) || newBuyAmount < 0) return callback(0);
+        if (!utils.isNumeric(newSellAmount) || newSellAmount < 0) return callback(0);
+        if (!utils.isNumeric(comission) || comission < 0) return callback(0);
+        if (!utils.isNumeric(buyerChange) || buyerChange < 0) return callback(0);
+        if (!utils.isNumeric(fromSellerToBuyer) || fromSellerToBuyer < 0) return callback(0);
+        if (!utils.isNumeric(fromBuyerToSeller) || fromBuyerToSeller < 0) return callback(0);
+        
         database.BeginTransaction(err => {
             if (err) return callback(0);
             
@@ -585,8 +626,6 @@ function ProcessExchange(data, callback)
     
     function UpdateOrders(newBuyAmount, newSellAmount, buyOrderID, sellOrderID, callback)
     {
-        if (!utils.isNumeric(newBuyAmount)) return callback(null);
-        
         g_constants.dbTables['orders'].update('amount="'+newBuyAmount+'"', 'ROWID="'+buyOrderID+'"', err => {
             if (err) return callback(err);
 
