@@ -66,10 +66,11 @@ The first registered user will be exchange administrator.
 
 you need to send your running process to the background and remove the associated job from current shell.
 
-    Press `Ctrl+Z` and type `bg` to send the installation process to the backgroud
-    then type `disown`.
+Press `Ctrl+Z` and type `bg` to send the installation process to the backgroud
+then type `disown`.
     
-You can now close the terminal, the process will still be alive. You can open another terminal and check its process id with `ps -aef` in left column check your id number of main.js process and next after it
+You can now close the terminal, the process will still be alive. You can open another terminal and check its process id with `ps -aef` in left column check your id number of main.js process and next after it. 
+
 To kill your process use `sudo kill #ID_NUMBER_OF_YOUR_PROCESS`
 
 
