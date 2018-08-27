@@ -4,14 +4,14 @@ Life version https://trade.multicoins.org/
 
 Step-by-step install instructions:
 
-1. Register on the VPS hosting like this https://m.do.co/c/1ece5d76d5cd
+1. Register on the VPS hosting like this https://m.do.co/c/4124684bc46e
 2. Create "Droplet" Ubuntu 16 x64 / 1GB / 1vCPU / 25 GB SSD
 3. Log in to Droplet console over SSH
 4
 
 ```
 sudo apt-get update
-sudo apt-get install build-essential libssl-dev curl -y
+sudo apt-get install git build-essential libssl-dev curl -y
 curl -sL https://raw.githubusercontent.com/creationix/nvm/v0.31.0/install.sh -o install_nvm.sh
 bash install_nvm.sh
 sudo reboot
@@ -21,7 +21,14 @@ nvm install 6.0.0
 git clone https://github.com/3s3s/opentrade.git
 cd opentrade
 
-sudo npm install 
+sudo npm install
+sudo npm install -g node-gyp
+sudo PATH="$PATH:/usr/local/bin" npm install -g grunt-cli
+sudo npm install sqlite3 --build-from-source
+sudo npm cache clean -f
+sudo npm install -g n
+sudo n stable
+ln -s /usr/bin/nodejs /usr/bin/node
 
 mkdir ~/opentrade/server/database
 ```
@@ -54,6 +61,17 @@ In the browser address string type https://127.0.0.1:40443
 You will see OpenTrade.
 
 The first registered user will be exchange administrator. 
+
+# To run process in backgroung
+
+you need to send your running process to the background and remove the associated job from current shell.
+
+    Press `Ctrl+Z` and type `bg` to send the installation process to the backgroud
+    then type `disown`.
+    
+You can now close the terminal, the process will still be alive. You can open another terminal and check its process id with `ps -aef` in left column check your id number of main.js process and next after it
+To kill your process use `sudo kill #ID_NUMBER_OF_YOUR_PROCESS`
+
 
 # Add trade pairs
 
