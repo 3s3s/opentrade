@@ -6,7 +6,7 @@
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-        
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav mr-auto">
             <li class="nav-item active">
               <a class="nav-link" href="/"><%-__('Trade')%></a>
@@ -30,6 +30,7 @@
               <a class="nav-link" href="/add_coin">Add coin</a>
             </li>
         </ul>
+        </div>
         <ul class="navbar-nav ml-auto">
             <% var key = ''; try{if (status.active) key = status.token || '';}catch(e){}%>
             <% if (!key.length) {%><% include ../partials/nav_not_logged %><% }%>
@@ -65,13 +66,13 @@
             '</div>'
         }
     %>
-    <div class="container pt-2">
+    <!--<div class="container pt-2">
       <div id="alert-fail" class="alert alert-danger alert-dismissible col-md-12" role="alert" >
-        <div id="fail-message"><b>Keyco (KEC)</b> will delisted. Please close your orders and withdraw KEC balances</div>
+        <div id="fail-message"><b>Crew (CREW)</b> will delisted. Please close your orders and withdraw CREW balances</div>
         <button id="close_fail" type="button" class="close"  aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
         </div>
       </div>
-    </div>
+    </div>-->
     <%- message %>

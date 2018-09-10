@@ -23,6 +23,9 @@ exports.onSubmit = function(req, res)
             utils.CheckUserExist(request.body['username'], request.body['email'], ret => {
                 if (ret.result == true)
                     return SignupError(request, responce, ret.message);
+                    
+                if (g_constants.share.emailVerificationEnabled == 'disabled')
+                    return Signup(request, responce);
 
                 SendConfirmEmail(request, responce);
             });

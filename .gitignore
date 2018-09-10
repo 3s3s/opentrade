@@ -1,9 +1,16 @@
+# SQLite Database
+/server/database/sqlite.db
+*.db
+
+# Node Modules
+node_modules/
+
+# Certificates
 *.key
 *.crt
-*.db
+
+# Others
+/server/modules/private_constants.js
 *.log
 *.py
 *.out
-node_modules
-private_constants.js
-database

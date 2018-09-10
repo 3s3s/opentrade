@@ -6,12 +6,8 @@ var g_CurrentLang = 'ru';
 var g_bFirstChatFilling = true;
 const chat_languages = ['ru', 'en'];
 
-//var pairData = {};
-
 var coinNameToTicker = {};
 var coinTickerToName = {};
-
-//var chartData = [];
 
 var g_role = 'User';
 
@@ -27,6 +23,11 @@ function UpdatePageWithRole()
   }
   if (g_role == 'Support')
     $('.staff_area').show();
+  if (g_role == 'Chat-admin')
+  {
+    $('.del_message_button').show();
+    $('.chat_admin_area').show();
+  }
 }
 
 function IsNeadScroll()
@@ -57,10 +58,11 @@ $(() => {
   UpdateBuySellText();  
 
   setInterval(IsNeadScroll, 5000);
+  setInterval(UpdateHelpers, 10000);
 
   $('.staff_area').hide();
+  $('.chat_admin_area').hide();
   
-  //setInterval(UpdateMCFromLB, 30000);
 });
 
 $('#inputBuyTotal').change(e => {
@@ -237,15 +239,6 @@ function onSocketMessage(event)
   if (data.request == 'pairdata')
     return UpdatePairData(data.message)
 
-  /*if (data.request == 'chartdata')
-  {
-    if (data.message.data.chart)
-    {
-      chartData = data.message.data.chart;
-      drawChart();
-    }
-    return;
-  }*/
   if (data.request == 'pairbalance')
     return UpdatePairBalance(data.message)
 
@@ -303,8 +296,14 @@ function RedirectToCurrentPair()
   return false;
 }
 
+//let lastupdated = 0;
+let g_LastPrices = {};
+let g_LastVolumes = {};
 function UpdateMarket(message)
 {
+  //if (Date.now() - lastupdated < 50000) return;
+ // lastupdated = Date.now();
+  
   if (!message || !message.coins || !message.coins.length)
     return;
   
@@ -313,6 +312,7 @@ function UpdateMarket(message)
   for (var i=0; i<message.coins.length; i++)
   {
     const coinName = unescape(message.coins[i].name);
+    const coinIcon = '<img style="float:left;" width="16px" src="'+unescape(message.coins[i].icon)+'" />';
     
     coinNameToTicker[coinName] = {ticker: message.coins[i].ticker};
     coinTickerToName[message.coins[i].ticker] = {name: coinName};
@@ -320,7 +320,6 @@ function UpdateMarket(message)
     if (coinName == utils.MAIN_COIN)
       continue;
     
-//    const price = (message.coins[i].price*1).toFixed(8)*1;
     const price = (message.coins[i].fromBuyerToSeller/(message.coins[i].volume == 0 ? 1 : message.coins[i].volume)).toFixed(8)*1;
     const vol = (message.coins[i].volume*1).toFixed(8)*1;
     const ch = message.coins[i].prev_frombuyertoseller ? ((price - message.coins[i].prev_frombuyertoseller*1) / (price != 0 ? price : 1))*100 : 100;
@@ -336,12 +335,28 @@ function UpdateMarket(message)
 
     const MC = coinNameToTicker[utils.MAIN_COIN] ? coinNameToTicker[utils.MAIN_COIN].ticker || 'MC' : 'MC';
     const BTC = coinNameToTicker[coinName].ticker;
+    
+    const prevPrice = g_LastPrices[MC+'-'+BTC] || 0;
+    g_LastPrices[MC+'-'+BTC] = price;
+    
+    const prevVolume = g_LastVolumes[MC+'-'+BTC] || 0;
+    g_LastVolumes[MC+'-'+BTC] = vol;
+    
+    const rowClass = 
+      (prevVolume*1 != vol*1) ? (ch*1 < 0 ? "table-danger" : "table-success") :
+      prevPrice == 0 ? "" :
+      prevPrice*1 > price*1 ? "table-success" : 
+      prevPrice*1 < price*1 ? "table-danger" : "";
+      
+//    if (rowClass.length != 0) bNeedUpdate = true;
+   // else if (rowClass == chColor) chColor = "";
 
-    const tr = $('<tr></tr>')
-      .append($('<td>'+message.coins[i].ticker+'</td>'))
-      .append($('<td>'+price+'</td>'))
-      .append($('<td>'+vol+'</td>'))
-      .append($('<td><span class="'+chColor+'">'+(ch*1).toFixed(2)+'</span></td>'))
+    const tr = $('<tr class="'+rowClass+'"></tr>')
+      .append($('<td class="align-middle">'+coinIcon+'</td>'))
+      .append($('<td class="align-middle" >'+message.coins[i].ticker+'</td>'))
+      .append($('<td class="align-middle">'+price+'</td>'))
+      .append($('<td class="align-middle">'+vol+'</td>'))
+      .append($('<td class="align-middle"><span class="'+chColor+'">'+(ch*1).toFixed(2)+'</span></td>'))
       .css( 'cursor', 'pointer' )
       .on('click', e => {
         if (coinName == g_CurrentPair)
@@ -380,6 +395,9 @@ function UpdateMarket(message)
   const BTC = coinNameToTicker[g_CurrentPair].ticker;
 
   utils.ChangeUrl(document.title + "(" + g_CurrentPair+' market)', '/market/'+MC+'-'+BTC+(window.location.search || ""));
+  
+//  if (bNeedUpdate)
+//    setTimeout(UpdateMarket, 2000, message);
 }
 
 function UpdateBuySellTickers()
@@ -404,12 +422,39 @@ function UpdateBuySellTickers()
 
 }
 
+function IsIgnoredUser(user)
+{
+  const saved = storage.getItem('ignore_'+user);
+  if (!saved || !saved.value || saved.value != 'true') return false;
+  
+  return true;
+}
+
+let prevUser = "";
 function AddChatMessage(message, noscroll, method)
 {
   const userName = unescape(message.user);
   const user = $('<a href="#"></a>').text(userName+":");
   const text = $('<span class="p-2"></span>').text(message.message.text);
   
+  const bIgnoredUser = IsIgnoredUser(userName);
+  
+  if (bIgnoredUser && prevUser == userName)
+    return;
+  prevUser = userName;
+
+  const ignorButton = $('<a href="#" title="Ignore this user" style="text-decoration: none">&#10006;&nbsp</a>')
+    .on('click', e => {
+      e.preventDefault();
+      storage.setItem('ignore_'+userName, 'true');
+      location.reload(); 
+    });
+  const unignorButton = $('<a href="#" title="Ignored user" style="text-decoration: none">&#9785;&nbsp</a>')
+    .on('click', e => {
+      e.preventDefault();
+      storage.setItem('ignore_'+userName, 'false');
+      location.reload(); 
+    });
   const privMessage = $('<a href="#" style="text-decoration: none">&#9743;&nbsp</a>')
   const delButton = $('<a href="#" title="Delete message" class="del_message_button" style="text-decoration: none">&#10006;&nbsp</a>').hide();
   const banButton = $('<a href="#" title="Ban user" class="del_message_button" style="text-decoration: none">&#9760;&nbsp</a>').hide();
@@ -451,12 +496,20 @@ function AddChatMessage(message, noscroll, method)
     
   const append = method || 'append';
   
-  const row = $('<div class="row chat_row"></div>').append($('<div class="col-md-12"></div>')
-    .append(banButton)
-    .append(privMessage)
-    .append(user)
-    .append(text)
-    .append(delButton));
+  const row = !bIgnoredUser ?
+    $('<div class="row chat_row"></div>').append($('<div class="col-md-12"></div>')
+      .append(banButton)
+      .append(ignorButton)
+      .append(privMessage)
+      .append(user)
+      .append(text)
+      .append(delButton)) :
+    $('<div class="row chat_row"></div>').append($('<div class="col-md-12"></div>')
+      .append(banButton)
+      .append(unignorButton))
+      ;
+      
+  
 
   $('#chat-container_'+message.message.lang)[append](row);
   
@@ -637,10 +690,10 @@ function UpdateOrders(orders)
   const txtBuyPrice = utils.MakePrice(orders.buy[0].price);
   const txtSellPrice = utils.MakePrice(orders.sell[0].price);
   
-  const askButton = $('<button type="button" class="p-0 btn btn-link"></button>').append(txtBuyPrice).on('click', e => {
+  const askButton = $('<button id="button_max_ask" type="button" class="p-0 btn btn-link"></button>').append(txtBuyPrice).on('click', e => {
         $('#inputBuyPrice').val(txtBuyPrice);
       })
-  const bidButton = $('<button type="button" class="p-0 btn btn-link"></button>').append(txtSellPrice).on('click', e => {
+  const bidButton = $('<button id="button_max_bid"type="button" class="p-0 btn btn-link"></button>').append(txtSellPrice).on('click', e => {
         $('#inputSellPrice').val(txtSellPrice);
       })
   
@@ -710,7 +763,7 @@ function UpdateBalance(message)
       if (buyBalance < 0) buyBalance = 0.0;
       
       const txtBalance = buyBalance;
-      const balanceButton = $('<button type="button" class="p-0 btn btn-link"></button>').append(txtBalance).on('click', e => {
+      const balanceButton = $('<button id="buy_balance_button" type="button" class="p-0 btn btn-link"></button>').append(txtBalance).on('click', e => {
         $('#inputBuyTotal').val(txtBalance);
         UpdateBuyComissionFromTotal();
       })
@@ -760,8 +813,11 @@ function UpdateBuyComission()
     const total = amount*price+comission;
     $('#inputBuyComission').val(comission.toFixed(8)*1);
     $('#inputBuyTotal').val(total.toFixed(8)*1);
+    $('#inputBuyTotal').attr('title', 'title');
   }
   catch(e) {}
+  
+  UpdateHelpers();
 }
 
 function UpdateBuyComissionFromTotal()
@@ -777,7 +833,7 @@ function UpdateBuyComissionFromTotal()
   }
   catch(e) {}
   
-  //UpdateBuyComission();
+  UpdateHelpers();
 }
 function UpdateSellComissionFromTotal()
 {
@@ -792,6 +848,8 @@ function UpdateSellComissionFromTotal()
   }
   catch(e) {}
   //UpdateSellComission();
+  
+  UpdateHelpers();
 }
 
 function UpdateSellComission()
@@ -807,4 +865,44 @@ function UpdateSellComission()
   }
   catch(e) {}
   
+  UpdateHelpers();
+}
+
+function UpdateHelpers()
+{
+  const cntObject = storage.getItem('coinNameToTicker');
+  if (cntObject == null || !cntObject.value)
+      return;
+  
+  const coinNameToTicker = cntObject.value;
+
+  const MC = coinNameToTicker[utils.MAIN_COIN] ? coinNameToTicker[utils.MAIN_COIN].ticker || 'MC' : 'MC';
+  
+  const LB_data = storage.getItem('LB_DATA') != null &&  storage.getItem('LB_DATA').value ?
+    storage.getItem('LB_DATA').value : false;
+    
+  if (!LB_data || !LB_data.USD || !LB_data.EUR || !LB_data.RUB) return;
+  
+  SetHelper("inputSellTotal", MC, LB_data);
+  SetHelper("inputSellComission", MC, LB_data);
+  SetHelper("inputSellPrice", MC, LB_data);
+  SetHelper("inputBuyTotal", MC, LB_data);
+  SetHelper("inputBuyComission", MC, LB_data);
+  SetHelper("inputBuyPrice", MC, LB_data);
+  SetHelper("buy_balance_button", MC, LB_data);
+  SetHelper("button_max_ask", MC, LB_data);
+  SetHelper("button_max_bid", MC, LB_data);
+  
+  function SetHelper(name, MC, LB_data)
+  {
+    const total = $('#' + name).val() ? $('#' + name).val()*1 || 0 : $('#' + name).text()*1 || 0;
+
+    const helper = " = " + utils.MakePrice2(LB_data.USD*total) + " USD = " + utils.MakePrice2(LB_data.EUR*total) + " EUR = " + utils.MakePrice2(LB_data.RUB*total) + " RUB";
+
+    if (MC != 'BTC')
+      $('#' + name).attr('title', utils.MakePrice2(total) + " MC = " + utils.MakePrice2(LB_data.BTC*total) + " BTC" + helper); 
+    else
+      $('#' + name).attr('title', utils.MakePrice2(total) +" MC" + helper); 
+  }
+
 }
