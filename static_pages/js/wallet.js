@@ -106,7 +106,7 @@ function CreateDepositArea(data)
   const btnWithdraw = $('<button class="btn btn-secondary m-1 align-middle" type="button">Withdraw</button>')
     .on('click', e => { ShowWithdrawDialog(coin, data.coin.id, data.coin.ticker) });
   const btnHistory = $('<button class="btn btn-secondary m-1 align-middle" type="button">History</button>')
-    .on('click', e => { ShowHistoryDialog(coin, data.coin.id) });
+    .on('click', e => { ShowHistoryDialog(coin, data.coin.id, data) });
 
   return $('<td scope="col"></td>').append(btnDeposit).append(btnWithdraw).append(btnHistory);
 }
@@ -283,7 +283,7 @@ function ShowWithdrawDialog(coin, coinID, coinTicker)
   
 }
 
-function ShowHistoryDialog(coin, coinID)
+function ShowHistoryDialog(coin, coinID, data)
 {
   $('#alert-fail').hide();
   $('#alert-success').hide();
@@ -299,10 +299,10 @@ function ShowHistoryDialog(coin, coinID)
     if (ret.result != true)
       return utils.alert_fail(ret.message);
 
-    ShowHistory(coin, ret.data);
+    ShowHistory(coin, ret.data, data);
   });
   
-  function ShowHistory(coin, data)
+  function ShowHistory(coin, data, cdata)
   {
     data.sort((a,b)=>{return a - b;});
     
@@ -335,13 +335,15 @@ function ShowHistoryDialog(coin, coinID)
       }
       
       const amount = (data[i].category == 'receive') ? "+"+data[i].amount : data[i].amount;
+      const confirms = data[i].confirmations;
       tbody.append($('<tr></tr>')
         .append($('<td>'+amount+'</td>'))
         .append($('<td></td>').append(button))
+        .append($('<td>'+confirms+' / '+cdata.coin.info.minconf+'</td>'))
         )
     }
     
-    var table = $('<table class="table table-striped table-bordered"><thead><tr><th>amount</th><th>time</th></tr></thead></table>').append(tbody);
+    var table = $('<table class="table table-striped table-bordered"><thead><tr><th>amount</th><th>time</th><th>Confirms</th></tr></thead></table>').append(tbody);
     modals.OKCancel1(
         'Recent transactions '+coin, 
         table,
