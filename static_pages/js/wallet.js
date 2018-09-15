@@ -69,9 +69,18 @@ function UpdateWallet(data)
     
     mapCoinBalance[data.coin.ticker] = data.balance;
     
+    const balanceLink = $('<button type="button" class="btn btn-link"></button>')
+            .text((data.balance*1).toFixed(8)*1+" "+data.coin.ticker)
+            .on('click', e => {
+              e.preventDefault();
+              ShowDetailBalanceDialog(coin, data.coin.id);
+            });
+          
+    balanceLink.text((data.balance*1).toFixed(8)*1+" "+data.coin.ticker);
+    
     if ($('#'+escape(coin).replace('%', '_')).length)
     {
-      $('#'+id_balance).text(data.balance+" "+data.coin.ticker);
+      //$('#'+id_balance).text((data.balance*1).toFixed(8)*1+" "+data.coin.ticker);
       $('#'+id_awaiting).text(data.awaiting+" "+data.coin.ticker);
       $('#'+id_onhold).text(data.hold+" "+data.coin.ticker);
       return;
@@ -84,7 +93,8 @@ function UpdateWallet(data)
     } else {
 	    tdCoin = $('<td scope="col" class="align-middle"> <a href="/market/'+MC+'-'+data.coin.ticker+'">'+icon+unescape(data.coin.name)+'</a></td>');
     }
-    const tdBalance = $('<td id="'+id_balance+'" scope="col" class="align-middle">'+(data.balance*1).toFixed(8)*1+" "+data.coin.ticker+'</td>');
+//    const tdBalance = $('<td id="'+id_balance+'" scope="col" class="align-middle">'+(data.balance*1).toFixed(8)*1+" "+data.coin.ticker+'</td>');
+    const tdBalance = $('<td id="'+id_balance+'" scope="col" class="align-middle"></td>').append(balanceLink);
     const tdAwaiting = $('<td id="'+id_awaiting+'" scope="col" class="align-middle">'+(data.awaiting*1).toFixed(8)*1+" "+data.coin.ticker+'</td>');
     const tdHold = $('<td id="'+id_onhold+'" scope="col" class="align-middle">'+(data.hold*1).toFixed(8)*1+" "+data.coin.ticker+'</td>');
     
@@ -344,6 +354,59 @@ function ShowHistoryDialog(coin, coinID)
     var table = $('<table class="table table-striped table-bordered"><thead><tr><th>amount</th><th>time</th></tr></thead></table>').append(tbody);
     modals.OKCancel1(
         'Recent transactions '+coin, 
+        table,
+        function(){},
+        true
+    );
+      
+  }
+}
+
+function ShowDetailBalanceDialog(coin, coinID)
+{
+  $('#alert-fail').hide();
+  $('#alert-success').hide();
+  
+  if (utils.IsFiat(coin))
+    return utils.alert_fail('History is not allowed for fiat currency');
+    
+
+  $('#loader').show();
+  $("html, body").animate({ scrollTop: 0 }, "slow");
+  $.getJSON( "/detailbalance", {coinName: coin, coinID: coinID}, ret => {
+    $('#loader').hide();
+    if (ret.result != true)
+      return utils.alert_fail(ret.message);
+
+    ShowDetails(coin, ret.data);
+  });
+  
+  function ShowDetails(coin, data)
+  {
+    //{coin: coinsArray[index].name, deposit: 0, withdraw: 0, buy: 0, sell: 0, blocked: 0, balance: 0, payouts: 0}
+    
+    const total = (data.deposit || 0)*1 + (data.buy || 0)*1 + (data.payouts || 0)*1 - (data.withdraw || 0)*(-1) - (data.sell || 0)*1 - (data.blocked || 0)*1;
+    
+    const trDeposit = $('<tr></tr>').append($('<td>Deposit (D)</td>')).append($('<td>'+(data.deposit || 0)*1+'</td>'));
+    const trWithdraw = $('<tr></tr>').append($('<td>Withdraw (W)</td>')).append($('<td>'+(data.withdraw || 0)*(-1)+'</td>'));
+    const trBuy = $('<tr></tr>').append($('<td>Buy (B)</td>')).append($('<td>'+ (data.buy || 0)*1 +'</td>'));
+    const trSell = $('<tr></tr>').append($('<td>Sell (S)</td>')).append($('<td>'+(data.sell || 0)*1+'</td>'));
+    const trAff = $('<tr></tr>').append($('<td>Affiliate (A)</td>')).append($('<td>'+(data.payouts || 0)*1+'</td>'));
+    const trOrders = $('<tr></tr>').append($('<td>In orders (O)</td>')).append($('<td>'+(data.blocked || 0)*1+'</td>'));
+    const trBalance = $('<tr></tr>').append($('<td>D+B+A-W-S-O</td>')).append($('<td>'+total+'</td>'));
+    
+    let tbody = $('<tbody></tbody>')
+        .append(trDeposit)
+        .append(trWithdraw)
+        .append(trBuy)
+        .append(trSell)
+        .append(trAff)
+        .append(trOrders)
+        .append(trBalance)
+    
+    var table = $('<table class="table table-striped table-bordered"><thead><tr><th></th><th></th></tr></thead></table>').append(tbody);
+    modals.OKCancel1(
+        'Detail balance '+coin, 
         table,
         function(){},
         true

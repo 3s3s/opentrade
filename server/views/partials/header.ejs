@@ -54,11 +54,11 @@
     <input id='id_lang' type='hidden' <% var value = 'value="en"'; try{if (lang) value = "value='"+lang+"'"}catch(e){} %> <%- value %>>
 
     <% var message = ""; 
-        if (!share.tradeEnabled) {
+        if (!share.tradeEnabled || !share.withdrawEnabled) {
           message = 
             '<div class="container pt-2">'+
               '<div id="alert-fail" class="alert alert-danger alert-dismissible col-md-12" role="alert" >'+
-                '<div id="fail-message">Technical work is carried out. Please be patient</div>'+
+                '<div id="fail-message">Technical work is carried out. Please be patient. <b>Trading enabled</b>. Withdraw is temporarily disabled</div>'+
                 '<button id="close_fail" type="button" class="close"  aria-label="Close">'+
                   '<span aria-hidden="true">&times;</span>'+
                 '</button>'+

@@ -8,11 +8,12 @@ const util = require('util');
 const express = require('express');
 const bodyParser = require('body-parser');
 const WebSocketServer = require('ws').Server;
+const utils = require("./utils");
 
 const log_file = require("fs").createWriteStream(__dirname + '/debug.log', {flags : 'w'});
 const log_stdout = process.stdout;
 
-console.log = function(d, userID) { 
+/*console.log = function(d, userID) { 
     if (!g_constants.DEBUG_LOG)
         return;
 
@@ -21,7 +22,7 @@ console.log = function(d, userID) {
   
   if (userID)
     require("./utils").log_user(userID, d);
-};
+};*/
 
 const app = express();
 app.use( bodyParser.json() );       // to support JSON-encoded bodies
@@ -92,10 +93,11 @@ app.set('view engine', 'ejs');
 
 require('./reqHandler.js').handle(app, g_constants.WEB_SOCKETS);
 
-process.on('uncaughtException', function (err) {
+/*process.on('uncaughtException', function (err) {
   console.error(err.stack);
+  utils.balance_log(err.stack+"\n");
   console.log("Node NOT Exiting...");
-});
+});*/
 
 app.use(function (err, req, res, next) {
     res.send(500, 'Something broke!');
@@ -104,5 +106,7 @@ app.use(function (err, req, res, next) {
 //console.log(JSON.stringify(process.versions));
 require("./database").Init();
 require("./modules/users/market").Init();
+
+//require("./modules/admin/utils").FixAllBalances();
 
 

@@ -201,7 +201,7 @@ exports.onGetMarketSummary = function(req, res)
         const coin_icon_src = rows[0].icon;
         const coin_info = JSON.parse(utils.Decrypt(rows[0].info));
         
-        const WHERE = 'coin="'+COIN.name+'" AND time > ('+Date.now()+'-'+period+'*3600*1000)';
+        const WHERE = 'coin="'+COIN.name+'" AND time*1 > ('+Date.now()+'*1 - '+period+'*3600*1000)';
         
         const METHOD = 'onGetMarketSummary_'+WHERE;
         
@@ -212,7 +212,7 @@ exports.onGetMarketSummary = function(req, res)
             return;
         }
         
-        g_constants.dbTables['history'].selectAll('max(fromBuyerToSeller/fromSellerToBuyer) AS Height, min(fromBuyerToSeller/fromSellerToBuyer) AS Low, sum(fromSellerToBuyer) AS Volume', WHERE, 'GROUP BY coin', (err, rows) => {
+        g_constants.dbTables['history'].selectAll('max((fromBuyerToSeller*1)/fromSellerToBuyer) AS Height, min((fromBuyerToSeller*1)/fromSellerToBuyer) AS Low, sum(fromSellerToBuyer*1) AS Volume', WHERE, 'GROUP BY coin', (err, rows) => {
             if (err || !rows)
             {
                 onError(req, res, err && err.message ? err.message : 'unknown database error');
@@ -227,14 +227,14 @@ exports.onGetMarketSummary = function(req, res)
                 retData.Volume = (rows[0].Volume*1).toFixed(8);
             }
 
-            g_constants.dbTables['orders'].selectAll('count(price) as count_buy, max(price*1) AS Bid', "(coin='"+COIN.name+"' AND buysell='buy')", '', (err, rows) => {
+            g_constants.dbTables['orders'].selectAll('count(price*1) as count_buy, max(price*1) AS Bid', "(coin='"+COIN.name+"' AND amount*price>0 AND buysell='buy')", '', (err, rows) => {
                 if (rows.length)
                 {
                     retData.Bid = (rows[0].Bid*1).toFixed(8);
                     retData.OpenBuyOrders = rows[0].count_buy;
                 }
                     
-                g_constants.dbTables['orders'].selectAll('count(price) as count_sell, min(price*1) AS Ask', "(coin='"+COIN.name+"' AND buysell='sell')", '', (err, rows) => {
+                g_constants.dbTables['orders'].selectAll('count(price*1) as count_sell, min(price*1) AS Ask', "(coin='"+COIN.name+"' AND amount*price>0 AND buysell='sell')", '', (err, rows) => {
                     if (rows.length)
                     {
                         retData.Ask = (rows[0].Ask*1).toFixed(8);
@@ -281,7 +281,7 @@ exports.onGetMarketHistory = function(req, res)
             const COIN = rows[0];
             const WHERE = 'coin="'+escape(COIN.name)+'"';
             
-            g_constants.dbTables['history'].selectAll('ROWID AS id, *', WHERE, 'ORDER BY time DESC LIMIT 200', (err, rows) => {
+            g_constants.dbTables['history'].selectAll('ROWID AS id, *', WHERE, 'ORDER BY time*1 DESC LIMIT 200', (err, rows) => {
                 if (err || !rows) 
                     return onError(req, res, err && err.message ? err.message : 'unknown database error');
 
@@ -505,7 +505,7 @@ exports.onAccountGetBalance = function(req, res)
                             const awaiting = (message.awaiting || 0)*1;
                             const hold = (message.hold || 0)*1;
                                 
-                            return onSuccess(req, res, {Currency: message.coin.ticker, Balance: (balance+awaiting+hold).toFixed(8)*1, Available: balance.toFixed(8)*1, Pending: awaiting.toFixed(8)*1});
+                            return onSuccess(req, res, {Currency: message.coin.ticker, Balance: utils.roundDown(balance+awaiting+hold), Available: balance.toFixed(8)*1, Pending: awaiting.toFixed(8)*1});
                         }
                         catch (e) {
                             return onError(req, res, e.message);

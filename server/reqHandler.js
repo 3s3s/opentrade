@@ -72,6 +72,7 @@ exports.handle = function(app, wss)
 
     app.post('/admin/finduser', onAdminFindUser);
     app.post('/admin/findtrades', onAdminFindTrades);
+    app.post('/admin/findbalances', onAdminFindBalances);
     app.post('/admin/getcoinbalance', onAdminGetCoinBalance);
     app.post('/submitorder', onSubmitOrder);
     app.post('/closeorder', onCloseOrder);
@@ -103,6 +104,8 @@ exports.handle = function(app, wss)
     app.get('/confirmwithdraw/*', onConfirmWithdraw);
     
     app.get('/history', onGetHistory);
+    app.get('/detailbalance', onGetBalanceDetails);
+    app.get('/fixbalance', onFixBalance);
     
     app.get('/bitcoinaverage/ticker-all-currencies/', onLocalBitcoinsProxyAPI);
 
@@ -277,6 +280,16 @@ function onGetHistory(req, res)
     wallet.GetHistory(req, res);
 }
 
+function onGetBalanceDetails(req, res)
+{
+    wallet.GetBalanceDetails(req, res);
+}
+
+function onFixBalance(req, res)
+{
+    admin.onFixBalance(req, res);
+}
+
 function onAdminFindUser(req, res)
 {
     admin.onFindUser(req, res);
@@ -289,6 +302,11 @@ function onAdminFindBannedChatUser(req, res)
 function onAdminFindTrades(req, res)
 {
     admin.onFindTrades(req, res);
+}
+
+function onAdminFindBalances(req, res)
+{
+    admin.onFindUserBalances(req, res);
 }
 
 function onAdminGetCoinBalance(req, res)

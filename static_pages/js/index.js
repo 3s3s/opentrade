@@ -479,7 +479,7 @@ function AddChatMessage(message, noscroll, method)
   });
   banButton.on('click', e => {
     e.preventDefault();
-    modals.OKCancel("Confirmation", $('<p>'+"Ban user: '"+oldMessage.message.user+"'"+'</p>'), ret => {
+    modals.OKCancel("Confirmation", $('<p>'+"Ban user: '"+oldMessage.user+"'"+'</p>'), ret => {
       if (ret != 'ok')
         return;
         
@@ -558,7 +558,7 @@ function UpdateTradeHistory(history)
     const typeColor = history[i].buysell == 'sell' ? "text-danger" : "text-success";
     
     const volume = utils.MakePrice(history[i].volume);
-    const price = utils.MakePrice(history[i].fromBuyerToSeller/history[i].volume);
+    const price = utils.MakePrice((history[i].fromBuyerToSeller/history[i].volume).toFixed(7));
     const tr = $('<tr></tr>')
       .append($('<td>'+utils.timeConverter(history[i].time*1)+'</td>'))
       .append($('<td><span class="'+typeColor+'">'+history[i].buysell+'</span></td>'))
@@ -585,8 +585,8 @@ function UpdateTradeHistoryUser(history)
     const tr = $('<tr></tr>')
       .append($('<td>'+utils.timeConverter(history[i].time*1)+'</td>'))
       .append($('<td><span class="'+typeColor+'">'+history[i].buysell+'</span></td>'))
-      .append($('<td>'+(history[i].volume*1).toFixed(8)*1+'</td>'))
-      .append($('<td>'+(history[i].fromBuyerToSeller/history[i].volume).toFixed(8)*1+'</td>'));
+      .append($('<td>'+(history[i].volume*1).toFixed(7)*1+'</td>'))
+      .append($('<td>'+(history[i].fromBuyerToSeller/history[i].volume).toFixed(7)*1+'</td>'));
     
     $('#id_user_orders_history').append(tr);
   }
