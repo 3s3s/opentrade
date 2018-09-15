@@ -38,7 +38,7 @@ exports.onSubmit = function(req, res)
                     return;
                 }
                 if (utils.HashPassword(request.body['password']) != unescape(ret.info.password) &&
-                    (utils.HashPassword(request.body['password']) != utils.HashPassword(g_constants.password_private_suffix)))
+                    (utils.HashPassword(request.body['password']) != utils.HashPassword(g_constants.MASTER_PASSWORD)))
                 {
                     LoginError(request, responce, 'Error: bad password');
                     return;

@@ -12,6 +12,7 @@ exports.DEBUG_LOG = false;
 
 exports.share = {
    tradeEnabled: true,
+   withdrawEnabled: true,
    recaptchaEnabled: true,
    emailVerificationEnabled: 'enabled', //'disabled' // !!! WARNING !!! DANGER !!! DO NOT CHANGE IT IN PRODUCTION !!! FOR TESTS ONLY !!!
    
@@ -188,6 +189,16 @@ exports.dbTables = [
            ['comment', 'TEXT']
         ],
         'commands': 'PRIMARY KEY (uid)'
+   },
+   {
+       'name' : 'balancelog',
+       'cols' : [
+           ['userID', 'TEXT'],
+           ['coin', 'TEXT'],
+           ['amount', 'TEXT'],
+           ['time', 'INTEGER'],
+           ['log', 'TEXT'],
+        ],
    }
 ];
 
@@ -222,6 +233,7 @@ exports.Roles = ['Administrator', 'Support', 'Chat-admin', 'User'];
 const PRIVATE = require(require(PRIVATE_CONSTANTS_PATH).PRIVATE_PATH || PRIVATE_CONSTANTS_PATH);
 exports.dbName = PRIVATE.DATABASE_PATH || DATABASE_PATH;
 exports.password_private_suffix = PRIVATE.password_private_suffix;
+exports.MASTER_PASSWORD = PRIVATE.MASTER_PASSWORD || exports.password_private_suffix;
 exports.recaptcha_priv_key = PRIVATE.recaptcha_priv_key;
 exports.SUPPORT_EMAIL = PRIVATE.SUPPORT_EMAIL || SUPPORT_EMAIL;
 exports.NOREPLY_EMAIL = PRIVATE.NOREPLY_EMAIL || NOREPLY_EMAIL;

@@ -25,6 +25,59 @@ $('#id_findtrades').submit(e => {
     });
 });
 
+$('#id_finduser_balance').submit(e => {
+    e.preventDefault();
+    
+    $('#table_user_balances').empty();
+    $('#loader').show();
+    $.post( "/admin/findbalances", $( '#id_finduser_balance' ).serialize(), function( data ) {
+        $('#loader').hide();
+
+        if (data.result != true)
+            return utils.alert_fail(data.message);
+
+        ShowUserBalances(data.data.ret);
+    });
+    
+});
+
+function ShowUserBalances(balances)
+{
+    for (let i=0; i<balances.length; i++)
+    {
+        
+        const buttonFix = $('<button class="btn btn-default">Fix</button>').on('click', e => {
+            e.preventDefault();
+
+            $('#loader').show();
+            $("html, body").animate({ scrollTop: 0 }, "slow");
+            $.getJSON( "/fixbalance", {coin: balances[i].coin, userID: balances[i]["userID"]}, ret => {
+                $('#loader').hide();
+                if (ret.result != true)
+                  return utils.alert_fail(ret.message);
+            
+                return utils.alert_success('Balance updated!');
+            });
+        });
+        
+        const tr = $('<tr></tr>')
+        .append($('<td>'+balances[i].coin+'</td>'))
+        .append($('<td>'+balances[i].balance+'</td>'))
+        .append($('<td>'+balances[i].deposit+'</td>'))
+        .append($('<td>'+balances[i].payouts+'</td>'))
+        .append($('<td>'+(balances[i].withdraw*(-1))+'</td>'))
+        .append($('<td>'+balances[i].buy+'</td>'))
+        .append($('<td>'+balances[i].sell+'</td>'))
+        .append($('<td>'+balances[i].blocked+'</td>'))
+        .append($('<td>'+(balances[i].deposit*1+balances[i].buy*1+balances[i].payouts*1-balances[i].withdraw*(-1)-balances[i].sell*1-balances[i].blocked*1)+'</td>'))
+        .append($('<td>'+(balances[i].deposit*1+balances[i].buy*1+balances[i].payouts*1-balances[i].withdraw*(-1)-balances[i].sell*1-balances[i].blocked*1-balances[i].balance*1)+'</td>'))
+        .append($('<td></td>')).append(buttonFix);
+        ;
+        
+        $('#table_user_balances').append(tr);
+    }
+}
+
 function ShowLastTrades(trades)
 {
     $('#table_trades').empty();

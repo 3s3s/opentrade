@@ -37,6 +37,28 @@ exports.isNumeric = function(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
+exports.roundDown = function(number, decimals) {
+    
+    try
+    {
+        if (!exports.isNumeric(number)) 
+            return number;
+            
+        decimals = decimals || 7;
+        
+        if (!exports.isNumeric(decimals))
+            return number;
+            
+        const ret =  ( Math.floor( number * Math.pow(10, decimals) ) / Math.pow(10, decimals) )*1;
+        
+        return ret; //(ret < 0.000001) ? 0 : ret;
+    }
+    catch(e)
+    {
+        return number;
+    }
+}
+
 exports.Encrypt = function(str)
 {
     const algorithm = 'aes256';
@@ -185,7 +207,9 @@ exports.ForEachSync = function(array, func, cbEndAll, cbEndOne)
         {
             if (!cbEndOne)
             {
-                if (nIndex+1 < array.length && err == false)
+                if (err) return cbEndAll(err);
+                
+                if (nIndex+1 < array.length && !err)
                     Run(nIndex+1);
                 else
                     cbEndAll(false); //if all processed then stop and return from 'ForEachSync'
@@ -200,8 +224,7 @@ exports.ForEachSync = function(array, func, cbEndAll, cbEndOne)
                 if (error) {
                     //if func return error, then stop and return from 'ForEachSync'
                     console.log('error: ForEachSync_Run_cbEndOne return error');
-                    cbEndAll(true);
-                    return;
+                    return cbEndAll(true);
                 }
                 if (nIndex+1 < array.length)
                     Run(nIndex+1);
@@ -214,7 +237,7 @@ exports.ForEachSync = function(array, func, cbEndAll, cbEndOne)
 
 exports.UpdateRef = function(IP, userID)
 {
-    const WHERE = "uid=(SELECT uid FROM referals WHERE timeReg='0' AND IP='"+IP+"' ORDER BY timeIn LIMIT 1)";
+    const WHERE = "uid=(SELECT uid FROM referals WHERE timeReg='0' AND IP='"+IP+"' ORDER BY timeIn*1 LIMIT 1)";
     
     console.log('UpdateRef WHERE='+WHERE);
     g_constants.dbTables['referals'].update(

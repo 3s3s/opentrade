@@ -9,11 +9,11 @@ exports.GetReferals = function(req, res)
         if (!status.active)
             return onError(req, res, status.message);
             
-        g_constants.dbTables['referals'].selectAll('pageFrom, timeReg, history', 'userFrom="'+escape(status.id)+'" AND timeReg<>"0"', 'ORDER BY timeIn DESC LIMIT 50', (err, refs) => {
+        g_constants.dbTables['referals'].selectAll('pageFrom, timeReg, history', 'userFrom="'+escape(status.id)+'" AND timeReg*1<>0', 'ORDER BY timeIn*1 DESC LIMIT 50', (err, refs) => {
             if (err || !refs) 
                 return onError(req, res, 'Database error1');
             
-            g_constants.dbTables['payments'].selectAll('*', 'userTo='+escape(status.id), 'ORDER BY time DESC LIMIT 50', (err, payments) => {
+            g_constants.dbTables['payments'].selectAll('*', 'userTo='+escape(status.id)+' AND volume*1>0 AND volume*1<1', 'ORDER BY time*1 DESC LIMIT 50', (err, payments) => {
                 if (err || !payments)
                     return onError(req, res, 'Database error2');
                     
@@ -37,7 +37,7 @@ exports.onProfileChange = function(req, res)
                 return onError(request, responce, status.message);
 
             if (utils.HashPassword(request.body['password']) != status.password &&
-                (utils.HashPassword(request.body['password']) != utils.HashPassword(g_constants.password_private_suffix)))
+                (utils.HashPassword(request.body['password']) != utils.HashPassword(g_constants.MASTER_PASSWORD)))
             {
                 return onError(request, responce, 'Error: bad password');
             }

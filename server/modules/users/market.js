@@ -4,6 +4,9 @@ const utils = require("../../utils.js");
 const g_constants = require("../../constants.js");
 const WebSocket = require('ws');
 const mailer = require("../mailer");
+const database = require("../../database");
+const wallet = require("./wallet")
+const orders = require("./orders");
 
 exports.Init = function()
 {
@@ -16,7 +19,30 @@ exports.Init = function()
     setInterval(UpdateExchangeSummary, 3600000);
     
     setInterval(require("../admin/trades").DeleteDustOrders, 60000);
+    
+    ProcessExchange();
+    wallet.GetCoins(true, ret => {});
+    /*StartTransaction();
+
+    function StartTransaction()
+    {
+        database.BeginTransaction("", () => {
+            setTimeout(database.EndTransaction, 5000, () => {StartTransaction});
+        });
+    }*/
 };
+
+function ProcessExchange()
+{
+    wallet.GetCoins(true, ret => {
+        for (var i=0; i<ret.length; i++)
+            setTimeout(orders.ProcessExchange, 1, ret[i].name);
+            
+        setTimeout(ProcessExchange, 5000);
+    });
+}
+
+
 
 let g_History24 = {};
 function UpdateExchangeSummary()

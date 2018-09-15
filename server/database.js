@@ -138,7 +138,7 @@ exports.Init = function(callback)
             if (!callback) 
                 console.log("WARNING: SelectAll callback undefined!!!");
 
-            g_db.all(query, param, function(err, rows) {
+            g_db.all(query, param, (err, rows) => {
                 if (err) console.log("SELECT ERROR: query="+query+" message=" + err.message);
                 
                 query = null;
@@ -147,13 +147,14 @@ exports.Init = function(callback)
         }
         catch (e) {
             console.log(e.message);
-            if (callback) setTimeout(callback, 1, e); //callback(e);
+            if (callback) setTimeout(callback, 1, e, []); //callback(e);
         }
     }
     function Update(tableName, SET, WHERE, callback)
     {
         try {
             let query = 'UPDATE ' + tableName;
+            console.log(query); 
             
             if (!SET || !SET.length)  throw new Error("Table Update MUST have 'SET'");
             if (!WHERE || !WHERE.length) throw new Error("Table Update MUST have 'WHERE'");
@@ -161,7 +162,7 @@ exports.Init = function(callback)
             query += ' SET ' + SET;
             query += ' WHERE ' + WHERE;
             
-            console.log(query);   
+            //console.log(query);   
             g_db.run(query, function(err) {
                 if (callback) setTimeout(callback, 1, err); //callback(err);
                 if (err) console.log("UPDATE error: " + err.message);
@@ -258,15 +259,21 @@ exports.RunTransactions = function()
     }
 };
 
+let txLog = "";
 let g_gotTransaction = false;
-exports.BeginTransaction = function (callback, count)
+exports.BeginTransaction = function (log, callback, count)
 {
     const counter = count || 0;
     if (g_gotTransaction && counter <= 3)
-        return setTimeout(exports.BeginTransaction, 5000, callback, counter+1);
-        
+        return setTimeout(exports.BeginTransaction, 5000, log, callback, counter+1);
+    
+    if (g_gotTransaction && counter > 3)
+        return callback({message: 'Transactions busy '+txLog});
+
+    g_gotTransaction = true;   
+    txLog = log;
     g_db.run('BEGIN TRANSACTION', function(err){
-        if (!err) g_gotTransaction = true;
+        if (err) g_gotTransaction = false;
         //if (err) throw ("BeginTransaction error: " + err.message);
         if (callback) callback(err);
     });
@@ -281,10 +288,45 @@ exports.EndTransaction = function(callback)
      });
 };
 
+exports.RunQuery = function(SQL, callback)
+{
+    g_db.run(SQL, callback);
+}
+exports.SELECT = function(query, callback, param)
+{
+    g_db.all(query, param, (err, rows) => {
+        if (err) console.log("SELECT ERROR: query="+query+" message=" + err.message);
+                
+        query = null;
+        if (callback) setTimeout(callback, 1, err, rows);
+    });        
+}
+
+exports.run = function(log, query, callback, count)
+{
+    const counter = count || 0;
+    if (g_gotTransaction && counter <= 3)
+        return setTimeout(exports.BeginTransaction, 5000, log, callback, counter+1);
+    
+    if (g_gotTransaction && counter > 3)
+        return callback({message: 'Transactions busy '+txLog});
+
+    g_gotTransaction = true;   
+    txLog = log;
+
+    g_db.run(query, err => {
+        if (err) return exports.RollbackTransaction(callback);
+
+        g_gotTransaction = false;
+
+        if (callback) callback(err);
+    });
+}
+
 exports.RollbackTransaction = function(callback)
 {
     g_db.run('ROLLBACK', err => {
-        if (!err) g_gotTransaction = false;
+        g_gotTransaction = false;
         //if (err) throw ("EndTransaction error: " + err.message);
         if (callback) callback(err);
      });
@@ -305,9 +347,9 @@ exports.RunMemQueries = function(callback)
         return;
     }
     exports.BeginTransaction(function() {
-        g_memQueries.forEach(function(val, index, array){
+        g_memQueries.forEach((val, index, array) => {
             console.log('run from memory: '+ val);
-            g_db.run(val, function(error) {
+            g_db.run(val, error => {
                  if (error) //throw 'RunMemQueries unexpected error for query='+val;
                  {
                      console.log('ERROR for RUN SQL: '+ val + '\nmessage:'+(error.message || ''));
@@ -319,4 +361,7 @@ exports.RunMemQueries = function(callback)
     });
     
 }
+
+
+
 
