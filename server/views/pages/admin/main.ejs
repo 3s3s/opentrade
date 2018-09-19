@@ -24,6 +24,9 @@
       <li class="nav-item">
         <a class="nav-link" id="chat-admin" data-toggle="tab" href="#chat_admin" role="tab" aria-controls="chat_admin" aria-selected="false">Chat admin</a>
       </li>
+      <li class="nav-item">
+        <a class="nav-link" id="check-balance" data-toggle="tab" href="#check_balance" role="tab" aria-controls="check_balance" aria-selected="false">Check Balance</a>
+      </li>
     </ul>
     <div class="tab-content p-4" id="adminTabsContent">
       <div class="tab-pane fade show active" id="users" role="tabpanel" aria-labelledby="users-tab">
@@ -255,6 +258,56 @@
             </tr>
           </thead>
           <tbody id='table_ban_users'>
+          </tbody>
+        </table>
+      </div>
+      <div class="tab-pane fade" id="check_balance" role="tabpanel" aria-labelledby="check-balance">
+        <form id="id_finduser_balance" class="form-inline">
+          <div class="form-group row">
+            <label for="inputUser" class="col-sm-2 col-form-label">UserID</label>
+            <div class="col-sm-10">
+              <input type="text" name='user' class="form-control" id="inputUser" placeholder="1">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">Find</button>
+        </form>  
+        <table class="table m-2" style="table-layout: fixed; word-wrap: break-word;">
+          <thead>
+            <tr>
+              <th>
+                coin
+              </th>
+              <th>
+                balance (b)
+              </th>
+              <th>
+                Deposit (D)
+              </th>
+              <th>
+                Affiliate (A)
+              </th>
+              <th>
+                Withdraw (W)
+              </th>
+              <th>
+                Buy (B)
+              </th>
+              <th>
+                Sell (S)
+              </th>
+              <th>
+                In orders (O)
+              </th>
+              <th>
+                D+B+A-W-S-O
+              </th>
+              <th>
+                D+B+A-W-S-O-b
+              </th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id='table_user_balances'>
           </tbody>
         </table>
       </div>

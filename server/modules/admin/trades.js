@@ -66,7 +66,7 @@ exports.onChangeRole = function(ws, req, data)
 
 exports.DeleteDustOrders = function()
 {
-    const WHERE = "amount*1 <= "+g_constants.share.DUST_VOLUME;
+    const WHERE = "amount*1 <= "+g_constants.share.DUST_VOLUME + "*1 OR price*1 <= "+g_constants.share.DUST_VOLUME + "*1";
     g_constants.dbTables['orders'].selectAll('ROWID AS id, *', WHERE, '', (err, rows) => {
         if (err || !rows || !rows.length)
             return;
@@ -84,7 +84,7 @@ exports.onDeleteOrders = function(ws, req, data)
         if (status.id != 1)
             return;
             
-       const WHERE = 'coin="'+escape(data.coinName)+'" AND price*1+0.000001 > '+escape(data.price)+' AND price*1-0.000001 < '+escape(data.price);
+       const WHERE = 'coin="'+escape(data.coinName)+'" AND price*1+0.000001 > '+escape(data.price)+'*1 AND price*1-0.000001 < '+escape(data.price) + '*1';
        g_constants.dbTables['orders'].selectAll('ROWID AS id, *', WHERE, '', (err, rows) => {
            if (err || !rows || !rows.length)
             return;
@@ -123,31 +123,7 @@ function DeleteTrade(data, callback)
     g_constants.dbTables['history'].selectAll('ROWID AS id, *', 'id='+data.id, '', (err, rows) => {
         if (err || !rows || !rows.length) return callback();
         
-        database.BeginTransaction(err => {
-            if (err) return callback();
-            
-            try
-            {
-                const ID = rows[0].id;
-    
-                UpdateBalances(rows, err => {
-                    if (err)
-                    {
-                        database.RollbackTransaction();
-                        return callback();
-                    }
-                    g_constants.dbTables['history'].delete('ROWID='+ID, err => {
-                        database.EndTransaction();
-                        callback();
-                    })
-                });
-            }
-            catch(e)
-            {
-                database.RollbackTransaction();
-                return callback();
-            }
-        });
+        UpdateBalances(rows, err => { g_constants.dbTables['history'].delete('ROWID='+rows[0].id, callback); });
     });
 
     function UpdateBalances(rows, callback)

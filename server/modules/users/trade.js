@@ -24,7 +24,7 @@ exports.onGetChart = function(ws, req, data)
 let g_onGetPair_counter = 0;
 exports.onGetPair = function(ws, req, data)
 {
-    if (g_onGetPair_counter > 30)
+    if (g_onGetPair_counter > 10)
     {
         return;
     }
@@ -32,15 +32,15 @@ exports.onGetPair = function(ws, req, data)
     
     try
     {
-        let retMessage = {
-            request: 'pairdata',
-            message: {result: true, data: {online: utils.GetValidSessionsCount(), allusers: utils.GetAllUsersCount(), orders: '', userOrders: '', historyUser: '', history: ''}}
-        };
         utils.GetSessionStatus(req, status => {
             GetBalance(ws, status, data);
             //if (ws.readyState === WebSocket.OPEN) try{ws.send(JSON.stringify(retMessage));}catch(e){ws.terminate();}
             //    return;
             exports.GetAllOrders(data, ret => {
+                let retMessage = {
+                    request: 'pairdata',
+                    message: {result: true, data: {online: utils.GetValidSessionsCount(), allusers: utils.GetAllUsersCount(), orders: '', userOrders: '', historyUser: '', history: ''}}
+                };
                 retMessage.message.data.orders = ret.data || {};
                 //if (ws.readyState === WebSocket.OPEN) try{ws.send(JSON.stringify(retMessage));}catch(e){ws.terminate();}
                 //return;
@@ -153,18 +153,12 @@ exports.GetAllOrders = function(data, callback)
 {
    // callback({result: true, data: {}}); return;
     if (!data || !data.length || data.length != 2)
-    {
-        callback({result: false, message: 'Bad Request'});
-        return;
-    }
-    
+        return callback({result: false, message: 'Bad Request'});
+
     GetCoins(data[0], data[1], err => {
         if (!err || !err.result || !err.data || err.data.length != 2)
-        {
-            callback({result: false, message: err ? err.message || 'Unknown message error' : 'Unknown message'});
-            return;
-        }
-        
+            return callback({result: false, message: err ? err.message || 'Unknown message error' : 'Unknown message'});
+
         orders.GetAllOrders(err.data, callback);
     });
 }
@@ -195,7 +189,7 @@ function GetUserTradeHistory(status, data, callback)
         return callback({result: true, data: []});
 
     const WHERE = 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'" AND (buyUserID='+status.id+' OR sellUserID='+status.id+')';
-    g_constants.dbTables['history'].selectAll('buyUserID, sellUserID, fromSellerToBuyer AS volume, fromBuyerToSeller, price, buysell, time', WHERE, 'ORDER BY time DESC LIMIT 200', (err, rows) => {
+    g_constants.dbTables['history'].selectAll('buyUserID, sellUserID, fromSellerToBuyer AS volume, fromBuyerToSeller, price, buysell, time', WHERE, 'ORDER BY time*1 DESC LIMIT 200', (err, rows) => {
         if (err || !rows) return callback({result: false, data: []});
         
         let ret = [];
@@ -219,7 +213,7 @@ function GetTradeHistory(data, callback)
         return callback({result: true, data: tradeHistory[data[1]].data});
     
 
-    g_constants.dbTables['history'].selectAll('fromSellerToBuyer AS volume, fromBuyerToSeller, price, buysell, time', 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'"', 'ORDER BY time DESC LIMIT 200', (err, rows) => {
+    g_constants.dbTables['history'].selectAll('fromSellerToBuyer AS volume, fromBuyerToSeller, price, buysell, time', 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'"', 'ORDER BY time*1 DESC LIMIT 200', (err, rows) => {
         if (err || !rows) callback({result: false, data: []});
         
         if (tradeHistory[data[1]])
@@ -266,7 +260,7 @@ function GetChartData(data, callback)
             (data[2] == 6000) ? 86400000 : 360000;
             
         //g_constants.dbTables['history'].selectAll('fromSellerToBuyer AS volume, AVG(price*1000000) AS avg_10min, (time/360000) AS t10min', 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'"', 'GROUP BY t10min ORDER BY t10min DESC LIMIT 60', (err, rows) => {
-        g_constants.dbTables['history'].selectAll('SUM(fromSellerToBuyer) AS volume, AVG((fromBuyerToSeller/fromSellerToBuyer)*1000000) AS avg_10min, (time/'+group+') AS t10min', 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'"', 'GROUP BY t10min ORDER BY t10min DESC LIMIT 200', (err, rows) => {
+        g_constants.dbTables['history'].selectAll('SUM(fromSellerToBuyer*1) AS volume, AVG((fromBuyerToSeller/fromSellerToBuyer)*1000000) AS avg_10min, (time/'+group+') AS t10min', 'coin="'+escape(data[1])+'" AND coin_pair="'+escape(data[0])+'"', 'GROUP BY t10min ORDER BY t10min*1 DESC LIMIT 200', (err, rows) => {
             if (err || !rows) callback({result: false, data: []});
             
             if (chartData[data[1]][data[2]]) delete chartData[data[1]][data[2]];

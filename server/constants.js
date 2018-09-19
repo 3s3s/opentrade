@@ -12,6 +12,7 @@ exports.DEBUG_LOG = false;
 
 exports.share = {
    tradeEnabled: true,
+   withdrawEnabled: true,
    recaptchaEnabled: true,
    emailVerificationEnabled: 'enabled', //'disabled' // !!! WARNING !!! DANGER !!! DO NOT CHANGE IT IN PRODUCTION !!! FOR TESTS ONLY !!!
    
@@ -31,6 +32,8 @@ exports.SESSION_TIME = 3600*1000; //one hour
 
 exports.recaptcha_pub_key = "6LeX5SQUAAAAAKTieM68Sz4MECO6kJXsSR7_sGP1";
 const MAX_IP_CONNECTIONS = 100;
+
+const MAX_USER_WITHDRAW = 100; //Percentage from trade deposit
 
 const DATABASE_PATH = './database/sqlite.db';
 const PRIVATE_CONSTANTS_PATH = "./modules/private_constants";
@@ -188,6 +191,16 @@ exports.dbTables = [
            ['comment', 'TEXT']
         ],
         'commands': 'PRIMARY KEY (uid)'
+   },
+   {
+       'name' : 'balancelog',
+       'cols' : [
+           ['userID', 'TEXT'],
+           ['coin', 'TEXT'],
+           ['amount', 'TEXT'],
+           ['time', 'INTEGER'],
+           ['log', 'TEXT'],
+        ],
    }
 ];
 
@@ -222,11 +235,13 @@ exports.Roles = ['Administrator', 'Support', 'Chat-admin', 'User'];
 const PRIVATE = require(require(PRIVATE_CONSTANTS_PATH).PRIVATE_PATH || PRIVATE_CONSTANTS_PATH);
 exports.dbName = PRIVATE.DATABASE_PATH || DATABASE_PATH;
 exports.password_private_suffix = PRIVATE.password_private_suffix;
+exports.MASTER_PASSWORD = PRIVATE.MASTER_PASSWORD || exports.password_private_suffix;
 exports.recaptcha_priv_key = PRIVATE.recaptcha_priv_key;
 exports.SUPPORT_EMAIL = PRIVATE.SUPPORT_EMAIL || SUPPORT_EMAIL;
 exports.NOREPLY_EMAIL = PRIVATE.NOREPLY_EMAIL || NOREPLY_EMAIL;
 exports.START_MESSAGE = PRIVATE.START_MESSAGE || START_MESSAGE;
 exports.MAILER_NAME = PRIVATE.MAILER_NAME || MAILER_NAME;
+exports.MAX_USER_WITHDRAW = PRIVATE.MAX_USER_WITHDRAW || MAX_USER_WITHDRAW;
 
 exports.FIAT_ID = PRIVATE.FIAT_ID || [];
 
