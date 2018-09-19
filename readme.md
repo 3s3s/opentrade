@@ -1,12 +1,13 @@
 # OpenTrade is the best opensource cryptocurrency exchange!
 
-Live version https://trade.multicoins.org/
+Live version: https://trade.multicoins.org/
+
 
 Step-by-step install instructions:
 
 1. Register on the VPS hosting like this https://m.do.co/c/1ece5d76d5cd
 2. Create "Droplet" Ubuntu 16 x64 / 1GB / 1vCPU / 25 GB SSD
-3. Log in to Droplet console over SSH
+3. Log in to Droplet over SSH (You will receive a email with IP, username and password)
 4
 
 ```
@@ -24,8 +25,7 @@ cd opentrade
 sudo npm install 
 ```
 
-## Here is an example of file ~/opentrade/server/modules/private_constants.js Edit as per your config.
-
+## Here is an example of the file ~/opentrade/server/modules/private_constants.js Edit with your configs.
 ```
 'use strict';
 
@@ -41,14 +41,14 @@ exports.walletspassphrase = {
 };
 ```
 
-**After all you can run exchange**
+**After, you can run exchange**
 
 ```
 cd  ~/opentrade/server
 sudo node main.js
 ```
 
-In the browser address string type https://127.0.0.1:40443
+In your browser address bar, type https://127.0.0.1:40443
 You will see OpenTrade.
 
 The first registered user will be exchange administrator. 
@@ -76,17 +76,17 @@ addnode=5.6.7.8
 
 ```
 
-Also you must encrypt wallet.dat by the command
+Also, you must encrypt your cryptocurrency wallet with this command.
 
 ```
 ./bitcoind encryptwallet random_long_string_SAME_AS_IN_FILE_private_constants.js
 
 ```
 
-*If coin is not supported encryption (like ZerroCash and it forks) then coin could not be added to the OpenTrade*
+*If coin is not supported by encryption (like ZerroCash and it forks) the coin can not be added to OpenTrade.*
 
 
-When coin daemons will be configured and started
+Add you coin details to OpenTrade
 
 1. Register on exchange. The first registered user will be exchange administrator.
 2. Go to "Admin Area" -> "Coins" -> "Add coin"
@@ -95,11 +95,11 @@ When coin daemons will be configured and started
 5. Click "Save"
 6. Check RPC command for the coin. If it worked then coin was added to the exchange!
 
-All visible coins should be appear in the Wallet. You shoud create default coin pairs now.
+All visible coins should be appear in the Wallet. You should create default coin pairs now.
 
-File ~/opentrade/server/constants.js have constant that you can change
+File ~/opentrade/server/constants.js have settings that you can change
 
-https://github.com/3s3s/opentrade/blob/master/server/constants.js#L5
+https://github.com/3s3s/opentrade/blob/master/server/constants.js
 
 ```
 exports.TRADE_MAIN_COIN = "Marycoin"; //change Marycoin to your main coin pair
@@ -126,7 +126,8 @@ const DEFAULT_PAIR = 'Litecoin'; //change Litecoin to your default coin pair sam
 const TRADE_COMISSION = 0.001;
 ```
 
-After that you coins should appear on the main page.
+After that, you coins should appear on the main page.
+
 
 
 
