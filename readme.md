@@ -2,6 +2,7 @@
 
 Live version: https://trade.multicoins.org/
 
+
 Step-by-step install instructions:
 
 1. Register on the VPS hosting like this https://m.do.co/c/1ece5d76d5cd
@@ -22,8 +23,6 @@ git clone https://github.com/3s3s/opentrade.git
 cd opentrade
 
 sudo npm install 
-
-mkdir ~/opentrade/server/database
 ```
 
 ## Here is an example of the file ~/opentrade/server/modules/private_constants.js Edit with your configs.
@@ -115,6 +114,21 @@ exports.my_portSSL = 40443; //change to your ssl port
 
 ```
 
+File ~/opentrade/static_pages/chart.html
+
+https://github.com/3s3s/opentrade/blob/master/static_pages/chart.html#L23
+
+```
+const PORT_SSL = 40443; //change to your ssl port
+const MAIN_COIN = 'Greencoin'; //change Greencoin to your main coin pair same as in constants.js
+const DEFAULT_PAIR = 'Litecoin'; //change Litecoin to your default coin pair same as in constants.js
+      
+const TRADE_COMISSION = 0.001;
+```
+
 After that, you coins should appear on the main page.
+
+
+
 
 
