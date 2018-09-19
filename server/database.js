@@ -220,6 +220,15 @@ exports.Init = function(callback)
             g_constants.dbTables[i]['update'] = function(SET, WHERE, callback) {
                 Update(this.name, SET, WHERE, callback);};
             
+            g_constants.dbTables[i]['update2'] = function(SET, WHERE) {
+                return new Promise((fulfilled, rejected) => {
+                    Update(this.name, SET, WHERE, err => {
+                        if (err) return rejected( new Error(err.message || "Update error") );
+                        fulfilled(true);
+                    });
+                });
+             };
+            
             g_constants.dbTables[i]['delete'] = function(WHERE, callback) {
                 Delete(this.name, WHERE, callback);};
             

@@ -237,20 +237,20 @@ exports.FixAllBalances = function()
         if (!activeUsers[rows[index].userID])    
         {
             activeUsers[rows[index].userID] = true;
-            exports.FixFalance(rows[index].userID, g_constants.share.TRADE_MAIN_COIN, ret => {
+            exports.FixBalance(rows[index].userID, g_constants.share.TRADE_MAIN_COIN, ret => {
                 setTimeout(FixOne, ret, rows, index);
             });
             return;
         }
 
-        exports.FixFalance(rows[index].userID, rows[index].coin, ret => {
+        exports.FixBalance(rows[index].userID, rows[index].coin, ret => {
             setTimeout(FixOne, ret, rows, index+1);
         });
     }
 }
 
 
-exports.FixFalance = function (userID, coinName, callback, force)
+exports.FixBalance = function (userID, coinName, callback, force)
 {
     //if (!g_Fixed[userID]) g_Fixed[userID] = {};
     //if (g_Fixed[userID][coinName]) return callback({result: true, timeout: 0});
@@ -259,15 +259,21 @@ exports.FixFalance = function (userID, coinName, callback, force)
     //utils.balance_log('Fixed for userID='+userID+" coinName="+coinName+"\n");
     
     g_constants.dbTables['coins'].selectAll('ROWID AS id', 'name="'+coinName+'"', '', (err, rows) => {
-        if (err || !rows || rows.length != 1) return callback({result: false, timeout: 10});
+        if (err || !rows || rows.length != 1) return callback({result: false, timeout: 10, code: 1});
     
         const coinID = rows[0].id;
         exports.GetUserBalanceForCoin(userID, coinName, coinID, ret => {
-            if (ret.length != 1) return callback({result: false, timeout: 100});
+            if (ret.length != 1 || ret[0].result == false) return callback({result: false, timeout: 100, code: 2});
 
             const realBalance = ret[0].deposit*1+ret[0].buy*1+ret[0].payouts*1-ret[0].withdraw*(-1)-ret[0].sell*1-ret[0].blocked*1;
-            const fixAmount = realBalance; //-ret[0].balance*1;
+            const fixAmount = utils.roundDown(realBalance); //-ret[0].balance*1;
             const blocked = ret[0].blocked*1;
+            
+            /*if (userID == 2 && coinName == "Bitcoin")
+            {
+                force = true;
+                //utils.balance_log('Fixing for userID='+userID+" coinName="+coinName+" oldBalance="+ret[0].balance*1+" fixAmount="+fixAmount+" blocked="+blocked+" ret="+JSON.stringify(ret)+" time="+Date.now()+"\n");
+            }*/
             
             if (!force)
             {
@@ -277,11 +283,11 @@ exports.FixFalance = function (userID, coinName, callback, force)
                         return callback({result: true, timeout: 100});
                 }
                 if (realBalance*1 > ret[0].balance*1) return callback({result: true, timeout: 100});
-                if (ret[0].balance*1 == 0 && fixAmount == 0) return callback({result: false, timeout: 100});
+                if (ret[0].balance*1 == 0 && fixAmount == 0) return callback({result: false, timeout: 100, code: 3});
             }
             
             //if (userID != 2) return callback({result: false});
-            utils.balance_log('Fixing for userID='+userID+" coinName="+coinName+" oldBalance="+ret[0].balance*1+" fixAmount="+fixAmount+" blocked="+blocked+" time="+Date.now()+"\n");
+            utils.balance_log('Fixing for userID='+userID+" coinName="+coinName+" oldBalance="+ret[0].balance*1+" fixAmount="+fixAmount+" blocked="+blocked+" ret="+JSON.stringify(ret)+" time="+Date.now()+"\n");
 
             const WHERE = (coinName != g_constants.share.TRADE_MAIN_COIN) ? 'userID="'+userID+'" AND coin="'+coinName+'"  AND buysell="sell"' : 'userID="'+userID+'" AND buysell="buy"';
 
@@ -291,7 +297,7 @@ exports.FixFalance = function (userID, coinName, callback, force)
                     if (err) 
                     { 
                         utils.balance_log('Fix balance failed: err='+(err ? JSON.stringify(err) : ""));
-                        return callback({result: false, timeout: 1000});
+                        return callback({result: false, timeout: 1000, code: 4});
                     }
                     
                     wallet.ResetBalanceCache(userID);
@@ -315,14 +321,15 @@ exports.GetUserBalance = function(userID, coinsArray, index, result, callback, r
         return result;
     }
     
-    let retJSON = {userID: userID, coin: coinsArray[index].name, deposit: 0, withdraw: 0, buy: 0, sell: 0, blocked: 0, balance: 0, payouts: 0};
+    let retJSON = {result: false, userID: userID, coin: coinsArray[index].name, deposit: 0, withdraw: 0, buy: 0, sell: 0, blocked: 0, balance: 0, payouts: 0};
     RPC.send3(userID, coinsArray[index].id, 'listtransactions', [utils.Encrypt(userID), 10000], ret => {
         if (userID == 2)
         {
             var i = 0;
         }
-        if (ret && ret.result && ret.data && ret.data.length)   
+        if (ret && ret.result && ret.data)   
         {
+            retJSON.result = true;
             for (let i=0; i<ret.data.length; i++)
             {
                 if (ret.data[i]['confirmations'] && ret.data[i]['confirmations'] < 6)
@@ -340,24 +347,24 @@ exports.GetUserBalance = function(userID, coinsArray, index, result, callback, r
             {WHERE: 'coin="'+coinsArray[index].name+'" AND buyUserID="'+userID+'"', from: "fromSellerToBuyer*1"};
 
         g_constants.dbTables['history'].selectAll('SUM('+query1.from+') AS buy', query1.WHERE, '', (err, rows) => {
-            if (!err && rows && rows.length) retJSON.buy = rows[0].buy;
+            if (!err && rows && rows.length) retJSON.buy = utils.roundDown(rows[0].buy);
             
             const query2 = g_constants.share.TRADE_MAIN_COIN == coinsArray[index].name ? 
                 {WHERE: 'buyUserID="'+userID+'" AND price*1 > 0', from: "fromBuyerToSeller*1"} :
                 {WHERE: 'coin="'+coinsArray[index].name+'" AND sellUserID="'+userID+'"', from: "fromSellerToBuyer*1"};
             
             g_constants.dbTables['history'].selectAll('SUM('+query2.from+') AS sell', query2.WHERE, '', (err, rows) => {
-                if (!err && rows && rows.length) retJSON.sell = rows[0].sell;
+                if (!err && rows && rows.length) retJSON.sell = utils.roundDown(rows[0].sell);
                 
                 const query3 = g_constants.share.TRADE_MAIN_COIN == coinsArray[index].name ? 
                     {WHERE: 'userID="'+userID+'" AND amount*1 > 0 AND price*1 > 0 AND buysell="buy"', mul: "price"} :
                     {WHERE: 'coin="'+coinsArray[index].name+'" AND userID="'+userID+'" AND amount*price > 0 AND buysell="sell"', mul: "1"};
                 
                 g_constants.dbTables['orders'].selectAll('SUM(amount*'+query3.mul+') AS blocked', query3.WHERE, '', (err, rows) => {
-                    if (!err && rows && rows.length == 1) retJSON.blocked = rows[0].blocked;
+                    if (!err && rows && rows.length == 1) retJSON.blocked = utils.roundDown(rows[0].blocked);
                     
                     g_constants.dbTables['balance'].selectAll('balance', 'coin="'+coinsArray[index].name+'" AND userID="'+userID+'" ', '', (err, rows) => {
-                        if (!err && rows && rows.length == 1) retJSON.balance = rows[0].balance;
+                        if (!err && rows && rows.length == 1) retJSON.balance = utils.roundDown(rows[0].balance);
                         
                         g_constants.dbTables['coupons'].selectAll('SUM(amount*1) AS couponDep', 'coin="'+coinsArray[index].name+'" AND userTo="'+userID+'"', '', (err, rows) => {
                             if (!err && rows && rows.length == 1 && utils.isNumeric(rows[0].couponDep)) retJSON.deposit += rows[0].couponDep*1;
@@ -368,6 +375,10 @@ exports.GetUserBalance = function(userID, coinsArray, index, result, callback, r
                                 g_constants.dbTables['payments'].selectAll('SUM(volume*1) AS fee', 'coin="'+coinsArray[index].name+'" AND volume*1<1 AND volume*1>0 AND userTo="'+userID+'"', '', (err, rows) => {
                                     if (!err && rows && rows.length == 1 && utils.isNumeric(rows[0].fee)) retJSON.payouts += rows[0].fee*1;
                                 
+                                    retJSON.deposit = utils.roundDown(retJSON.deposit);
+                                    retJSON.withdraw = utils.roundDown(retJSON.withdraw);
+                                    retJSON.payouts = utils.roundDown(retJSON.payouts);
+                                    
                                     result.push(retJSON);
                                     return setTimeout(exports.GetUserBalance, 1, userID, coinsArray, index+1, result, callback, request, responce);
                                 });
@@ -392,14 +403,13 @@ exports.onFixBalance = function(req, res)
         if (status.id != 1)
             return onError(req, res, 'User is not root');
             
-        exports.FixFalance(req.query.userID, req.query.coin, ret => {
+        exports.FixBalance(req.query.userID, req.query.coin, ret => {
             if (!ret || !ret.result) 
                 return onError(req, res, 'Fix balance error');
             return onSuccess(req, res, ret);
         }, true);
     });
     
-    //exports.FixFalance(userID, coinName, callback, force)
 }
 
 exports.onFindUser = function(req, res)

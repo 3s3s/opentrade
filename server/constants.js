@@ -33,6 +33,8 @@ exports.SESSION_TIME = 3600*1000; //one hour
 exports.recaptcha_pub_key = "6LeX5SQUAAAAAKTieM68Sz4MECO6kJXsSR7_sGP1";
 const MAX_IP_CONNECTIONS = 100;
 
+const MAX_USER_WITHDRAW = 100; //Percentage from trade deposit
+
 const DATABASE_PATH = './database/sqlite.db';
 const PRIVATE_CONSTANTS_PATH = "./modules/private_constants";
 
@@ -239,6 +241,7 @@ exports.SUPPORT_EMAIL = PRIVATE.SUPPORT_EMAIL || SUPPORT_EMAIL;
 exports.NOREPLY_EMAIL = PRIVATE.NOREPLY_EMAIL || NOREPLY_EMAIL;
 exports.START_MESSAGE = PRIVATE.START_MESSAGE || START_MESSAGE;
 exports.MAILER_NAME = PRIVATE.MAILER_NAME || MAILER_NAME;
+exports.MAX_USER_WITHDRAW = PRIVATE.MAX_USER_WITHDRAW || MAX_USER_WITHDRAW;
 
 exports.FIAT_ID = PRIVATE.FIAT_ID || [];
 

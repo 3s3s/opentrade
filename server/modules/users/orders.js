@@ -10,6 +10,7 @@ const database = require("../../database");
 let userOrders = {};
 let allOrders = {};
 let g_LockedOrders = [];
+let g_LockExchange = {};
 
 function onError(req, res, message)
 {
@@ -46,8 +47,12 @@ exports.CloseAllUserOrders = function(userID, coinName)
     }
 }
 
-exports.CloseUserOrder = function(userID, orderROWID, callback)
+exports.CloseUserOrder = function(userID, orderROWID, callback, c)
 {
+    const counter = c || 0;
+    if (counter > 5)
+        return callback(false, 'Coin is locked');
+        
     if (IsOrderLocked(orderROWID))
         return callback(false, 'Order is locked');
         
@@ -57,6 +62,7 @@ exports.CloseUserOrder = function(userID, orderROWID, callback)
             return callback(false, err ? err.message || 'Order not found' : 'Order not found');
 
         const order = rows[0];
+
         const fullAmount = order.buysell == 'buy' ?
                 utils.roundDown(order.amount*order.price+g_constants.share.TRADE_COMISSION*order.amount*order.price) :
                 utils.roundDown(order.amount*1);
@@ -76,17 +82,30 @@ exports.CloseUserOrder = function(userID, orderROWID, callback)
             if (require("./orderupdate").IsLockedUser(order.userID))
                 return callback(false, 'User is locked');
 
+            if (!g_LockExchange[userID]) g_LockExchange[userID] = {};
+            if (g_LockExchange[userID]['lock'])
+                return setTimeout(exports.CloseUserOrder, 1000, userID, orderROWID, callback, counter+1);
+            
+            g_LockExchange[userID]['lock'] = true;    
             require("./orderupdate").UpdateOrders(order.userID, "amount='0.0', time='"+Date.now()+"'", WHERE_ORDER, err => {
                 
-                if (err) 
+                if (err && err.result == false) 
+                {
+                    g_LockExchange[userID]['lock'] = false;
                     return callback(false, err.message || 'User is locked');
+                }
                 if (Math.abs(newBalance*1 - rows[0].balance*1) < g_constants.share.DUST_VOLUME) 
+                {
+                    g_LockExchange[userID]['lock'] = false;
                     return callback(true, {"success" : true, "message" : "", "result" : null});
+                }
                     
                 require("./balanceupdate").UpdateBalance(userID, unescape(coinBalance), newBalance, "CloseUserOrder", err => {
                     wallet.ResetBalanceCache(userID);
                     if (allOrders[order.coin]) delete allOrders[order.coin];
                     if (userOrders[userID]) delete userOrders[userID];
+                    
+                    g_LockExchange[userID]['lock'] = false;
                                     
                     return callback(true, {"success" : true, "message" : "", "result" : null});
                 });
@@ -294,8 +313,17 @@ function ValidateOrderRequest(req)
     return true;
 }
 
-function AddOrder(status, WHERE, newBalance, req, res)
+function AddOrder(status, WHERE, newBalance, req, res, c)
 {
+    const counter = c || 0;
+    if (counter > 5)
+        return onError(req, res, 'Coin locked. Please try later');
+    
+    const coinName = escape(req.body.coin);    
+    if (!g_LockExchange[status.id]) g_LockExchange[status.id] = {};
+    if (g_LockExchange[status.id]['lock'])
+        return setTimeout(AddOrder, 1000, status, WHERE, newBalance, req, res, counter+1);
+
     const amount = utils.roundDown(req.body.amount);
     const price = utils.roundDown(req.body.price);
     const balance = utils.roundDown(newBalance*1);
@@ -305,14 +333,19 @@ function AddOrder(status, WHERE, newBalance, req, res)
     {
         return onError(req, res, 'Bad amount or price or balance');
     }
-
+    
     const uuid = Date.now()+"-"+status.id+"-"+Math.random();
     const log = [{action: "init", amount: amount, price: price, time: Date.now()}];
     
     if (require("./orderupdate").IsLockedUser(status.id)) return onError(req, res, 'User is locked for orders');
     
+    g_LockExchange[status.id]['lock'] = true;
     require("./balanceupdate").UpdateBalance(status.id, unescape(req['queryCoin']), balance, "AddOrder", err => {
-        if (err) return onError(req, res, 'Update balance error');
+        if (err) 
+        {
+            g_LockExchange[status.id]['lock'] = false;
+            return onError(req, res, 'Update balance error');
+        }
         
         g_constants.dbTables['orders'].insert(
             status.id,
@@ -325,21 +358,25 @@ function AddOrder(status, WHERE, newBalance, req, res)
             JSON.stringify(log),
             uuid,
             err => {
-                if (err) return onError(req, res, err.message || 'Database Insert error');
+                g_LockExchange[status.id]['lock'] = false;
                 
+               // if (status.id == 2 && req.body.coin == "Bitcoin")
+               //     utils.balance_log('Call FixBalance from AddOrder amount='+amount+" balance="+balance);
+                    
+                adminUtils.FixBalance(status.id, escape(req.body.coin), () => {});
+                
+                if (err) 
+                    return onError(req, res, err.message || 'Database Insert error');
+
                 wallet.ResetBalanceCache(status.id);
                 if (allOrders[req.body.coin]) delete allOrders[req.body.coin];
                 if (userOrders[status.id])
                     delete userOrders[status.id];
-                    
-                adminUtils.FixFalance(status.id, escape(req.body.coin), () => {});
                                     
                 return onSuccess(req, res, {uuid: uuid});
             }
         );
     });
-
-
 }
 
 function LockOrder(id)
@@ -367,25 +404,15 @@ function IsOrderLocked(id)
     return false;
 }
 
-let g_LockExchange = {};
 exports.ProcessExchange = function(coin)
 {
-    if (!g_LockExchange[coin]) g_LockExchange[coin] = {};
-    if (g_LockExchange[coin]['lock']) return;
-    
-    g_LockExchange[coin]['lock'] = true;
-
     const SQL = 'SELECT * FROM (SELECT ROWID as id, * FROM orders where coin="'+coin+'"  AND amount*price > 0 AND amount*1>0.000001 AND price*1>0.000001 AND buysell="buy" ORDER BY price*1 DESC, time*1 DESC LIMIT 1 ) '+
                 'UNION ' +
                 'SELECT * FROM (SELECT ROWID as id, * FROM orders where coin="'+coin+'"  AND amount*price > 0  AND amount*1>0.000001 AND price*1>0.000001 AND buysell="sell"  ORDER BY price*1, time*1 LIMIT 1 )';
      
     database.SELECT(SQL, (err, rows) => {
-        if (err || !rows || rows.length != 2) 
-        {
-            g_LockExchange[coin]['lock'] = false;
-            return;
-        }
-        
+        if (err || !rows || rows.length != 2) return;
+
         LockOrder(rows[0].id);
         LockOrder(rows[1].id);
         
@@ -394,7 +421,6 @@ exports.ProcessExchange = function(coin)
             RunExchange(rows[0], rows[1], ret => { 
                 UnlockOrder(rows[0].id);
                 UnlockOrder(rows[1].id);
-                g_LockExchange[coin]['lock'] = false;
                 if (ret == 1) setTimeout(exports.ProcessExchange, 10, coin)
             });
             return;
@@ -405,7 +431,6 @@ exports.ProcessExchange = function(coin)
             RunExchange(rows[1], rows[0],  ret => { 
                 UnlockOrder(rows[0].id);
                 UnlockOrder(rows[1].id);
-                g_LockExchange[coin]['lock'] = false;
                 if (ret == 1) setTimeout(exports.ProcessExchange, 10, coin)
             });
             return;
@@ -413,11 +438,12 @@ exports.ProcessExchange = function(coin)
         
         UnlockOrder(rows[0].id);
         UnlockOrder(rows[1].id);
-        g_LockExchange[coin]['lock'] = false;
     });
 
     function RunExchange(buyOrder, sellOrder, callback)
     {
+        if (!buyOrder.userID || !sellOrder.userID) return callback(0);
+        
         const coinName = unescape(buyOrder.coin);
         
         if (!utils.isNumeric(sellOrder.amount*1) || sellOrder.amount*1 <= 0) return callback(0);
@@ -433,9 +459,6 @@ exports.ProcessExchange = function(coin)
             utils.roundDown(fromSellerToBuyer*sellOrder.price) :
             utils.roundDown(fromSellerToBuyer*buyOrder.price);
         
-        //if (fromSellerToBuyer*1 == 0 || fromBuyerToSeller*1 == 0 )
-        //    return;
-        
         const comission = utils.roundDown(fromBuyerToSeller*g_constants.share.TRADE_COMISSION);
         
         const buyerChange = (priority == 'buyer') ? 
@@ -449,8 +472,22 @@ exports.ProcessExchange = function(coin)
         if (!utils.isNumeric(fromSellerToBuyer) || fromSellerToBuyer <= 0) return callback(0);
         if (!utils.isNumeric(fromBuyerToSeller) || fromBuyerToSeller <= 0) return callback(0);
         
+        if (!g_LockExchange[buyOrder.userID]) g_LockExchange[buyOrder.userID] = {};
+        if (g_LockExchange[buyOrder.userID]['lock']) return callback(0);
+        
+        if (!g_LockExchange[sellOrder.userID]) g_LockExchange[sellOrder.userID] = {};
+        if (g_LockExchange[sellOrder.userID]['lock']) return callback(0);
+        
+        g_LockExchange[buyOrder.userID]['lock'] = true;
+        g_LockExchange[sellOrder.userID]['lock'] = true;
+        
         UpdateOrders(newBuyAmount, newSellAmount, buyOrder.id, sellOrder.id, err => {
-            if (err) return callback(0);
+            if (err && err.result == false) 
+            {
+                g_LockExchange[buyOrder.userID]['lock'] = false;
+                g_LockExchange[sellOrder.userID]['lock'] = false;
+                return callback(0);
+            }
             UpdateBalances(buyOrder, sellOrder, fromSellerToBuyer, fromBuyerToSeller, buyerChange, comission, err => {
                 UpdateHistory(buyOrder, sellOrder, fromSellerToBuyer, fromBuyerToSeller, buyerChange, comission, err => {
         
@@ -472,8 +509,9 @@ exports.ProcessExchange = function(coin)
                     
                     if (allOrders[coinName]) delete allOrders[coinName];
                                             
+                    g_LockExchange[buyOrder.userID]['lock'] = false;
+                    g_LockExchange[sellOrder.userID]['lock'] = false;
                     return callback(1);
-
                 });
                         
             });
@@ -551,7 +589,7 @@ exports.ProcessExchange = function(coin)
     function UpdateOrders(newBuyAmount, newSellAmount, buyOrderID, sellOrderID, callback)
     {
         g_constants.dbTables['orders'].selectAll("ROWID AS id, coin, amount, info", "ROWID="+buyOrderID+" OR ROWID="+sellOrderID, "", (err, rows) => {
-            if (err || !rows || rows.length != 2) return callback(1);
+            if (err || !rows || rows.length != 2) return callback({result: false, message: "Select orders failed"});
             
             try
             {
@@ -564,23 +602,23 @@ exports.ProcessExchange = function(coin)
                 const logSell = logSell0.length ? logSell0 : [];
                 
                 if (require("./orderupdate").IsLockedUser(rows[0].userID))
-                    return callback(false, 'User is locked');
+                    return callback({result: false, message: 'User is locked'});
                 if (require("./orderupdate").IsLockedUser(rows[1].userID))
-                    return callback(false, 'User is locked');
+                    return callback({result: false, message: 'User is locked'});
 
                 require("./orderupdate").UpdateOrders(rows[0].userID, 'amount="'+newBuyAmount+'", info="'+escape(JSON.stringify(logBuy.concat([{action: "updtB", amount: newBuyAmount, old0: rows[0].amount, old1: rows[1].amount}])))+'"', 'ROWID="'+buyOrderID+'"', err => {
-                    if (err) return callback(false, err.message || 'User is locked');
+                    if (err && err.result == false) return callback({result: false, message: err.message || 'User is locked'});
                     
                    require("./orderupdate").UpdateOrders(rows[0].userID, 'amount="'+newSellAmount+'", info="'+escape(JSON.stringify(logSell.concat([{action: "updtS", amount: newSellAmount, old0: rows[0].amount, old1: rows[1].amount}])))+'"', 'ROWID="'+sellOrderID+'"', err => {
-                        if (err) return callback(false, err.message || 'User is locked');
+                        if (err && err.result == false) return callback({result: false, message: err.message || 'User is locked'});
                         
-                        require("./orderupdate").DeleteOrder(rows[0].coin, "amount*price <= 0 AND time*1+3600*48*1000 < "+Date.now(), err => {});
-                        callback(null);
+                        require("./orderupdate").DeleteOrder(rows[0].coin, "(amount*price <= 0 OR amount*1 <= 0 OR price*1 <= 0) AND time*1+3600*48*1000 < "+Date.now(), err => {});
+                        return callback({result: true});
                     });
                 });
             }
             catch(e) {
-                return callback(1);
+                return callback({result: false, message: e.message || "cathed error"});
             }
         });
     }
@@ -598,7 +636,7 @@ exports.AddBalance = function(userID, count, coin, callback, userFrom, comment)
         const newBalance = rows.length ? rows[0].balance*1 + count*1 : count*1;
         
         const balance = utils.roundDown(newBalance);
-        if (!utils.isNumeric(balance) || balance < 0) return callback(1); //Fatal error need rollback transaction
+        if (!utils.isNumeric(balance)) return callback(1); //Fatal error need rollback transaction
 
         if (userFrom && comment)
         {
