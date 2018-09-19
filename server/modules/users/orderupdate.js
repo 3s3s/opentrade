@@ -32,9 +32,9 @@ exports.IsLockedUser = function(id)
 
 exports.UpdateOrders = function(userID, SET, WHERE, callback)
 {
-    if (exports.IsLockedUser(userID)) return callback(1);
+    if (exports.IsLockedUser(userID)) return callback({result: false, message: "User is locked for orders"});
     
-    g_constants.dbTables['orders'].update(SET, WHERE, callback);
+    g_constants.dbTables['orders'].update(SET, WHERE, err => {return callback({result: err ? false : true, message: ""})});
 }
 
 exports.DeleteOrder = function(coin, WHERE, callback)

@@ -650,15 +650,15 @@ exports.CheckCoin = function(coin, callback)
         catch(e) {callback({result: false, message: e.message});}
 
         if (rows[0].info.active != true)
-            return setTimeout(callback, 10, {result: false, message: 'Coin "'+coin+'" is not active'});
+            return setTimeout(callback, 10, {result: false, message: 'Coin "'+coin+'" is not active', info: rows[0].info});
  
         if (rows[0].info.orders == 'Disabled')
-            return setTimeout(callback, 10, {result: false, message: 'Coin "'+coin+'" orders is temporarily disabled'});
+            return setTimeout(callback, 10, {result: false, message: 'Coin "'+coin+'" orders is temporarily disabled', info: rows[0].info});
         
         if (g_constants.share.tradeEnabled == false)
-            return setTimeout(callback, 10, {result: false, message: 'Trading is temporarily disabled'});
+            return setTimeout(callback, 10, {result: false, message: 'Trading is temporarily disabled', info: rows[0].info});
 
-        setTimeout(callback, 10, {result: true});
+        setTimeout(callback, 10, {result: true, info: rows[0].info});
     });
 }
 

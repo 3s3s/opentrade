@@ -124,29 +124,6 @@ function DeleteTrade(data, callback)
         if (err || !rows || !rows.length) return callback();
         
         UpdateBalances(rows, err => { g_constants.dbTables['history'].delete('ROWID='+rows[0].id, callback); });
-        
-        /*database.BeginTransaction('1', err => {
-            if (err) return callback();
-            
-            console.log('BeginTransaction from DeleteTrade');
-            try {
-                const ID = rows[0].id;
-    
-                UpdateBalances(rows, err => {
-                    if (err) return database.RollbackTransaction(() => { return callback(); });
-
-                    g_constants.dbTables['history'].delete('ROWID='+ID, err => {
-                        database.EndTransaction(err => {
-                            if (err) return database.RollbackTransaction(() => { return callback(); });
-                            return callback();
-                        });
-                    })
-                });
-            }
-            catch(e) {
-                return database.RollbackTransaction(() => { return callback(); });
-            }
-        });*/
     });
 
     function UpdateBalances(rows, callback)
