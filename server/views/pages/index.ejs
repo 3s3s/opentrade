@@ -10,8 +10,89 @@
     <div class="container pt-2">
       <% include ../partials/alerts %>
       <input id='id_token' type='hidden' <% var value = ''; try{if (status.token) value = "value='"+status.token+"'"}catch(e){} %> <%- value %>>
-      <div class='row'>
-        <div class="col-md-2 p-0">
+      <div class='row specialmargin'>
+        <div class='col-md-10 pl-1.4 customchart nomargin' style='background: white !important'>
+          <div class='container p-0'>
+            <div class='row p-0 nomargin'>
+			<div class='card-header' style='width:100%;'><div id='coinsymbolid'></div></div>
+			<script src='https://code.jquery.com/jquery-3.1.1.min.js'></script>
+	<script src='https://code.highcharts.com/stock/highstock.js'></script>
+	<script src='https://code.highcharts.com/stock/modules/drag-panes.js'></script>
+	<script src='https://code.highcharts.com/stock/modules/exporting.js'></script>
+			 <div id='graphs' style='width:100%; height:100%'></div>
+			
+              	<script>
+	
+	var link = document.location.href;
+	
+	var coinsymbol = link.split("-").pop();
+	
+	var baseurl = window.location.origin + '/';
+	
+	if (link == baseurl){
+		document.getElementById("coinsymbolid").innerHTML = 'News';
+		document.getElementById("graphs").innerHTML = '<div class="news">These are news</div>';
+	} else {
+	
+	document.getElementById("coinsymbolid").innerHTML = 'Graph - ' + coinsymbol + '/BTC';
+	
+	
+	
+	$.getJSON('/api/v1/public/getcharts?market=BTC-'+coinsymbol, function (data) {
+	var json_obj = data;
+Highcharts.stockChart('graphs', {
+        title: {
+            text: null
+        },
+
+        xAxis: {
+            gapGridLineWidth: 0
+        },
+
+        rangeSelector: {
+		 selected: 1,
+            buttons: [{
+                type: 'day',
+                count: 1,
+                text: '1D'
+            }, {
+                type: 'all',
+                count: 1,
+                text: 'All'
+            }],
+            selected: 1,
+            inputEnabled: false
+        },
+		
+		legend: {
+                    enabled: true
+        },
+		
+		exporting: {
+                    enabled: false
+        },
+		plotOptions: {
+ candlestick: {
+			lineColor: '#2f7ed8',	    		
+	    	upLineColor: 'silver',
+	    	upColor: 'silver'
+        }
+    },
+
+        series: [{
+            type: 'candlestick',
+            name: coinsymbol,
+            data: json_obj
+        }]
+    });
+});
+}
+	</script>
+            </div>
+          </div>
+        </div>
+       <!-- pairs -->
+	   <div class="col-md-2 p-1">
           <div class="card">
             <div class="card-header">
               <%-__('Market')%>
@@ -19,13 +100,13 @@
             <div class="card-body p-0">
               <div id='market-flex' class="d-flex d-flex-market align-items-start bd-highlight mb-0" >
                 <div id='market-container' class='container p-0'>
-                  <table class="table table-sm  table-hover table-orders">
+                  <table class="table table-sm  table-hover table-orders sortable">
                     <thead>
                       <tr>
                         <th scope="col"></th>
                         <th scope="col">Coin</th>
                         <th scope="col">Price</th>
-                        <th scope="col">Vol</th>
+                        <th scope="col">Vol BTC</th>
                         <th scope="col">Ch (%)</th>
                       </tr>
                     </thead>
@@ -37,52 +118,56 @@
             </div>
           </div>
         </div>
-        <div class='col-md-7 pl-1.4'>
-          <div class='container p-0'>
-            <div class='row p-0'>
-              <iframe frameBorder="0" scrolling='no' style='height: 470px;' class="col-md-12" src='../chart.html'></iframe>
-            </div>
-          </div>
-          <!--<div class="embed-responsive" style='padding-top: 75%' >
-            <iframe style='height: 500px;' scrolling='no' class="embed-responsive-item" src='../chart.html'></iframe>
-          </div>-->
-        </div>
-        <div class="col-md-3 p-0">
-          <div class="card">
-            <div id='id_chat_header' class="card-header">
-              Chat
-            </div>
-            <div class="card-body p-0">
-              <button id='id_btn_chat_ru' type="button" class="btn btn-outline-primary btn-sm">Ru</button>
-              <button id='id_btn_chat_en' type="button" class="btn btn-outline-primary btn-sm">En</button>
-              <div id='chat-flex' class="d-flex d-flex-chat align-items-start bd-highlight mb-0" style="height: 350px">
-                <div id='chat-container_loading' class='container'>
-                  <div class='row'><div class='col-md-12'>Loading...</div></div>
-                </div>
-                <div id='chat-container_ru' class='container font_14'>
-                </div>
-                <div id='chat-container_en' class='container font_14'>
-                </div>
-              </div>
-              <div class="input-group">
-                <input id='chat_message' type="text" class="form-control" maxlength="150">
-                <span class="input-group-btn">
-                  <button id='button_chat' class="btn btn-secondary" type="button">Submit</button>
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+	   <!-- end pairs -->
       </div>
+	  <!-- end graph & pairs -->
 
-      <div class='row'>
-        <div class="col-md-3 p-1">
+	  <!-- trade history -->
+	  <div class='row'>
+	  <div class="col-md-8 p-1">
+	  <div class="row" style="margin: 0 0 0 0 !important;">
+		<div class="col-md-4 p-1">
+            <div class="card">
+             <!-- <div class="card-header">
+                Trade history:
+              </div>-->
+              <div class="card-header p-0">
+                <table class='table table-orders m-0'>
+                  <tr>
+                    <td><strong><%-__('Trade history')%>:</strong></td>
+                  </tr>
+                </table>
+              </div>
+              
+              
+              <div class="card-body div-orders p-0">
+                <table class="table table-striped table-sm table-orders">
+                  <thead>
+                    <tr>
+                      <th>Time</th>
+                      <th>Type</th>
+                      <th>Volume</th>
+                      <th>Price</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id='id_trade_history'>
+                  </tbody>
+                </table>
+              </div>
+            </div>          
+          </div>
+		<!-- end trade history -->
+		
+		<!-- buy sell -->
+		
+		<div class="col-md-4 p-1">
           <div class="card">
             <div id='header_buy' class="card-header">
               
             </div>
             <div class="card-body p-1">
-              <div class="alert alert-secondary p-1" role="alert">
+              <div class="alert alert-secondary buyform p-1" role="alert">
                 <div class='container'>
                   <div class='row'>
                     <div class='col-md-6'>
@@ -153,19 +238,19 @@
                     <span class="currency" id="id_total_buy"></span>
                   </div>
                 </div>
-                <button type="submit" class="btn btn-primary"><%-__('Buy')%></button>
+                <button type="submit" class="btn btn-primary buybtn"><%-__('Buy')%></button>
               </form>
               
             </div>
           </div>          
         </div>
-        <div class="col-md-3 p-1">
+        <div class="col-md-4 p-1 nopaddingright">
           <div class="card">
                   <div id='header_sell' class="card-header">
                     
                   </div>
                   <div class="card-body p-1">
-                    <div class="alert alert-secondary p-1" role="alert">
+                    <div class="alert alert-secondary sellform p-1" role="alert">
                       <div class='container'>
                         <div class='row'>
                           <div class='col-md-6'>
@@ -236,12 +321,14 @@
                             <span class="currency" id="id_total_sell"></span>
                           </div>
                         </div>
-                        <button type="submit" class="btn btn-primary"><%-__('Sell')%></button>
+                        <button type="submit" class="btn btn-primary sellbtn"><%-__('Sell')%></button>
                       </form>
                   </div>
                 </div>          
         </div>
-        <div class="col-md-6 p-1">
+		<!-- end buy sell -->
+		<!-- your trade history -->
+		<div class="col-md-12 p-1 nopaddingright">
           <div class="card">
            <!-- <div class="card-header">
               Your active orders:
@@ -291,9 +378,15 @@
             </div>
           </div>          
         </div>
-      </div>
-      <div class='row'>
-        <div class="col-md-3 p-1">
+		
+		
+		
+		</div>
+		</div> <!-- end right side -->
+		<div class="col-md-4 p-1">
+		<div class="row" style="margin: 0 0 0 0 !important;">
+		<!-- orders -->
+		 <div class="col-md-6 p-1 nopaddingleft">
             <div class="card">
               <div class="card-header p-0">
                 <table class='table table-orders m-0'>
@@ -304,7 +397,7 @@
                 </table>
                 
               </div>
-              <div class="card-body div-orders p-0">
+              <div class="card-body div-orders p-0 custom-height">
                 <table class="table table-striped table-sm table-orders table-hover">
                   <thead>
                     <tr id='id_sell_orders_header'>
@@ -316,7 +409,7 @@
               </div>
             </div>          
           </div>
-        <div class="col-md-3 p-1">
+        <div class="col-md-6 p-1">
             <div class="card">
               <div class="card-header p-0">
                 <table class='table table-orders m-0'>
@@ -327,7 +420,7 @@
                 </table>
                 
               </div>
-              <div class="card-body div-orders p-0">
+              <div class="card-body div-orders p-0 custom-height">
                 <table class="table table-striped table-sm table-orders table-hover">
                   <thead>
                     <tr id='id_buy_orders_header'>
@@ -339,38 +432,12 @@
               </div>
             </div> 
           </div>
-        <div class="col-md-6 p-1">
-            <div class="card">
-             <!-- <div class="card-header">
-                Trade history:
-              </div>-->
-              <div class="card-header p-0">
-                <table class='table table-orders m-0'>
-                  <tr>
-                    <td><strong><%-__('Trade history')%>:</strong></td>
-                  </tr>
-                </table>
-              </div>
-              
-              
-              <div class="card-body div-orders p-0">
-                <table class="table table-striped table-sm table-orders">
-                  <thead>
-                    <tr>
-                      <th>Time</th>
-                      <th>Type</th>
-                      <th>Volume</th>
-                      <th>Price</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody id='id_trade_history'>
-                  </tbody>
-                </table>
-              </div>
-            </div>          
-          </div>
-      </div>
+		<!-- end orders -->
+		</div> <!-- end row -->
+		</div>
+		</div>
+	  
+      
 
     </div> <!-- /container -->
 
