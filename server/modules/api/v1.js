@@ -257,6 +257,68 @@ exports.onGetMarketSummary = function(req, res)
     });
 }
 
+exports.onGetCharts = function(req, res)
+{
+    const dataParsed = url.parse(req.url);
+    if (!dataParsed || !dataParsed.query)
+        return onError(req, res, 'Bad request');
+
+    const queryStr = querystring.parse(dataParsed.query);
+    if (!queryStr.market)
+        return onError(req, res, 'Bad request. Parameter "market" not found');
+
+    const data = queryStr.market.split('-');
+    if (!data || !data.length || data.length != 2)
+        return  onError(req, res, 'Bad request. Parameter "market" is invalid');
+
+
+    g_constants.dbTables['coins'].selectAll('name, ticker, info', 'ticker="'+data[1]+'"', '', (err, rows) => {
+        try
+        {
+            if (err || !rows) throw new Error(err && err.message ? err.message : 'unknown database error');
+            if (!rows.length) throw new Error('ticker '+data[1]+' not found');
+
+            const COIN = rows[0];
+            const WHERE = 'coin="'+escape(COIN.name)+'"';
+            
+            g_constants.dbTables['history'].selectAll('time,price', WHERE, 'ORDER BY time', (err, rows) => {
+                if (err || !rows) 
+                    return onError(req, res, err && err.message ? err.message : 'unknown database error');
+
+                let retData = [];
+				
+				for (var i=0; i<rows.length; i++)
+                {
+                    var time = rows[i].time*1;
+					var price = rows[i].price*1;
+					
+					//previeus price
+					var b = i - 1;
+					if (b < 0){
+						var openpos = 0;
+					} else {
+						var openpos = rows[b].price*1;
+					}
+					//end previeus
+					
+					var openb = "[";
+					var closeb = "]";
+					var outputdata = openb + time + ',' + openpos + ',' + price + ',' + price + ',' + price + closeb;
+					var outputreplace = JSON.parse(outputdata);
+				retData.push(outputreplace);
+                }
+                //return onSuccess(req, res, retData);
+				var displaydata = utils.renderJSON(req, res, retData);
+				return outputdata;
+            });
+        }
+        catch(e) {
+            return onError(req, res, e.message);
+        }
+    });
+}
+
+
 exports.onGetMarketHistory = function(req, res)
 {
     const dataParsed = url.parse(req.url);

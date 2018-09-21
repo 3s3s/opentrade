@@ -35,6 +35,7 @@ exports.handle = function(app, wss)
     app.get('/api/v1/public/getmarkets', cors(), API1.onGetMarkets);
     app.get('/api/v1/public/getorderbook', cors(), API1.onGetOrderbook);
     app.get('/api/v1/public/getmarketsummary', cors(), API1.onGetMarketSummary);
+  	app.get('/api/v1/public/getcharts', cors(), API1.onGetCharts);
     app.get('/api/v1/public/getmarkethistory', cors(), API1.onGetMarketHistory);
     app.get('/api/v1/public/getlastmarketdata', cors(), API1.onGetLastMarketData)
     app.get('/api/v1/public/getmarkets24', cors(), API1.onGetExchangeSummary);

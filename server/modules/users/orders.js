@@ -325,7 +325,7 @@ function AddOrder(status, WHERE, newBalance, req, res, c)
         return setTimeout(AddOrder, 1000, status, WHERE, newBalance, req, res, counter+1);
 
     const amount = utils.roundDown(req.body.amount);
-    const price = utils.roundDown(req.body.price);
+    const price = req.body.price;
     const balance = utils.roundDown(newBalance*1);
             
     if (!utils.isNumeric(amount) || !utils.isNumeric(price) || !utils.isNumeric(balance) ||

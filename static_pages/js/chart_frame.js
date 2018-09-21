@@ -57,7 +57,7 @@ function UpdateMCFromLB()
       if (!g_LB_Data || !g_LB_Data.USD || !g_LB_Data.RUB)
         return;
       
-      if (MC == 'BTC') g_MC_BTC_Price = 0;
+      if (MC == 'BTC') var g_MC_BTC_Price = 0;
         
       const USD = g_LB_Data.USD.rates.last/(g_MC_BTC_Price+1);
       const BTC = 1/(g_MC_BTC_Price+1);

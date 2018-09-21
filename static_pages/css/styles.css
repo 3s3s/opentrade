@@ -1,3 +1,97 @@
+body{
+	background-color:#fafafa !important;
+}
+.buyform{
+	background-color: #8fc3b3 !important;
+	border-color: #1eaa7d !important;
+}
+.sellform{
+	background-color: #e4b1af !important;
+	border-color: #d04742 !important;
+}
+.navbar{
+	padding: 0 0 0 0 !important;
+    height: 65px;
+}
+.ml-auto{
+	margin-left: 0px !important;
+}
+.mr-auto{
+	margin: 0 auto;
+}
+.navbar > .container{
+	    line-height: 47px;
+}
+.customchart{
+	box-shadow: 0 2px 2px 0 rgba(0,0,0,.14), 0 1px 5px 0 rgba(0,0,0,.12), 0 3px 1px -2px rgba(0,0,0,.2);
+    border-radius: 5px !important;
+	max-height: 470px;
+	margin-top: 3px;
+	overflow:hidden;
+}
+.customchart:hover{
+	box-shadow: 0 8px 17px 0 rgba(0,0,0,.2), 0 6px 20px 0 rgba(0,0,0,.19) !important;
+}
+.nomargin{
+	margin-left:0px !important;
+	margin-right: 0px !important;
+	padding-left: 0px !important;
+    padding-right: 0px !important;
+}
+.specialmargin{
+	margin-left: -6px !important;
+}
+.btn-primary{
+	width:100%;
+}
+.buybtn{
+	background-color: #1eaa7d !important;
+	border-color: #1eaa7d !important;
+}
+.buybtn:hover{
+	box-shadow: 0 8px 17px 0 rgba(0,0,0,.2), 0 6px 20px 0 rgba(0,0,0,.19) !important;
+	cursor:pointer;
+}
+.sellbtn{
+	background-color: #d04742 !important;
+	border-color: #d04742 !important;
+}
+.sellbtn:hover{
+	box-shadow: 0 8px 17px 0 rgba(0,0,0,.2), 0 6px 20px 0 rgba(0,0,0,.19) !important;
+	cursor:pointer;
+}
+.custom-height{
+	min-height: 864px !important;
+    max-height: 864px !important;
+}
+.nopaddingright{
+	padding-right: 0px !important;
+}
+.nopaddingleft{
+	padding-left: 0px !important;
+}
+.card-header{
+	background-color: #ffffff !important;
+    border-bottom: 1px solid #C0D7E9;
+}
+.card{
+	transition: box-shadow .25s !important;
+	box-shadow: 0 2px 2px 0 rgba(0,0,0,.14), 0 1px 5px 0 rgba(0,0,0,.12), 0 3px 1px -2px rgba(0,0,0,.2);
+	border: 0px !important;
+	border-radius: 5px !important;
+}
+.card:hover{
+	box-shadow: 0 8px 17px 0 rgba(0,0,0,.2), 0 6px 20px 0 rgba(0,0,0,.19) !important;
+}
+.container{
+	line-height: 1.5;
+    font-family: Roboto,sans-serif;
+}
+.navbar{
+	box-shadow: 0 6px 7px 0 rgba(0,0,0,.19) !important;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #cccccc;
+}
 pre {
     display: block;
     padding: 9.5px;
@@ -71,8 +165,8 @@ pre {
 .div-orders {
   overflow-y:auto;
   overflow-x:auto;
-  min-height: 400px;
-  max-height: 400px;
+  min-height: 406px;
+  max-height: 406px;
 }
 
 .bd-highlight {
