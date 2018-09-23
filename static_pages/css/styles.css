@@ -392,8 +392,8 @@ background-color: rgba(255,255,255,.5);
 .div-orders {
   overflow-y:auto;
   overflow-x:auto;
-  min-height: 400px;
-  max-height: 400px;
+  min-height: 407px;
+  max-height: 407px;
 }
 
 .bd-highlight {
