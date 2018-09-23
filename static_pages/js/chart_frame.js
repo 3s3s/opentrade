@@ -11,7 +11,7 @@ catch(e)
 }
 
 let g_LB_Data = {};
-//let g_MC_BTC_Price = 100000;
+//let g_MC_BTC_Price = 1000000;
 let g_CurrentPair = utils.DEFAULT_PAIR;
 let g_currentChartPeriod = 24;
 
