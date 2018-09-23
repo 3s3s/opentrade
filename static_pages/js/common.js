@@ -36,39 +36,16 @@ function eraseCookie(name) {
 }
 
 $("input#mode").change(function() {
-
 if ($(this).is(':checked')) {
-
 $("body").addClass('dark-mode');
-
 createCookie("mode", "dark-mode", 1000);
-
 } else {
-
 $("body").removeClass('dark-mode');
-
 eraseCookie("mode", "dark-mode");
-
 }
-
 });
-
 
 if (readCookie("mode")) {
-
 $("body").addClass('dark-mode');
-
 $('input#mode').attr('checked', 'checked');
-
 }
-
-$("#close_info").click(function() {
-     createCookie("alert", "true", 1000);
-          $( "#info_bar" ).slideUp( "slow" );
-
-});
-
-  if (readCookie("alert")) {
-      $( "div#info_bar" ).addClass('hide');
-
-  };
