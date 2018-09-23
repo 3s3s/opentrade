@@ -10,16 +10,6 @@ $('#id-button-lang-ru').on('click', e => {
     location.reload(); 
 })
 
-function createCookie(name, value, days) {
-    if (days) {
-        var date = new Date();
-        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-        var expires = "; expires=" + date.toGMTString();
-    }
-    else var expires = "";
-    document.cookie = name + "=" + value + expires + "; path=/";
-}
-
 function readCookie(name) {
     var nameEQ = name + "=";
     var ca = document.cookie.split(';');
@@ -32,13 +22,13 @@ function readCookie(name) {
 }
 
 function eraseCookie(name) {
-    createCookie(name, "", -1);
+    utils.setCookie(name, "", -1);
 }
 
 $("input#mode").change(function() {
 if ($(this).is(':checked')) {
 $("body").addClass('dark-mode');
-createCookie("mode", "dark-mode", 1000);
+utils.setCookie('mode', 'dark-mode');
 } else {
 $("body").removeClass('dark-mode');
 eraseCookie("mode", "dark-mode");
