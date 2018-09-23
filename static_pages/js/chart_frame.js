@@ -11,7 +11,7 @@ catch(e)
 }
 
 let g_LB_Data = {};
-//let g_MC_BTC_Price = 1000000;
+let g_MC_BTC_Price = 100000;
 let g_CurrentPair = utils.DEFAULT_PAIR;
 let g_currentChartPeriod = 24;
 
@@ -203,6 +203,7 @@ function drawChart(chartData)
                 maxZoomIn: 4.0
         },*/
         seriesType: 'candlesticks',
+	backgroundColor: 'none',
         series: {0: {type: 'bars', targetAxisIndex: 1, color: '#eaeaea'}}
     };
     
@@ -281,3 +282,4 @@ function AddCoinInfo(info)
   const p1 = $('<p><strong>Forum</strong> ANN: <a target="_blank" href="'+(info.result.coin_info.page || "")+'">'+g_CurrentPair+' @ bitcointalk</a></p>');
   $('#coin_info').empty().append(p1);
 }
+
