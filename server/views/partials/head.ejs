@@ -37,4 +37,28 @@
     </script>
     <script src='/js/utils.js'></script>
 
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+    <script>
+    $(document).ready(function(){
+      $("#table-market-input").on("keyup", function() {
+      var value = $(this).val().toLowerCase();
+        $("#table-market tr").filter(function() {
+          $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+         });
+        });
+      });
+    </script>
+
+    <script>
+    $(document).ready(function(){
+      $("#id_wallet_body_input").on("keyup", function() {
+      var value = $(this).val().toLowerCase();
+        $("#id_wallet_body tr").filter(function() {
+          $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+         });
+        });
+      });
+    </script>
   </head>
