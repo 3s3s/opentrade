@@ -153,31 +153,30 @@ exports.onGetAddress = function(req, res)
     });
 }
 
-exports.GetCoins = function(active, callback)
+exports.GetCoins = async function(active, callback)
 {
     if (!g_constants.dbTables['coins'])
         return setTimeout(exports.GetCoins, 2000, active, callback);
         
-    g_constants.dbTables['coins'].selectAll("ROWID AS id, name, ticker, icon, info", "", "", (err, rows) => {
-        if (err || !rows || !rows.length)
-        {
-            callback([]);
-            return;
-        }
+    try {
+        const rows = await g_constants.dbTables['coins'].Select("ROWID AS id, name, ticker, icon, info");
         
         let ret = [];    
         for (var i=0; i<rows.length; i++)
         {
             try { rows[i].info = JSON.parse(utils.Decrypt(rows[i].info));}
             catch(e) {continue;}
-
+    
             if (rows[i].info.active != active)
                 continue;
-            
+                
             ret.push(rows[i]);
         }
         callback(ret);
-    });
+    }
+    catch (e) {
+        return callback([]);
+    }
 }
 
 exports.onGetWallet = function(ws, req)
@@ -704,7 +703,7 @@ exports.ProcessWithdrawToCoupon = function(userID, amount, coinName, callback)
 
 exports.ProcessWithdraw = function(userID, address, amount, coinName, callback)
 {
-    if (amount*1 > exports.GetCoinBalanceByName(coinName)*g_constants.MAX_USER_WITHDRAW)
+    if (amount*1 > exports.GetCoinBalanceByName(coinName)*(g_constants.MAX_USER_WITHDRAW/100))
     {
         utils.balance_log('Block user for withdraw userID='+userID+" coinName="+coinName+" amount="+amount+" time="+Date.now()+"\n");
         adminUtils.BlockUserForWithdraw(userID);

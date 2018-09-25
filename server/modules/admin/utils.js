@@ -332,7 +332,7 @@ exports.GetUserBalance = function(userID, coinsArray, index, result, callback, r
             retJSON.result = true;
             for (let i=0; i<ret.data.length; i++)
             {
-                if (ret.data[i]['confirmations'] && ret.data[i]['confirmations'] < 6)
+                if (ret.data[i]['confirmations'] && ret.data[i]['confirmations'] < 3)
                     continue;
                     
                 if (ret.data[i]['category'] == 'receive')
