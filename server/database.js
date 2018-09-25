@@ -139,7 +139,8 @@ exports.Init = function(callback)
                 console.log("WARNING: SelectAll callback undefined!!!");
 
             g_db.all(query, param, (err, rows) => {
-                if (err) console.log("SELECT ERROR: query="+query+" message=" + err.message);
+                if (err) 
+                    console.log("SELECT ERROR: query="+query+" message=" + err.message);
                 
                 query = null;
                 if (callback) setTimeout(callback, 1, err, rows);
@@ -216,15 +217,30 @@ exports.Init = function(callback)
                 Insert(this, arguments);};
             g_constants.dbTables[i]['insert2'] = function() {
                 Insert2(this, arguments);};
+
+            g_constants.dbTables[i]['Insert'] = function() {
+                let args = [];
+                for (let i = 0; i < arguments.length; i++) {
+                  args[i] = arguments[i];
+                }
+                return new Promise((fulfilled, rejected) => {
+                    args.push(err => { 
+                        if (err) return rejected( new Error(err.message || "Insert error") );
+                        fulfilled(null);
+                    });
+                    Insert(this, args);
+                });
+            };
             
             g_constants.dbTables[i]['update'] = function(SET, WHERE, callback) {
                 Update(this.name, SET, WHERE, callback);};
             
-            g_constants.dbTables[i]['update2'] = function(SET, WHERE) {
+            g_constants.dbTables[i]['Update'] = function(SET, WHERE) {
+                const name = this.name;
                 return new Promise((fulfilled, rejected) => {
-                    Update(this.name, SET, WHERE, err => {
+                    Update(name, SET, WHERE, err => {
                         if (err) return rejected( new Error(err.message || "Update error") );
-                        fulfilled(true);
+                        fulfilled(null);
                     });
                 });
              };
@@ -234,6 +250,16 @@ exports.Init = function(callback)
             
             g_constants.dbTables[i]['selectAll'] = function(cols, where, other, callback, param) {
                 SelectAll(cols, this.name, where, other, callback, param);};
+            
+            g_constants.dbTables[i]['Select'] = function(cols, where = "", other = "", param) {
+                const name = this.name;
+                return new Promise((fulfilled, rejected) => {
+                    SelectAll(cols, name, where, other, (err, rows) => {
+                        if (err || !rows) return rejected( new Error(err && err.message ? err.message : "Select error") );
+                        fulfilled(rows);
+                    }, param);
+                });
+            };
             
             cbError(false);
         });

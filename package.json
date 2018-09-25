@@ -8,11 +8,11 @@
   },
   "dependencies": {
     "express": "latest",
-	"ws": "latest",
-	"sendmail": "latest",
-	"sqlite3": "latest",
-	"ejs": "latest",
-	"cors": "latest",
-	"debug": "latest"
+	  "ws": "latest",
+	  "sendmail": "latest",
+	  "sqlite3": "latest",
+	  "ejs": "latest",
+	  "cors": "latest",
+	  "debug": "latest"
   }
 }
