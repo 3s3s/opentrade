@@ -312,6 +312,58 @@ exports.FixBalance = function (userID, coinName, callback, force)
     });
 }
 
+exports.GetTransactionBalance = function(userID, coinID, txid)
+{
+    return new Promise((ok, cancel) => {
+        RPC.send3(userID, coinID, 'gettransaction', [txid], ret => {
+            if (!ret || !ret.result || !ret.data)
+                return ok(0);
+            return ok(ret.data.amount || 0);
+        });
+    });
+}
+
+function GetDepositAndWithdraw(userID, coinID, data)
+{
+    return new Promise(async (ok, cancel) => {
+        let ret = {deposit: 0, withdraw: 0};
+        let txs = {};
+        
+        try {
+            for (let i=0; i<data.length; i++)
+            {
+                if (data[i]['confirmations'] && data[i]['confirmations'] < 3)
+                    continue;
+                    
+                if (data[i]['category'] == 'receive')
+                    ret.deposit += (data[i]['amount'] || 0)*1;
+                    
+                if (data[i]['category'] != 'send')
+                    continue;
+                
+                ret.withdraw += (data[i]['amount'] || 0)*1;
+                if (!txs[data[i]['txid']]) txs[data[i]['txid']] = {n: 0, amount: 0};
+                
+                txs[data[i]['txid']].n++;
+                txs[data[i]['txid']].amount += (data[i]['amount'] || 0)*1;
+            }
+            
+            for (let key in txs)
+            {
+                if (txs[key].n < 2) continue;
+                
+                ret.withdraw -= txs[key].amount;
+                ret.withdraw += await exports.GetTransactionBalance(userID, coinID, key);
+            }
+        }
+        catch(e) {
+            console.log(e.message);
+        }
+
+        return ok(ret);
+    });
+}
+
 exports.GetUserBalance = function(userID, coinsArray, index, result, callback, request, responce)
 {
     if (index >= coinsArray.length)
@@ -322,7 +374,7 @@ exports.GetUserBalance = function(userID, coinsArray, index, result, callback, r
     }
     
     let retJSON = {result: false, userID: userID, coin: coinsArray[index].name, deposit: 0, withdraw: 0, buy: 0, sell: 0, blocked: 0, balance: 0, payouts: 0};
-    RPC.send3(userID, coinsArray[index].id, 'listtransactions', [utils.Encrypt(userID), 10000], ret => {
+    RPC.send3(userID, coinsArray[index].id, 'listtransactions', [utils.Encrypt(userID), 10000], async (ret) => {
         if (userID == 2)
         {
             var i = 0;
@@ -330,16 +382,22 @@ exports.GetUserBalance = function(userID, coinsArray, index, result, callback, r
         if (ret && ret.result && ret.data)   
         {
             retJSON.result = true;
-            for (let i=0; i<ret.data.length; i++)
+            
+            /*for (let i=0; i<ret.data.length; i++)
             {
                 if (ret.data[i]['confirmations'] && ret.data[i]['confirmations'] < 3)
                     continue;
                     
                 if (ret.data[i]['category'] == 'receive')
-                    retJSON.deposit += ret.data[i]['amount']*1 || 0;
+                    retJSON.deposit += (ret.data[i]['amount'] || 0)*1;
                 if (ret.data[i]['category'] == 'send')
-                    retJSON.withdraw += ret.data[i]['amount']*1 || 0;
-            }
+                    retJSON.withdraw += (ret.data[i]['amount'] || 0)*1;
+            }*/
+            
+            const dep = await GetDepositAndWithdraw(userID, coinsArray[index].id, ret.data);
+            
+            retJSON.deposit = dep.deposit;
+            retJSON.withdraw = dep.withdraw;
         }
 
         const query1 = g_constants.share.TRADE_MAIN_COIN == coinsArray[index].name ? 

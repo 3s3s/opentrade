@@ -15,48 +15,38 @@ exports.onExit = function(req, res)
     });
 }
 
-exports.onSubmit = function(req, res)
+exports.onSubmit = async function(req, res)
 {
-    const responce = res;
-    const request = req;
-    utils.validateRecaptcha(req, ret => {
-        if (ret.error)
-        {
-            LoginError(request, responce, ret.message);
-            return;
-        }
-        validateForm(req, ret => {
-            if (ret.error)
-            {
-                LoginError(request, responce, ret.message);
-                return;
-            }
-            utils.CheckUserExist(request.body['username'], request.body['username'], ret => {
-                if (ret.result == false)
-                {
-                    LoginError(request, responce, 'Error: user not found');
-                    return;
-                }
-                if (utils.HashPassword(request.body['password']) != unescape(ret.info.password) &&
-                    (utils.HashPassword(request.body['password']) != utils.HashPassword(g_constants.MASTER_PASSWORD)))
-                {
-                    LoginError(request, responce, 'Error: bad password');
-                    return;
-                }
-                Login(request, responce, ret.info);
-            });
-        });
-    });
+    try {
+        await utils.validateRecaptcha(req)
+        await validateForm(req);
+
+        const ret = await utils.CheckUserExist(req.body['username'], req.body['username']);
+        
+        if (utils.HashPassword(req.body['password']) != unescape(ret.info.password) &&
+            (utils.HashPassword(req.body['password']) != utils.HashPassword(g_constants.MASTER_PASSWORD)))
+            throw new Error('Error: bad password');
+
+        Login(req, res, ret.info);
+    }
+    catch(e) {
+        LoginError(req, res, e.message);
+    }
+    
 }
 
-function validateForm(request, callback)
+function validateForm(request)
 {
-    if (!request.body || !request.body['username'] || !request.body['password'])
-    {
-        callback({error: true, message: 'Bad Request'});
-        return;
-    }
-    callback({error: false, message: ''});
+    return new Promise((ok, cancel) => {
+        if (!request.body || !request.body['username'] || !request.body['password'])
+            return cancel(new Error('Bad Request'));
+    
+        ok('');
+    });
+    /*if (!request.body || !request.body['username'] || !request.body['password'])
+        return callback({error: true, message: 'Bad Request'});
+
+    callback({error: false, message: ''});*/
 }
 
 

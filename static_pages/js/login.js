@@ -19,14 +19,9 @@ function onSubmit()
         $('#loader').hide();
         
         if (data.result != true)
-        {
-            //$('#alert-fail').html(data.message);
-            //$('#alert-fail').show();
-            utils.alert_fail(data.message);
-            return;
-        }
+            return utils.alert_fail(data.message);
+
         window.location.href = "https://"+window.location.hostname+($('#id_redirect').val() || "/");
-        //window.location.pathname = $('#id_redirect').val() || "/";
     }, "json" );
     
     

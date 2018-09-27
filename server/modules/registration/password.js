@@ -7,49 +7,27 @@ const mailer = require("../mailer.js");
 
 let emailChecker = {};
 
-exports.onPassworReset = function(req, res)
+exports.onPassworReset = async function(req, res)
 {
-    const responce = res;
-    const request = req;
-    
     try
     {
-        if (request.body && request.body['check'] && request.body['checked-email'] && 
-            emailChecker[request.body['check']] && emailChecker[request.body['check']]['email'] &&
-            emailChecker[request.body['check']].email == request.body['checked-email'])
+        if (req.body && req.body['check'] && req.body['checked-email'] && 
+            emailChecker[req.body['check']] && emailChecker[req.body['check']]['email'] &&
+            emailChecker[req.body['check']].email == req.body['checked-email'])
         {
-            delete emailChecker[request.body['check']];
-            PasswordReset(req, res);
-            return;
+            delete emailChecker[req.body['check']];
+            return PasswordReset(req, res);
         }
         
-        utils.validateRecaptcha(req, ret => {
-            if (ret.error)
-            {
-                PasswordResetError(request, responce, ret.message);
-                return;
-            }
-            validateForm(req, ret => {
-                if (ret.error)
-                {
-                    PasswordResetError(request, responce, ret.message);
-                    return;
-                }
-                
-                utils.CheckUserExist('', request.body['email'], ret => {
-                    if (ret.result == false)
-                    {
-                        PasswordResetError(request, responce, ret.message);
-                        return;
-                    }
-                    ConfirmPasswordReset(request, responce, ret.info.login);
-                });
-            });
-        });
+        await utils.validateRecaptcha(req);
+        await validateForm(req);
+        
+        const ret = await utils.CheckUserExist('', req.body['email']);
+        
+        ConfirmPasswordReset(req, res, ret.info.login);
     }
-    catch(e)
-    {
-        PasswordResetError(request, responce, e.message);
+    catch(e) {
+        PasswordResetError(req, res, e.message);
     }
 }
 
@@ -95,12 +73,12 @@ function ConfirmPasswordReset(req, res, user)
 
 function validateForm(request, callback)
 {
-    if (!request.body || !request.body['email'])
-    {
-        callback({error: true, message: 'Bad Request'});
-        return;
-    }
-    callback({error: false, message: ''});
+    return new Promise((ok, cancel) => {
+        if (!request.body || !request.body['email'])
+            return cancel(new Error('Bad Request'));
+    
+        ok('');
+    });
 }
 
 
