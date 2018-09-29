@@ -96,6 +96,8 @@ exports.handle = function(app, wss)
     app.post('/profile', onProfilePost);
     app.get('/wallet', onWallet);
     app.post('/withdraw', onWithdraw);
+    app.get('/pin', onShowPin);
+    app.post('/verifypin', onVerifyPin);
     
     app.post('/getdepositaddress', onGetDepositAddress);
     
@@ -187,6 +189,10 @@ function onLogin(req, res)
 {
     CommonRender(req, res, 'pages/registration/login');
 }
+function onVerifyPin(req, res)
+{
+    login.VerifyPin(req, res);
+}
 function onLogout(req, res)
 {
     login.onExit(req, res);
@@ -238,7 +244,10 @@ function onWallet(req, res)
 {
     CommonRender(req, res, 'pages/user/wallet');
 }
-
+function onShowPin(req, res)
+{
+    CommonRender(req, res, 'pages/registration/pin');
+}
 function onCheckEmailForSignup(req, res)
 {
     signup.onCheckEmail(req, res);

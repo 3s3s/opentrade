@@ -5,26 +5,20 @@ const g_constants = require("../constants.js");
 
 const mailer = require("./mailer.js");
 
-exports.onSubmit = function(req, res)
+exports.onSubmit = async function(req, res)
 {
-    const request = req;
-    const responce = res;
-    
-    utils.validateRecaptcha(request, ret => {
-        if (ret.error)
-        {
-            SupportError(request, responce, ret.message);
-            return;
-        }
-        validateForm(request, ret => {
+    try {
+        await utils.validateRecaptcha(req);
+        validateForm(req, ret => {
             if (ret.error)
-            {
-                SupportError(request, responce, ret.message);
-                return;
-            }
-            CreateTicket(request, responce, req.body['email'], req.body['subject'], req.body['message']);
+                return SupportError(req, res, ret.message);
+
+            CreateTicket(req, res, req.body['email'], req.body['subject'], req.body['message']);
         });
-    });
+    }
+    catch(e) {
+        SupportError(req, res, e.message);
+    }
 
     function validateForm(req, callback)
     {

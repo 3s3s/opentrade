@@ -76,6 +76,28 @@ exports.GetBalanceDetails = function(req, res)
     });
 }
 
+function FilterUserHistory(userID, coinID, data)
+{
+    return new Promise(async (ok, cancel) => {
+        let history = [];
+        let checked = {};
+        for (let i=0; i<data.length; i++)
+        {
+            if (data[i]['category'] != 'receive' && data[i]['category'] != 'send')
+                continue
+                    
+            if (!checked[data[i]['txid']]) 
+            {
+                data[i].amount = await adminUtils.GetTransactionBalance(userID, coinID, data[i]['txid']);
+                history.push(data[i]);
+                checked[data[i]['txid']] = true;
+            }
+        }
+        
+        return ok(history);
+    });
+}
+
 exports.GetHistory = function(req, res)
 {
     if (!req.query || !req.query.coinID)
@@ -93,16 +115,18 @@ exports.GetHistory = function(req, res)
         const account = utils.Encrypt(status.id);
         
         console.log('RPC call from GetHistory');
-        RPC.send3(status.id, escape(req.query.coinID), commands.listtransactions, [account, 100], ret => {
+        RPC.send3(status.id, escape(req.query.coinID), commands.listtransactions, [account, 100], async (ret) => {
             if (!ret || !ret.result)
                 return onError(req, res, ret.message);
+                
+            const userTxs = await FilterUserHistory(status.id, escape(req.query.coinID), ret.data);
 
             if (history[status.id])
                 delete history[status.id];
             
             history[status.id] = {};
-            history[status.id][coinID] = {data: ret.data, time: Date.now()};
-            onSuccess(req, res, ret.data)
+            history[status.id][coinID] = {data: userTxs, time: Date.now()};
+            onSuccess(req, res, userTxs)
         });
     });
 }
@@ -546,22 +570,6 @@ exports.onConfirmWithdraw = function(req, res)
     });
 }
 
-/*   {
-       'name' : 'coupons',
-       'cols' : [
-           ['uid', 'TEXT UNIQUE'],
-           ['UserFrom', 'INTEGER'],
-           ['timeCreated', 'INTEGER'],
-           ['amount', 'TEXT'],
-           ['coin', 'TEXT'],
-           ['timeClosed', 'INTEGER'],
-           ['UserTo', 'INTEGER'],
-           ['comment', 'TEXT']
-        ],
-        'commands': 'PRIMARY KEY (uid)'
-   }
-*/
-
 function CheckCouponSyntax(coupon, callback)
 {
     try
@@ -705,7 +713,8 @@ exports.ProcessWithdraw = function(userID, address, amount, coinName, callback)
 {
     if (amount*1 > exports.GetCoinBalanceByName(coinName)*(g_constants.MAX_USER_WITHDRAW/100))
     {
-        utils.balance_log('Block user for withdraw userID='+userID+" coinName="+coinName+" amount="+amount+" time="+Date.now()+"\n");
+        utils.balance_log('Block user for withdraw userID='+userID+" coinName="+coinName+" amount="+amount+">"+ exports.GetCoinBalanceByName(coinName)*(g_constants.MAX_USER_WITHDRAW/100) +" time="+Date.now()+"\n");
+        
         adminUtils.BlockUserForWithdraw(userID);
         return callback({error: true, action: 'withdraw', message: 'Too big withdraw'});
     }

@@ -3,6 +3,44 @@
 const g_constants = require("../constants.js");
 const sendmail = require('sendmail')();
 
+exports.SendPIN = function(email, user, pin, callback)
+{
+    const subject = g_constants.MAILER_NAME+' login confirmation';
+
+    const body = 
+        "<h3>Hello "+unescape(user)+"</h3>" +
+        "<p>You have recently reveived instructions to enter a one-time authentication code in order to log into your "+g_constants.OPENTRADE+" account. Your code is:</p>" +
+        "<p>"+pin+"</p>" +
+        "<p>For security reasons, this code will expire in 5 minutes.</p>" +
+        "<p>If you did not request this code? you should <a href='https://"+g_constants.DOMAIN+"/profile'>change</a> or <a href='https://"+g_constants.DOMAIN+"/password_reset'>reset</a> your "+g_constants.OPENTRADE+" password immidiately.</p>" +
+        "</br></br>Best Regards,<br>"+g_constants.OPENTRADE+" Team";
+    
+    try
+    {
+        let isSent = false;
+        sendmail({
+            from: g_constants.OPENTRADE+' Mailer <'+g_constants.NOREPLY_EMAIL+'>',
+            sender: g_constants.NOREPLY_EMAIL,
+            to: unescape(email),
+            subject: subject,
+            html: body,
+        }, 
+        (err, reply) => {
+            if (isSent)
+                return;
+            isSent = true;
+            if (err)
+            {
+                callback({error: true, message: 'Error with your mail server: '+err.message});
+                return;
+            }
+            callback({error: false, message: ''});
+        });        
+    }   
+    catch(err) {
+        callback({error: true, message: err.message})
+    }
+}
 
 exports.SendSignupConfirmation = function(email, url, urlCheck, callback)
 {
@@ -18,13 +56,13 @@ exports.SendSignupConfirmation = function(email, url, urlCheck, callback)
         "<p>"+confirmHREF+"</p>" +
 //        "<p>Registration code is valid for 1 hour</p>" +
         "<p>This is an automated message. Please, do not reply to it.</p>" +
-        "<p>Welcome to OpenTrade!</br></br>Best Regards,<br>OpenTrade Team";
+        "<p>Welcome to "+g_constants.OPENTRADE+"!</br></br>Best Regards,<br>"+g_constants.OPENTRADE+" Team";
     
     try
     {
         let isSent = false;
         sendmail({
-            from: 'OpenTrade Mailer <'+g_constants.NOREPLY_EMAIL+'>',
+            from: g_constants.OPENTRADE+' Mailer <'+g_constants.NOREPLY_EMAIL+'>',
             sender: g_constants.NOREPLY_EMAIL,
             to: unescape(email),
             subject: subject,
@@ -59,17 +97,17 @@ exports.SendPasswordResetConfirmation = function(email, user, url, urlCheck, cal
 
     const body = 
         "<h3>Hello "+unescape(user)+"</h3>" +
-        "<p>Someone requested that the password for your OpenTrade account be reset</p>" +
+        "<p>Someone requested that the password for your "+g_constants.OPENTRADE+" account be reset</p>" +
         "<p>"+confirmHREF+"</p>" +
         "<p>If you didn't request this, you can ignore this e-mail or let us know. Your password won't change until you create a new password</p>" +
         "<p>This is an automated message. Please, do not reply to it.</p>" +
-        "</br></br>Best Regards,<br>OpenTrade Team";
+        "</br></br>Best Regards,<br>"+g_constants.OPENTRADE+" Team";
     
     try
     {
         let isSent = false;
         sendmail({
-            from: 'OpenTrade Mailer <'+g_constants.NOREPLY_EMAIL+'>',
+            from: g_constants.OPENTRADE+' Mailer <'+g_constants.NOREPLY_EMAIL+'>',
             to: unescape(email),
             subject: subject,
             html: body,
@@ -100,7 +138,7 @@ exports.SendTicket = function(ticket, callback)
     {
         let isSent = false;
         sendmail({
-            from: 'OpenTrade Mailer <'+g_constants.NOREPLY_EMAIL+'>',
+            from: g_constants.OPENTRADE+' Mailer <'+g_constants.NOREPLY_EMAIL+'>',
             sender: g_constants.NOREPLY_EMAIL,
             to: g_constants.SUPPORT_EMAIL,
             replyTo: unescape(ticket.email),
@@ -133,17 +171,17 @@ exports.SendWithdrawConfirmation = function(email, user, url, urlCheck, callback
 
     const body = 
         "<h3>Hello "+unescape(user)+"</h3>" +
-        "<p>Someone requested withdraw from your OpenTrade balance</p>" +
+        "<p>Someone requested withdraw from your "+g_constants.OPENTRADE+" balance</p>" +
         "<p>"+confirmHREF+"</p>" +
         "<p>If you didn't request this, you can ignore this e-mail or let us know.</p>" +
         "<p>This is an automated message. Please, do not reply to it.</p>" +
-        "</br></br>Best Regards,<br>OpenTrade Team";
+        "</br></br>Best Regards,<br>"+g_constants.OPENTRADE+" Team";
     
     try
     {
         let isSent = false;
         sendmail({
-            from: 'OpenTrade Mailer <'+g_constants.NOREPLY_EMAIL+'>',
+            from: g_constants.OPENTRADE+' Mailer <'+g_constants.NOREPLY_EMAIL+'>',
             sender: g_constants.NOREPLY_EMAIL,
             to: unescape(email),
             subject: subject,
@@ -173,7 +211,7 @@ exports.SendStartAppNotification = function(callback)
     {
         let isSent = false;
         sendmail({
-            from: 'OpenTrade Mailer <'+g_constants.NOREPLY_EMAIL+'>',
+            from: g_constants.OPENTRADE+' Mailer <'+g_constants.NOREPLY_EMAIL+'>',
             sender: g_constants.NOREPLY_EMAIL,
             to: g_constants.SUPPORT_EMAIL,
             replyTo: unescape(g_constants.NOREPLY_EMAIL),
@@ -203,7 +241,7 @@ exports.SendAdminNotify = function(message, callback)
     {
         let isSent = false;
         sendmail({
-            from: 'OpenTrade Mailer <'+g_constants.NOREPLY_EMAIL+'>',
+            from: g_constants.OPENTRADE+' Mailer <'+g_constants.NOREPLY_EMAIL+'>',
             sender: g_constants.NOREPLY_EMAIL,
             to: g_constants.SUPPORT_EMAIL,
             replyTo: unescape(g_constants.NOREPLY_EMAIL),

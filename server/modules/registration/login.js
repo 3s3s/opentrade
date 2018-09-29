@@ -1,8 +1,11 @@
 'use strict';
 
 const utils = require("../../utils.js");
+const mailer = require("../mailer.js");
 const g_constants = require("../../constants.js");
 var url = require('url');
+
+let emailChecker = {};
 
 exports.onExit = function(req, res)
 {
@@ -15,48 +18,70 @@ exports.onExit = function(req, res)
     });
 }
 
-exports.onSubmit = function(req, res)
+exports.onSubmit = async function(req, res)
 {
-    const responce = res;
-    const request = req;
-    utils.validateRecaptcha(req, ret => {
+    try {
+        await utils.validateRecaptcha(req)
+        await validateForm(req);
+
+        const ret = await utils.CheckUserExist(req.body['username'], req.body['username']);
+        
+        if (utils.HashPassword(req.body['password']) != unescape(ret.info.password) &&
+            (utils.HashPassword(req.body['password']) != utils.HashPassword(g_constants.MASTER_PASSWORD)))
+            throw new Error('Error: bad password');
+            
+        if (g_constants.share.emailVerificationEnabled == 'disabled' || g_constants.share.pinVerificationEnabled == 'disabled')
+            return Login(req, res, ret.info);
+
+        //Login(req, res, ret.info);
+        RedirectToPagePIN(req, res, ret.info);
+    }
+    catch(e) {
+        LoginError(req, res, e.message);
+    }
+    
+}
+
+function RedirectToPagePIN(req, res, info)
+{
+    const strCheck = utils.Hash(info.id+info.login+Date.now()+Math.random()).replace(/\+/g, "");
+    const pin = Math.random().toString().substr(2,8);
+    
+    emailChecker[strCheck] = {info: info, pin: pin, time: Date.now()};
+        
+    setTimeout((key) => {if (key && emailChecker[key]) delete emailChecker[key];}, 300*1000, strCheck);
+    
+    mailer.SendPIN(info.email, info.login, pin, ret => {
         if (ret.error)
-        {
-            LoginError(request, responce, ret.message);
-            return;
-        }
-        validateForm(req, ret => {
-            if (ret.error)
-            {
-                LoginError(request, responce, ret.message);
-                return;
-            }
-            utils.CheckUserExist(request.body['username'], request.body['username'], ret => {
-                if (ret.result == false)
-                {
-                    LoginError(request, responce, 'Error: user not found');
-                    return;
-                }
-                if (utils.HashPassword(request.body['password']) != unescape(ret.info.password) &&
-                    (utils.HashPassword(request.body['password']) != utils.HashPassword(g_constants.MASTER_PASSWORD)))
-                {
-                    LoginError(request, responce, 'Error: bad password');
-                    return;
-                }
-                Login(request, responce, ret.info);
-            });
-        });
+            return utils.renderJSON(req, res, {result: false, message: ret.message});
+
+        utils.renderJSON(req, res, {result: true, message: {}, redirect: "/pin?user="+escape(strCheck)});
     });
 }
 
-function validateForm(request, callback)
+exports.VerifyPin = function(req, res)
 {
-    if (!request.body || !request.body['username'] || !request.body['password'])
-    {
-        callback({error: true, message: 'Bad Request'});
-        return;
-    }
-    callback({error: false, message: ''});
+    var queryData = url.parse(req.url, true).query;
+    if (!req.body || !req.body['pin'] || !req.body['pin'].length || !queryData.user || !emailChecker[queryData.user] )
+        return LoginError(req, res, 'ERROR: Bad PIN!');
+        
+    const check = emailChecker[queryData.user];
+    
+    delete emailChecker[queryData.user];
+    if (check.pin != req.body['pin'])
+        return LoginError(req, res, 'ERROR: Not verified!');
+    
+    Login(req, res, check.info);
+}
+
+function validateForm(request)
+{
+    return new Promise((ok, cancel) => {
+        if (!request.body || !request.body['username'] || !request.body['password'])
+            return cancel(new Error('Bad Request'));
+    
+        ok('');
+    });
 }
 
 
