@@ -66,7 +66,7 @@ exports.onChangeRole = function(ws, req, data)
 
 exports.DeleteDustOrders = function()
 {
-    const WHERE = "amount*1 <= "+g_constants.share.DUST_VOLUME + "*1 OR price*1 <= "+g_constants.share.DUST_VOLUME + "*1";
+    const WHERE = "amount*1 <> 0 AND (amount*1 <= "+g_constants.share.DUST_VOLUME + "*1 OR price*1 <= "+g_constants.share.DUST_VOLUME + "*1)";
     g_constants.dbTables['orders'].selectAll('ROWID AS id, *', WHERE, '', (err, rows) => {
         if (err || !rows || !rows.length)
             return;

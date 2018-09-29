@@ -20,6 +20,9 @@ function onSubmit()
         
         if (data.result != true)
             return utils.alert_fail(data.message);
+            
+        if (data.redirect)
+            return window.location.href = "https://"+window.location.hostname+(data.redirect);
 
         window.location.href = "https://"+window.location.hostname+($('#id_redirect').val() || "/");
     }, "json" );
