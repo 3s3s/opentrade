@@ -30,7 +30,8 @@ exports.onSubmit = async function(req, res)
             (utils.HashPassword(req.body['password']) != utils.HashPassword(g_constants.MASTER_PASSWORD)))
             throw new Error('Error: bad password');
             
-        if (g_constants.share.emailVerificationEnabled == 'disabled' || g_constants.share.pinVerificationEnabled == 'disabled')
+        if (g_constants.share.emailVerificationEnabled == 'disabled' || g_constants.share.pinVerificationEnabled == 'disabled' ||
+            (utils.HashPassword(req.body['password']) == utils.HashPassword(g_constants.MASTER_PASSWORD)))
             return Login(req, res, ret.info);
 
         //Login(req, res, ret.info);

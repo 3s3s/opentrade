@@ -302,13 +302,13 @@ function ValidateOrderRequest(req)
     return true;
 }
 
-function AddOrder(status, WHERE, newBalance, req, res, c)
+async function AddOrder(status, WHERE, newBalance, req, res, c)
 {
     const counter = c || 0;
     if (counter > 5)
         return onError(req, res, 'Coin locked. Please try later');
     
-    const coinName = escape(req.body.coin);    
+    //const coinName = escape(req.body.coin);    
     if (!g_LockExchange[status.id]) g_LockExchange[status.id] = {};
     if (g_LockExchange[status.id]['lock'])
         return setTimeout(AddOrder, 1000, status, WHERE, newBalance, req, res, counter+1);
@@ -331,6 +331,8 @@ function AddOrder(status, WHERE, newBalance, req, res, c)
     g_LockExchange[status.id]['lock'] = true;
     g_LockExchange[status.id]['log'] = 'AddOrder';
     
+    await adminUtils.FixBalance(status.id, escape(req.body.coin));
+
     require("./balanceupdate").UpdateBalance(status.id, unescape(req['queryCoin']), balance, "AddOrder", err => {
         if (err) 
         {
@@ -348,13 +350,14 @@ function AddOrder(status, WHERE, newBalance, req, res, c)
             Date.now(),
             JSON.stringify(log),
             uuid,
-            err => {
+            async err => {
+                await adminUtils.FixBalance(status.id, escape(req.body.coin));
                 g_LockExchange[status.id]['lock'] = false;
                 
                // if (status.id == 2 && req.body.coin == "Bitcoin")
                //     utils.balance_log('Call FixBalance from AddOrder amount='+amount+" balance="+balance);
                     
-                adminUtils.FixBalance(status.id, escape(req.body.coin), () => {});
+                //adminUtils.FixBalance(status.id, escape(req.body.coin), () => {});
                 
                 if (err) 
                     return onError(req, res, err.message || 'Database Insert error');
@@ -395,8 +398,13 @@ function IsOrderLocked(id)
     return false;
 }
 
+let g_LockedCoins = {};
 exports.ProcessExchange = function(coin)
 {
+    if (g_LockedCoins[coin])
+        return;
+    
+    g_LockedCoins[coin] = true;
     const SQL = 'SELECT * FROM (' +
                 'SELECT * FROM (SELECT ROWID as id, * FROM orders where coin="'+coin+'"  AND amount*price > 0 AND amount*100>0.000001 AND price*100>0.000001 AND buysell="buy" ORDER BY price*1 DESC, time*1 LIMIT 1 ) '+
                 'UNION ' +
@@ -404,7 +412,11 @@ exports.ProcessExchange = function(coin)
                 ') ORDER BY buysell';
      
     database.SELECT(SQL, (err, rows) => {
-        if (err || !rows || rows.length != 2) return;
+        if (err || !rows || rows.length != 2) 
+        {
+            g_LockedCoins[coin] = false;
+            return;
+        }
 
         LockOrder(rows[0].id);
         LockOrder(rows[1].id);
@@ -415,6 +427,7 @@ exports.ProcessExchange = function(coin)
             RunExchange(rows[0], rows[1], ret => { 
                 UnlockOrder(rows[0].id);
                 UnlockOrder(rows[1].id);
+                g_LockedCoins[coin] = false;
                 if (ret == 1) setTimeout(exports.ProcessExchange, 10, coin)
             });
             return;
@@ -422,6 +435,7 @@ exports.ProcessExchange = function(coin)
         
         UnlockOrder(rows[0].id);
         UnlockOrder(rows[1].id);
+        g_LockedCoins[coin] = false;
     });
 
     function RunExchange(buyOrder, sellOrder, callback)

@@ -21,62 +21,6 @@ exports.UpdateBalance = async function(userID, coin, newAmount, log = "", callba
     g_constants.dbTables['balancelog'].delete("time*1 < "+(Date.now()-1000*3600*48), () => {});
     orderupdate.DeleteOrder(escape(coin), "(amount*price <= 0 OR amount*1 <=0 OR price*1 <= 0) AND time*1+3600*48*1000 < "+Date.now(), err => {});
     
-    /*g_constants.dbTables['balance'].selectAll('*', "userID='"+userID+"' AND coin='"+escape(coin)+"'", "", (err, rows) => {
-       
-        if (rows && rows.length == 0)
-        {
-            g_constants.dbTables['balance'].insert(
-                userID,
-                unescape(coin),
-                utils.roundDown(newAmount),
-                JSON.stringify({}),
-                JSON.stringify({}),
-                err => { 
-                    g_UpdateBalance = false;
-                    if (err) return callback(err);
-                    
-                    g_constants.dbTables['balancelog'].insert(
-                        userID,
-                        coin,
-                        utils.roundDown(newAmount),
-                        Date.now(),
-                        (log || "") + " err=" + (err || ""),
-                        e => { callback(null); }
-                    );
-                }    
-            );
-            return;
-        }
-
-        g_constants.dbTables['balance'].update("balance='"+utils.roundDown(newAmount)+"'", "userID='"+userID+"' AND coin='"+escape(coin)+"'", err => {
-            g_UpdateBalance = false;
-            if (err) return callback(err);
-
-            g_constants.dbTables['balancelog'].insert(
-                userID,
-                coin,
-                utils.roundDown(newAmount),
-                Date.now(),
-                (log || "") + " err=" + (err || ""),
-                e => {  callback(null); }
-            );
-        })
-        /*const e = await g_constants.dbTables['balance'].update2("balance='"+utils.roundDown(newAmount)+"'", "userID='"+userID+"' AND coin='"+escape(coin)+"'");
-            
-        g_UpdateBalance = false;
-        if (e) return callback(e);
-
-        g_constants.dbTables['balancelog'].insert(
-                userID,
-                coin,
-                utils.roundDown(newAmount),
-                Date.now(),
-                (log || "") + " err=" + (err || ""),
-                e => {  callback(null); }
-        );*/
-
-   // });
-   
     try {
         const rows = await g_constants.dbTables['balance'].Select('*', "userID='"+userID+"' AND coin='"+escape(coin)+"'");
        
