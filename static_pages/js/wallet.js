@@ -61,7 +61,7 @@ function onOpenSocket()
 
 function UpdateWallet(data)
 {
-    const coin = unescape(data.coin.name).replace('@', '_');
+    const coin = unescape(data.coin.name).replace('@', '_').replace(" ", "_");
     const id_balance = coin+"_balance";
     const id_awaiting = coin+"_awaiting";
     const id_onhold = coin+"_onhold";
