@@ -10,7 +10,7 @@ const OPENTRADE = "OpenTrade";
 
 exports.ALLOW_EMAIL_CHANGING = true;
 
-exports.DEBUG_LOG = false;
+exports.DEBUG_LOG = true;
 
 exports.share = {
    tradeEnabled: true,
