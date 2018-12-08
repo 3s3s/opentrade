@@ -203,6 +203,7 @@ function drawChart(chartData)
                 maxZoomIn: 4.0
         },*/
         seriesType: 'candlesticks',
+	backgroundColor: 'none',
         series: {0: {type: 'bars', targetAxisIndex: 1, color: '#eaeaea'}}
     };
     
@@ -281,3 +282,4 @@ function AddCoinInfo(info)
   const p1 = $('<p><strong>Forum</strong> ANN: <a target="_blank" href="'+(info.result.coin_info.page || "")+'">'+g_CurrentPair+' @ bitcointalk</a></p>');
   $('#coin_info').empty().append(p1);
 }
+
