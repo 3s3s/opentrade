@@ -131,39 +131,32 @@ exports.UpdateSession = function(userid, token, callback)
     });
 }
 
-exports.CheckUserExist = function(user, email, callback)
+exports.CheckUserExist = function(user, email)
 {
-    IsUserExist(user, function(exist) {
-        if (exist.result == true)
-        {
-            callback({result: true, message: 'Sorry. This user already registered', info: exist.row});
-            return;
-        }
-                
-        IsEmailExist(email, function(exist){
+    return new Promise((ok, cancel) => {
+        
+        IsUserExist(user, exist => {
             if (exist.result == true)
-            {
-                callback({result: true, message: 'Sorry. This email already registered', info: exist.row});
-                return;
-            }
-            callback({result: false, message: ''});
+                return ok({message: 'Sorry. This user already registered', info: exist.row});
+    
+            IsEmailExist(email, exist => {
+                if (exist.result == true)
+                    return ok({message: 'Sorry. This email already registered', info: exist.row});
+    
+                cancel(new Error('Checking user failed. Error: user not found'));
+            });
         });
     });
 
     function IsUserExist(user, callback)
     {
         if (!user.length)
-        {
-            callback({result: false});
-            return;
-        }
-        
+            return callback({result: false});
+
         g_constants.dbTables['users'].selectAll("ROWID AS id, *", "login='"+escape(user)+"'", "", function(error, rows) {
             if (rows && rows.length)
-            {
-                callback({result: true, row: rows[0]});
-                return;
-            }
+                return callback({result: true, row: rows[0]});
+
             callback({result: false});
         });
     }
@@ -171,17 +164,12 @@ exports.CheckUserExist = function(user, email, callback)
     function IsEmailExist(email, callback)
     {
         if (!email.length)
-        {
-            callback({result: false});
-            return;
-        }
+            return callback({result: false});
 
         g_constants.dbTables['users'].selectAll("ROWID AS id, *", "email='"+escape(email)+"'", "", function(error, rows) {
             if (rows && rows.length)
-            {
-                callback({result: true, row: rows[0]});
-                return;
-            }
+                return callback({result: true, row: rows[0]});
+
             callback({result: false});
         });
     }
@@ -568,36 +556,29 @@ exports.ValidateEmail = function(text)
     return text.match(mailformat);
 }
 
-let g_validateRecaptcha = 0;
-exports.validateRecaptcha = function(request, callback)
+exports.validateRecaptcha = function(request)
 {
-    if (g_constants.share.recaptchaEnabled == false)
-        return setTimeout(callback, 5000, {error: false, message: 'Recapcha disabled'});
-
-    if (!request.body || !request.body['g-recaptcha-response'])
-        return setTimeout(callback, 10, {error: true, message: 'Bad Request'});
-
-    exports.postHTTP(
-        "https://www.google.com/recaptcha/api/siteverify?secret="+g_constants.recaptcha_priv_key+"&response="+request.body['g-recaptcha-response'], 
-        {}, 
-        (code, data) => {
-            try
-            {
-                var ret = data ? JSON.parse(data) : {};
-                if (!data)
-                    ret['success'] = false;
-                    
-                ret['error'] = !ret.success;
-                ret.message = ret.error ? 'Recaptcha failed' : '';
-                
-                setTimeout(callback, 10, ret);
+    return new Promise((ok, cancel) => {
+        if (g_constants.share.recaptchaEnabled == false) return cancel(new Error('Recapcha disabled'));
+    
+        if (!request.body || !request.body['g-recaptcha-response']) return cancel(new Error('Bad Request'));
+    
+        exports.postHTTP(
+            "https://www.google.com/recaptcha/api/siteverify?secret="+g_constants.recaptcha_priv_key+"&response="+request.body['g-recaptcha-response'], 
+            {}, 
+            (code, data) => {
+                try {
+                    var ret = data ? JSON.parse(data) : {};
+                    if (!data) return cancel(new Error('Recaptcha failed'));
+                        
+                    ok('');
+                }
+                catch(e) {
+                    cancel(new Error('Recaptcha failed'));
+                }
             }
-            catch(e)
-            {
-                setTimeout(callback, 10, {error: true, success: false, message: 'Recaptcha failed'});
-            }
-        }
-    );
+        );
+    });
 }
 
 // Where fileName is name of the file and response is Node.js Reponse. 

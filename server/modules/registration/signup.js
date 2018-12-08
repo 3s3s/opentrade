@@ -7,43 +7,41 @@ const mailer = require("../mailer.js");
 
 let emailChecker = {};
 
-exports.onSubmit = function(req, res)
+exports.onSubmit = async function(req, res)
 {
-    const request = req;
-    const responce = res;
-    
-    utils.validateRecaptcha(request, ret => {
-        if (ret.error)
-            return SignupError(request, responce, ret.message);
+    try {
+        
+        await utils.validateRecaptcha(req);
+        await validateForm(req);
+        
+        try {
+            const ret = await utils.CheckUserExist(req.body['username'], req.body['email']);
+            return SignupError(req, res, ret.message);
+        }
+        catch(e) {
+            if (g_constants.share.emailVerificationEnabled == 'disabled') return Signup(req, res);
+        
+            return SendConfirmEmail(req, res);
+        }
+    }
+    catch(e) {
+        return SignupError(req, res, e.message);
+    }
 
-        validateForm(request, ret => {
-            if (ret.error)
-                return SignupError(request, responce, ret.message);
-
-            utils.CheckUserExist(request.body['username'], request.body['email'], ret => {
-                if (ret.result == true)
-                    return SignupError(request, responce, ret.message);
-                    
-                if (g_constants.share.emailVerificationEnabled == 'disabled')
-                    return Signup(request, responce);
-
-                SendConfirmEmail(request, responce);
-            });
-        });
-    });
-    
-    function validateForm(req, callback)
+    function validateForm(req)
     {
-        if (!req.body || !req.body['username'] || !req.body['email'] || !req.body['password1'] || !req.body['password2'])
-            return callback({error: true, message: 'Bad Request'});
-
-        if (req.body['password1'] != req.body['password2'])
-            return callback({error: true, message: 'The two password fields didn\'t match.'});
-
-        if (!utils.ValidateEmail(req.body['email']))
-            return callback({error: true, message: 'Ivalid email'});
-
-        callback({error: false, message: ''});
+        return new Promise((ok, cancel) => {
+            if (!req.body || !req.body['username'] || !req.body['email'] || !req.body['password1'] || !req.body['password2'])
+                return cancel(new Error('Bad Request'));
+    
+            if (req.body['password1'] != req.body['password2'])
+                return cancel(new Error('The two password fields didn\'t match.'));
+    
+            if (!utils.ValidateEmail(req.body['email']))
+                return cancel(new Error('Ivalid email'));
+    
+            ok('');
+        });
     }
     
     function SendConfirmEmail(req, res)
@@ -77,7 +75,7 @@ exports.onCheckEmail = function(req, res)
     Signup(req, res);
 }
 
-function Signup(req, res)
+async function Signup(req, res)
 {
     const user = req.body['username'];
     const email = req.body['email'];
@@ -85,12 +83,14 @@ function Signup(req, res)
     
     const IP = escape(req.headers['x-forwarded-for'] || req.connection.remoteAddress);
     
-    utils.CheckUserExist(user, email, ret => {
-        if (ret.result == true)
-            return SignupError(req, res, ret.message);
-
+    try {
+        const ret = await utils.CheckUserExist(user, email);
+        
+        SignupError(req, res, ret.message);
+    }
+    catch(e) {
         InsertNewUser(user, email, password, res, IP);
-    });
+    }
 }
 
 function InsertNewUser(user, email, password, res, IP)

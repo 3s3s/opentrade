@@ -139,10 +139,23 @@ File ~/opentrade/static_pages/chart.html
 
 ```
 const PORT_SSL = 40443; //change to your ssl port
-const MAIN_COIN = 'Greencoin'; //change Greencoin to your main coin pair same as in constants.js
+const MAIN_COIN = 'Marycoin'; //change Marycoin to your main coin pair same as in constants.js
 const DEFAULT_PAIR = 'Litecoin'; //change Litecoin to your default coin pair same as in constants.js
       
 const TRADE_COMISSION = 0.001;
 ```
 
-After that you coins should appear on the main page.
+=======
+After that, you coins should appear on the main page.
+
+
+
+**Donate**
+If you find this script is useful then consider donate please
+
+Bitcoin 36WA1WESULub6Q434bQcnmpnk62oLD7vuQ
+Marycoin M9dKNcBYgrbbE2f4tz3ud32KLKj1i9FrmN
+Dogecoin DCJRhs9Pjr2FBrrUbKvFeWcYC6ZaF2GTAx
+Litecoin LTbDdTijroJEyXt27apQSnuMY4RoXyjdq2
+
+

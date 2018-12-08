@@ -2,19 +2,22 @@
 
 const SUPPORT_EMAIL = 'support@email.com';
 const NOREPLY_EMAIL = 'no-reply@email.com';
+const DOMAIN = 'trade.multicoins.org';
 
 const MAILER_NAME = 'OpenTrade Mailer';
 const START_MESSAGE = 'OpenTrade started!';
+const OPENTRADE = "OpenTrade";
 
 exports.ALLOW_EMAIL_CHANGING = true;
 
-exports.DEBUG_LOG = false;
+exports.DEBUG_LOG = true;
 
 exports.share = {
    tradeEnabled: true,
    withdrawEnabled: true,
    recaptchaEnabled: true,
    emailVerificationEnabled: 'enabled', //'disabled' // !!! WARNING !!! DANGER !!! DO NOT CHANGE IT IN PRODUCTION !!! FOR TESTS ONLY !!!
+   pinVerificationEnabled: 'enabled', //'disabled'
    
    TRADE_COMISSION: 0.001,
    DUST_VOLUME: 0.000001,
@@ -242,6 +245,8 @@ exports.NOREPLY_EMAIL = PRIVATE.NOREPLY_EMAIL || NOREPLY_EMAIL;
 exports.START_MESSAGE = PRIVATE.START_MESSAGE || START_MESSAGE;
 exports.MAILER_NAME = PRIVATE.MAILER_NAME || MAILER_NAME;
 exports.MAX_USER_WITHDRAW = PRIVATE.MAX_USER_WITHDRAW || MAX_USER_WITHDRAW;
+exports.OPENTRADE = PRIVATE.OPENTRADE || OPENTRADE;
+exports.DOMAIN = PRIVATE.DOMAIN || DOMAIN;
 
 exports.FIAT_ID = PRIVATE.FIAT_ID || [];
 

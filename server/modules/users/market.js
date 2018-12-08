@@ -30,6 +30,7 @@ exports.Init = function()
             setTimeout(database.EndTransaction, 5000, () => {StartTransaction});
         });
     }*/
+    database.RunTransactions();
 };
 
 function ProcessExchange()
