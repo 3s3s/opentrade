@@ -11,18 +11,19 @@ Step-by-step install instructions:
 4
 
 ```
-sudo apt-get update
-sudo apt-get install build-essential libssl-dev curl -y
+[sudo] apt-get update
+[sudo] apt-get install build-essential libssl-dev curl -y
 curl -sL https://raw.githubusercontent.com/creationix/nvm/v0.31.0/install.sh -o install_nvm.sh
 bash install_nvm.sh
-sudo reboot
+[sudo] reboot
 
 nvm install 8.0.0
 
 git clone https://github.com/3s3s/opentrade.git
 cd opentrade
 
-sudo npm install 
+[sudo] npm install 
+[sudo] npm install forever -g
 ```
 
 ## Here is an example of the file ~/opentrade/server/modules/private_constants.js Edit with your configs.
@@ -44,8 +45,10 @@ exports.walletspassphrase = {
 **After, you can run exchange**
 
 ```
+cd ~/opentrade/databaseServer
+[sudo] forever start main.js
 cd  ~/opentrade/server
-sudo node main.js
+[sudo] forever start main.js
 ```
 
 In your browser address bar, type https://127.0.0.1:40443

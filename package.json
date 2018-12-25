@@ -1,6 +1,6 @@
 {
   "name": "OpenTrade",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Open Source Cryptocurrency Exchange",
   "repository": {
     "type": "git",
@@ -13,6 +13,6 @@
 	  "sqlite3": "latest",
 	  "ejs": "latest",
 	  "cors": "latest",
-	  "debug": "latest"
+	  "compression": "latest"
   }
 }

@@ -22,14 +22,10 @@ exports.share = {
    TRADE_COMISSION: 0.001,
    DUST_VOLUME: 0.000001,
    
-   my_portSSL: 40443,
-   
    TRADE_MAIN_COIN: "Marycoin",
    TRADE_MAIN_COIN_TICKER: "MC",
    TRADE_DEFAULT_PAIR: "Litecoin"
 };
-
-exports.my_port = process.env.PORT || 40080;
 
 exports.SESSION_TIME = 3600*1000; //one hour
 
@@ -247,6 +243,11 @@ exports.MAILER_NAME = PRIVATE.MAILER_NAME || MAILER_NAME;
 exports.MAX_USER_WITHDRAW = PRIVATE.MAX_USER_WITHDRAW || MAX_USER_WITHDRAW;
 exports.OPENTRADE = PRIVATE.OPENTRADE || OPENTRADE;
 exports.DOMAIN = PRIVATE.DOMAIN || DOMAIN;
+
+exports.share["my_portSSL"] = PRIVATE.SSL_PORT || 443;
+exports.my_port = PRIVATE.PORT || 80;
+
+exports.PORT_DB = PRIVATE.SSL_PORTDB || 40543;
 
 exports.FIAT_ID = PRIVATE.FIAT_ID || [];
 
