@@ -2,7 +2,7 @@
 
 const SUPPORT_EMAIL = 'support@email.com';
 const NOREPLY_EMAIL = 'no-reply@email.com';
-const DOMAIN = 'trade.multicoins.org';
+const DOMAIN = 'localhost';
 
 const MAILER_NAME = 'OpenTrade Mailer';
 const START_MESSAGE = 'OpenTrade started!';
@@ -15,12 +15,12 @@ exports.DEBUG_LOG = true;
 exports.share = {
    tradeEnabled: true,
    withdrawEnabled: true,
-   recaptchaEnabled: true,
+   recaptchaEnabled: false,
    emailVerificationEnabled: 'enabled', //'disabled' // !!! WARNING !!! DANGER !!! DO NOT CHANGE IT IN PRODUCTION !!! FOR TESTS ONLY !!!
    pinVerificationEnabled: 'enabled', //'disabled'
    
-   TRADE_COMISSION: 0.001,
-   DUST_VOLUME: 0.000001,
+   TRADE_COMISSION: 0.001, //change trade comission percent
+   DUST_VOLUME: 0.000001, //change minimal order volume
    
    TRADE_MAIN_COIN: "Marycoin",
    TRADE_MAIN_COIN_TICKER: "MC",
@@ -34,7 +34,7 @@ const MAX_IP_CONNECTIONS = 100;
 
 const MAX_USER_WITHDRAW = 100; //Percentage from trade deposit
 
-const DATABASE_PATH = './database/sqlite.db';
+const DATABASE_PATH = '/root/opentrade/server/database/sqlite.db';
 const PRIVATE_CONSTANTS_PATH = "./modules/private_constants";
 
 exports.dbTables = [

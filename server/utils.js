@@ -396,8 +396,8 @@ exports.getJSON = function(query, callback)
 {
     const parsed = url.parse(query, true);
     const options = {
-        host: parsed.host,
-        port: parsed.port || parsed.protocol=='https:' ? 443 : 80,
+        host: parsed.hostname,
+        port: parsed.port || (parsed.protocol=='https:' ? 443 : 80),
         path: parsed.path,
         method: 'GET',
         headers: {

@@ -51,7 +51,7 @@ cd  ~/opentrade/server
 [sudo] forever start main.js
 ```
 
-In your browser address bar, type https://127.0.0.1:40443
+In your browser address bar, type https://127.0.0.1
 You will see OpenTrade.
 
 The first registered user will be exchange administrator. 
@@ -105,21 +105,20 @@ File ~/opentrade/server/constants.js have settings that you can change
 https://github.com/3s3s/opentrade/blob/master/server/constants.js
 
 ```
-exports.TRADE_MAIN_COIN = "Marycoin"; //change Marycoin to your main coin pair
-exports.TRADE_DEFAULT_PAIR = "Litecoin"; //change Litecoin to your default coin pair
-exports.TRADE_COMISSION = 0.001; //change trade comission percent
-
-exports.recaptcha_pub_key = "6LeX5SQUAAAAAKTieM68Sz4MECO6kJXsSR7_sGP1"; //change to your recaptcha public key
-
 exports.NOREPLY_EMAIL = 'no-reply@multicoins.org'; //change no-reply email
 exports.SUPPORT_EMAIL = 'ivanivanovkzv@gmail.com'; //change to your valid email for support requests
-exports.my_portSSL = 40443; //change to your ssl port
+const DOMAIN = 'localhost'; //Change to your domain name
+
+exports.TRADE_MAIN_COIN = "Marycoin"; //change Marycoin to your main coin pair
+exports.TRADE_DEFAULT_PAIR = "Litecoin"; //change Litecoin to your default coin pair
+exports.share.TRADE_COMISSION = 0.001; //change trade comission percent
+exports.share.DUST_VOLUME = 0.000001; //change minimal order volume
+
+exports.recaptcha_pub_key = "6LeX5SQUAAAAAKTieM68Sz4MECO6kJXsSR7_sGP1"; //change to your recaptcha public key
 
 ```
 
 File ~/opentrade/static_pages/chart.html
-
-https://github.com/3s3s/opentrade/blob/master/static_pages/chart.html#L23
 
 ```
 const PORT_SSL = 40443; //change to your ssl port

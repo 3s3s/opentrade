@@ -11,7 +11,9 @@ exports.onSubmit = async function(req, res)
 {
     try {
         
-        await utils.validateRecaptcha(req);
+        if (g_constants.share.recaptchaEnabled)
+            await utils.validateRecaptcha(req);
+            
         await validateForm(req);
         
         try {
