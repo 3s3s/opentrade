@@ -23,7 +23,6 @@ git clone https://github.com/3s3s/opentrade.git
 cd opentrade
 
 [sudo] npm install 
-[sudo] npm install forever -g
 ```
 
 ## Here is an example of the file ~/opentrade/server/modules/private_constants.js Edit with your configs.
