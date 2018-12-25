@@ -315,6 +315,9 @@ exports.GetAllUsersCount = function()
     if (allUsersCount.count && Date.now() - allUsersCount.time < 1000*60)
         return allUsersCount.count;
         
+    if (!g_constants.dbTables['users'])
+        return allUsersCount.count;
+        
     g_constants.dbTables['users'].selectAll('count(login) AS ret', '', '', (err, rows) => {
         if (err || !rows.length)
             return;
@@ -393,8 +396,8 @@ exports.getJSON = function(query, callback)
 {
     const parsed = url.parse(query, true);
     const options = {
-        host: parsed.host,
-        port: parsed.port || parsed.protocol=='https:' ? 443 : 80,
+        host: parsed.hostname,
+        port: parsed.port || (parsed.protocol=='https:' ? 443 : 80),
         path: parsed.path,
         method: 'GET',
         headers: {
@@ -403,12 +406,14 @@ exports.getJSON = function(query, callback)
     };
     exports.getHTTP(options, callback);
 };
+
 exports.postJSON = function(query, body, callback)
 {
     const parsed = url.parse(query, true);
     const options = {
-        host: parsed.host,
-        port: parsed.port || parsed.protocol=='https:' ? 443 : 80,
+        protocol: parsed.protocol,
+        host: parsed.hostname,
+        port: parsed.port || (parsed.protocol=='https:' ? 443 : 80),
         path: parsed.path,
         method: 'POST',
         body: body,
@@ -498,46 +503,44 @@ exports.getHTTP = function(options, onResult)
     console.log("rest::getJSON");
 
     const port = options.port || 80;
-    const prot = port == 443 ? https : http;
+    const prot = (port == 443 || options.protocol == 'https:') ? https : http;
     
     if (!options.method)
         options.method = 'GET';
     if (!options.headers)
         options.headers = {'Content-Type': 'application/json'};
         
-    var req = prot.request(options, function(res)
-    {
+    var req = prot.request(options, res => {
         var output = '';
         console.log(options.host + ':' + res.statusCode);
         res.setEncoding('utf8');
 
-        res.on('data', function (chunk) {
+        res.on('data', chunk => {
             output += chunk;
         });
 
-        res.on('end', function() {
+        res.on('end', () => {
             if (options.headers['Content-Type'] == 'application/json')
             {
                 try {
-                    var obj = JSON.parse(output);
-                    onResult(res.statusCode, obj);
-
+                    return onResult(res.statusCode, JSON.parse(output));
                 }catch(e) {
                     console.log(e.message);
-                    onResult(res.statusCode, e);
+                    return onResult(res.statusCode, e);
                 }
-                
-                return;
             }
             onResult(res.statusCode, output);
         });
     });
 
-    req.on('error', function(err) {
+    req.on('error', err => {
         console.log(err.message)
         onResult('0', 'unknown error');
     });
 
+    if (options.body)
+        req.write(options.body);
+        
     req.end();
 };
 

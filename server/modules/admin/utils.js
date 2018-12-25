@@ -21,6 +21,7 @@ exports.GetUserRole = function(user, callback)
 {
     try
     {
+        if (!user || !user.length) throw new Error('not logged');
         g_constants.dbTables['users'].selectAll('ROWID AS id, info', 'id='+escape(user), '', (err, rows) => {
             if (err || !rows || !rows.length) 
                 return callback({role: 'User'});

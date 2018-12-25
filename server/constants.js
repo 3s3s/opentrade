@@ -2,7 +2,7 @@
 
 const SUPPORT_EMAIL = 'support@email.com';
 const NOREPLY_EMAIL = 'no-reply@email.com';
-const DOMAIN = 'trade.multicoins.org';
+const DOMAIN = 'localhost';
 
 const MAILER_NAME = 'OpenTrade Mailer';
 const START_MESSAGE = 'OpenTrade started!';
@@ -15,21 +15,17 @@ exports.DEBUG_LOG = true;
 exports.share = {
    tradeEnabled: true,
    withdrawEnabled: true,
-   recaptchaEnabled: true,
+   recaptchaEnabled: false,
    emailVerificationEnabled: 'enabled', //'disabled' // !!! WARNING !!! DANGER !!! DO NOT CHANGE IT IN PRODUCTION !!! FOR TESTS ONLY !!!
    pinVerificationEnabled: 'enabled', //'disabled'
    
-   TRADE_COMISSION: 0.001,
-   DUST_VOLUME: 0.000001,
-   
-   my_portSSL: 40443,
+   TRADE_COMISSION: 0.001, //change trade comission percent
+   DUST_VOLUME: 0.000001, //change minimal order volume
    
    TRADE_MAIN_COIN: "Marycoin",
    TRADE_MAIN_COIN_TICKER: "MC",
    TRADE_DEFAULT_PAIR: "Litecoin"
 };
-
-exports.my_port = process.env.PORT || 40080;
 
 exports.SESSION_TIME = 3600*1000; //one hour
 
@@ -38,7 +34,7 @@ const MAX_IP_CONNECTIONS = 100;
 
 const MAX_USER_WITHDRAW = 100; //Percentage from trade deposit
 
-const DATABASE_PATH = './database/sqlite.db';
+const DATABASE_PATH = '/root/opentrade/server/database/sqlite.db';
 const PRIVATE_CONSTANTS_PATH = "./modules/private_constants";
 
 exports.dbTables = [
@@ -247,6 +243,11 @@ exports.MAILER_NAME = PRIVATE.MAILER_NAME || MAILER_NAME;
 exports.MAX_USER_WITHDRAW = PRIVATE.MAX_USER_WITHDRAW || MAX_USER_WITHDRAW;
 exports.OPENTRADE = PRIVATE.OPENTRADE || OPENTRADE;
 exports.DOMAIN = PRIVATE.DOMAIN || DOMAIN;
+
+exports.share["my_portSSL"] = PRIVATE.SSL_PORT || 443;
+exports.my_port = PRIVATE.PORT || 80;
+
+exports.PORT_DB = PRIVATE.SSL_PORTDB || 40543;
 
 exports.FIAT_ID = PRIVATE.FIAT_ID || [];
 

@@ -1,22 +1,113 @@
 'use strict';
 
-var sqlite3 = require('sqlite3').verbose();
-
 const g_constants = require('./constants');
 const g_utils = require('./utils');
+const WebSocket = require('ws');
 
-var g_db;
+let g_ws = null;
+let g_mapIdToCallback = {};
+
+function WaitingSocket()
+{
+    if (g_ws && g_ws.readyState === WebSocket.OPEN) return;
+    
+    g_ws = new WebSocket('wss://'+g_constants.DOMAIN+':'+g_constants.PORT_DB); 
+    if (!g_ws) return;
+    
+    g_ws.on('message', data => {
+        DeleteTimeouts();
+        if (!data) return;
+        try {
+            const message = JSON.parse(data);
+
+            if (!message.id) return;
+            if (!g_mapIdToCallback[message.id] || !g_mapIdToCallback[message.id].callback) return;
+                
+            const callback = g_mapIdToCallback[message.id].callback;
+
+            setTimeout(callback, 1, message.err, message.rows || []);
+
+            delete g_mapIdToCallback[message.id];
+        }
+        catch(e) {
+            console.log(e.message);
+        }
+    });
+    
+    function DeleteTimeouts()
+    {
+        let keys = [];
+        for (let key in g_mapIdToCallback)
+        {
+            if (g_mapIdToCallback[key].time && Date.now()-g_mapIdToCallback[key].time > 3000)
+            {
+                const callback = g_mapIdToCallback[key].callback;
+                const cancel = g_mapIdToCallback[key].cancel;
+                
+                if (callback) setTimeout(callback, 1, new Error('sql timeout'), []);
+                if (cancel && !callback) setTimeout(cancel, 1);
+                
+                //delete g_mapIdToCallback[key];
+                //break;
+                keys.push(key)
+            }
+        }
+        for (let i=0; i<keys.length; i++)
+            delete g_mapIdToCallback[keys[i]];
+    }
+}
+function remoteInit()
+{
+    WaitingSocket();
+    setInterval(WaitingSocket, 5000);
+    
+    return new Promise((ok, cancel) => {
+        const id = Math.random();
+        const strJSON = JSON.stringify({id: id, q: JSON.stringify(
+            {
+                dbPath: g_constants.dbName, 
+                command: "init",
+                dbStructure: {dbTables: g_constants.dbTables, dbIndexes: g_constants.dbIndexes}
+            }
+        )});
+
+        g_ws.on('open', () => {
+          g_ws.send(strJSON);
+          return ok();
+        });
+
+    });
+}
+
+function remoteRun(SQL, callback)
+{
+    const id = Math.random();
+    g_mapIdToCallback[id] = {time: Date.now(), callback: callback};
+        
+    const strJSON = JSON.stringify({id: id, q: JSON.stringify(
+        {
+            dbPath: g_constants.dbName, 
+            command: "sql",
+            sql: SQL
+        }
+    )});
+        
+    if (g_ws.readyState === WebSocket.OPEN) g_ws.send(strJSON);
+}
+
 
 function RunDBTransaction()
 {
     exports.RunMemQueries(function(err) {});
 }
 
-exports.Init = function(callback)
+exports.Init = async function(callback)
 {
     const globalCallback = callback;
     
-    g_db = new sqlite3.Database(g_constants.dbName);
+    await remoteInit();
+    
+    //g_db = new sqlite3.Database(g_constants.dbName);
     
     //g_db.run('DROP TABLE history');
     //g_db.run('ALTER TABLE orders ADD COLUMN uuid TEXT UNIQUE')
@@ -26,7 +117,8 @@ exports.Init = function(callback)
     
     function CreateIndex(indexObject)
     {
-        g_db.run("CREATE INDEX IF NOT EXISTS "+indexObject.name+" ON "+indexObject.table+" ("+indexObject.fields+")", function(err){
+        //g_db.run("CREATE INDEX IF NOT EXISTS "+indexObject.name+" ON "+indexObject.table+" ("+indexObject.fields+")", function(err){
+        remoteRun("CREATE INDEX IF NOT EXISTS "+indexObject.name+" ON "+indexObject.table+" ("+indexObject.fields+")", err => {
             if (err) throw new Error(err.message);
         });
     }
@@ -45,13 +137,11 @@ exports.Init = function(callback)
     
          cols += ')';
          
-         g_db.run('CREATE TABLE IF NOT EXISTS ' + dbTables[nIndex].name + cols, function(err) {
+         //g_db.run('CREATE TABLE IF NOT EXISTS ' + dbTables[nIndex].name + cols, function(err) {
+         remoteRun('CREATE TABLE IF NOT EXISTS ' + dbTables[nIndex].name + cols, err => {
             if (!err)
-            {
-                cbError(false);
-                return;
-            }
-                
+                return cbError(false);
+
             console.log(err.message);
             cbError(true);
          });
@@ -61,7 +151,8 @@ exports.Init = function(callback)
     {
         try
         {
-            g_db.run('DELETE FROM ' + table + ' WHERE ' + where, function(err) {
+            //g_db.run('DELETE FROM ' + table + ' WHERE ' + where, function(err) {
+            remoteRun('DELETE FROM ' + table + ' WHERE ' + where, err => {
                 if (callback) setTimeout(callback, 1, err); //callback(err)
                 if (!err) 
                     return;
@@ -112,7 +203,8 @@ exports.Init = function(callback)
             }
             else
             {
-                g_db.run('INSERT INTO ' + tableObject.name + ' VALUES ' + vals, function(err) {
+                //g_db.run('INSERT INTO ' + tableObject.name + ' VALUES ' + vals, err => {
+                remoteRun('INSERT INTO ' + tableObject.name + ' VALUES ' + vals, err => {
                     if (callbackERR) setTimeout(callbackERR, 1, err); //callbackERR(err);
                     if (err) 
                         console.log('INSERT error: ' + err.message);
@@ -138,13 +230,14 @@ exports.Init = function(callback)
             if (!callback) 
                 console.log("WARNING: SelectAll callback undefined!!!");
 
-            g_db.all(query, param, (err, rows) => {
+            //g_db.all(query, param, (err, rows) => {
+            remoteRun(query, (err, rows) => {
                 if (err) 
                     console.log("SELECT ERROR: query="+query+" message=" + err.message);
                 
                 query = null;
                 if (callback) setTimeout(callback, 1, err, rows);
-            });        
+            });
         }
         catch (e) {
             console.log(e.message);
@@ -164,7 +257,8 @@ exports.Init = function(callback)
             query += ' WHERE ' + WHERE;
             
             //console.log(query);   
-            g_db.run(query, function(err) {
+            //g_db.run(query, function(err) {
+            remoteRun(query, err => {
                 if (callback) setTimeout(callback, 1, err); //callback(err);
                 if (err) console.log("UPDATE error: " + err.message);
             });
@@ -175,9 +269,9 @@ exports.Init = function(callback)
         }
     }
     
-    g_db.parallelize(function(){
+    //g_db.parallelize(() => {
         
-        g_utils.ForEachSync(g_constants.dbTables, CreateTable, function(err) {
+        g_utils.ForEachSync(g_constants.dbTables, CreateTable, err => {
             if (err) throw new Error('unexpected init db error 2');
             
             if (g_constants.dbIndexes)
@@ -206,7 +300,7 @@ exports.Init = function(callback)
             if (globalCallback)
                 globalCallback();
                 
-        }, function(err, params, cbError){
+        }, (err, params, cbError) => {
             if (err) throw new Error('unexpected init db error 1');
             
             const i = params.nIndex;
@@ -260,10 +354,19 @@ exports.Init = function(callback)
                     }, param);
                 });
             };
+            g_constants.dbTables[i]['Select2'] = function(cols, where = "", other = "", param) {
+                const name = this.name;
+                return new Promise((fulfilled, rejected) => {
+                    SelectAll(cols, name, where, other, (err, rows) => {
+                        if (err || !rows) return fulfilled([]);
+                        fulfilled(rows);
+                    }, param);
+                });
+            };
             
             cbError(false);
         });
-    });
+    //});
 };
 
 exports.RunTransactions = function()
@@ -272,7 +375,8 @@ exports.RunTransactions = function()
     
     function Begin()
     {
-        g_db.run('BEGIN TRANSACTION', function(err){
+        //g_db.run('BEGIN TRANSACTION', function(err){
+        remoteRun('BEGIN TRANSACTION', err => {
             if (!err)
                 setTimeout(End, 10000);
             else
@@ -282,7 +386,8 @@ exports.RunTransactions = function()
     
     function End()
     {
-        g_db.run('END TRANSACTION', function(err){
+        //g_db.run('END TRANSACTION', function(err){
+        remoteRun('END TRANSACTION', err => {
             if (!err)
             {
                // g_db.run("VACUUM");
@@ -307,7 +412,8 @@ exports.BeginTransaction = function (log, callback, count)
 
     g_gotTransaction = true;   
     txLog = log;
-    g_db.run('BEGIN TRANSACTION', function(err){
+    //g_db.run('BEGIN TRANSACTION', function(err){
+    remoteRun('BEGIN TRANSACTION', err => {
         if (err) g_gotTransaction = false;
         //if (err) throw ("BeginTransaction error: " + err.message);
         if (callback) callback(err);
@@ -316,7 +422,8 @@ exports.BeginTransaction = function (log, callback, count)
 
 exports.EndTransaction = function(callback)
 {
-    g_db.run('END TRANSACTION', err => {
+    //g_db.run('END TRANSACTION', err => {
+    remoteRun('END TRANSACTION', err => {
         if (!err) g_gotTransaction = false;
         //if (err) throw ("EndTransaction error: " + err.message);
         if (callback) callback(err);
@@ -325,11 +432,13 @@ exports.EndTransaction = function(callback)
 
 exports.RunQuery = function(SQL, callback)
 {
-    g_db.run(SQL, callback);
+   // g_db.run(SQL, callback);
+    remoteRun(SQL, callback);
 }
 exports.SELECT = function(query, callback, param)
 {
-    g_db.all(query, param, (err, rows) => {
+    //g_db.all(query, param, (err, rows) => {
+    remoteRun(query, (err, rows) => {
         if (err) console.log("SELECT ERROR: query="+query+" message=" + err.message);
                 
         query = null;
@@ -349,7 +458,8 @@ exports.run = function(log, query, callback, count)
     g_gotTransaction = true;   
     txLog = log;
 
-    g_db.run(query, err => {
+    //_db.run(query, err => {
+    remoteRun(query, err => {
         if (err) return exports.RollbackTransaction(callback);
 
         g_gotTransaction = false;
@@ -360,7 +470,8 @@ exports.run = function(log, query, callback, count)
 
 exports.RollbackTransaction = function(callback)
 {
-    g_db.run('ROLLBACK', err => {
+    //g_db.run('ROLLBACK', err => {
+    remoteRun('ROLLBACK', err => {
         g_gotTransaction = false;
         //if (err) throw ("EndTransaction error: " + err.message);
         if (callback) callback(err);
@@ -381,10 +492,11 @@ exports.RunMemQueries = function(callback)
         callback(false);
         return;
     }
-    exports.BeginTransaction(function() {
+    exports.BeginTransaction('RunMemQueries', () => {
         g_memQueries.forEach((val, index, array) => {
             console.log('run from memory: '+ val);
-            g_db.run(val, error => {
+            //g_db.run(val, error => {
+            remoteRun(val, error => {
                  if (error) //throw 'RunMemQueries unexpected error for query='+val;
                  {
                      console.log('ERROR for RUN SQL: '+ val + '\nmessage:'+(error.message || ''));

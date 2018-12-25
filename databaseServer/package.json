@@ -12,6 +12,7 @@
     "sendmail": "latest",
     "sqlite3": "latest",
     "ejs": "latest",
-    "cors": "latest"
+    "cors": "latest",
+    "compression": "latest"
   }
 }

@@ -48,7 +48,7 @@ function ProcessExchange()
 let g_History24 = {};
 function UpdateExchangeSummary()
 {
-    utils.getJSON('https://trade.multicoins.org/api/v1/public/getmarkets', (status, data) => {
+    utils.getJSON('https://'+g_constants.DOMAIN+':'+g_constants.share["my_portSSL"]+'/api/v1/public/getmarkets', (status, data) => {
         if (status != 200 || !data || !data.result || data.success != true)
             return;
             
@@ -60,7 +60,7 @@ function UpdateExchangeSummary()
             const BTC = data.result[i].MarketCurrency;
             const MC = data.result[i].BaseCurrency;
             
-            utils.getJSON('https://trade.multicoins.org/api/v1/public/getmarketsummary?market='+MC+'-'+BTC+'&period=24', (status2, data2) => {
+            utils.getJSON('https://'+g_constants.DOMAIN+':'+g_constants.share["my_portSSL"]+'/api/v1/public/getmarketsummary?market='+MC+'-'+BTC+'&period=24', (status2, data2) => {
                 if (status2 != 200 || !data2 || data2.success != true || !data2.result)
                     return;
 

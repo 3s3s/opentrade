@@ -2,7 +2,6 @@
 
 const url = require('url');
 const utils = require("./utils");
-const index = require("./modules/index");
 const support = require("./modules/support");
 const login = require("./modules/registration/login");
 const signup = require("./modules/registration/signup");

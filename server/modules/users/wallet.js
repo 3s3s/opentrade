@@ -6,7 +6,6 @@ const WebSocket = require('ws');
 const RPC = require("../rpc.js");
 const mailer = require("../mailer.js");
 const orders = require("./orders");
-const database = require("../../database");
 const adminUtils = require("../admin/utils");
 
 const commands = {
@@ -773,7 +772,7 @@ function ProcessWithdraw(userID, address, amount, coinName, callback)
             return callback({result: false, message: '<b>Withdraw error ('+(ret && ret.code ? ret.code : 0)+'): check balance error</b>'});
         }
         MoveBalance(g_constants.ExchangeBalanceAccountID, userID, coin, utils.roundDown(amount*1+(rows[0].info.hold || 0.002)), ret => {
-            if (!ret || !ret.result)
+            if (!ret || !ret.result || !ret.balanceupdated)
             {
                 require("./orderupdate").UnlockUser(userID);
                 return callback({result: false, message: '<b>Withdraw error (1):</b> '+ ret.message});
@@ -885,7 +884,7 @@ function MoveBalance(userID_from, userID_to, coin, amount, callback)
                 }
 
                 console.log('MoveBalance return with message="amount<=0" userID='+userID+' coin='+coin.name+" amount="+(amount*1).toFixed(7)*1);
-                callback({result: true, balance: rows[0].balance});
+                callback({result: true, balance: rows[0].balance, balanceupdated: false});
             });
             return;
         }
@@ -904,7 +903,7 @@ function MoveBalance(userID_from, userID_to, coin, amount, callback)
                     }
 
                     console.log('MoveBalance return with error message="" userID='+userID+' coin='+coin.name);
-                    callback({result: true, balance: rows[0].balance});
+                    callback({result: true, balance: rows[0].balance, balanceupdated: false});
                 });
                 return;
             }
@@ -973,7 +972,7 @@ function UpdateBalanceDB(userID_from, userID_to, coin, amount, comment, callback
                         utils.balance_log('Insert DB balance error (userID_from='+userID_from+'), wait 10 sec and try again. ERROR: '+JSON.stringify(err));
                         return setTimeout(UpdateBalanceDB, 10000, userID_from, userID_to, coin, amount, comment, callback, nTry+1);
                     }*/
-                    callback({result: true, balance: amount}); 
+                    callback({result: true, balance: amount, balanceupdated: true}); 
                 }
             );
             return;
@@ -1013,7 +1012,7 @@ function UpdateBalanceDB(userID_from, userID_to, coin, amount, comment, callback
             }*/
 
             g_CachedBalance[WHERE] = {};
-            callback({result: true, balance: newBalance}); 
+            callback({result: true, balance: newBalance, balanceupdated: true}); 
         });
     });
 }
