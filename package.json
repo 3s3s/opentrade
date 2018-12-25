@@ -6,10 +6,6 @@
     "type": "git",
     "url": "https://github.com/3s3s/opentrade.git"
   },
-  "scripts": {
-    "preinstall": "npm i -g forever",
-    "compression": "npm i -g forever"
-  },
   "dependencies": {
     "express": "latest",
     "ws": "latest",
