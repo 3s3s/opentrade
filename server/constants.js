@@ -34,7 +34,7 @@ const MAX_IP_CONNECTIONS = 100;
 
 const MAX_USER_WITHDRAW = 100; //Percentage from trade deposit
 
-const DATABASE_PATH = '/root/opentrade/server/database/sqlite.db';
+const DATABASE_PATH = './server/database/sqlite.db';
 const PRIVATE_CONSTANTS_PATH = "./modules/private_constants";
 
 exports.dbTables = [
