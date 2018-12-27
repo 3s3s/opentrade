@@ -4,42 +4,77 @@ const g_constants = require('./constants');
 const g_utils = require('./utils');
 const WebSocket = require('ws');
 
-let g_ws = null;
+let g_wsPool = [];
 let g_mapIdToCallback = {};
 
-function WaitingSocket()
+function getRandomInt(min = 0, max = 100) {
+  return Math.floor(Math.random() * (max - min)) + min;
+}
+
+function InitSocketPool()
 {
-    if (g_ws && g_ws.readyState === WebSocket.OPEN) return;
+    if (g_wsPool.length) return;
+
+    g_wsPool = new Array(100)
+    for (let i=0; i<100; i++)
+        NewSocket(i); 
+}
+
+function NewSocket(index)
+{
+    const client = new WebSocket('wss://'+g_constants.DOMAIN+':'+g_constants.PORT_DB);
+    client['index'] = index;
     
-    g_ws = new WebSocket('wss://'+g_constants.DOMAIN+':'+g_constants.PORT_DB); 
-    if (!g_ws) return;
+    g_wsPool[index] = client;
+
+    client.on('open', heartbeat);
+    client.on('ping', heartbeat);
+    client.on('close', () =>  {
+      clearTimeout(client.pingTimeout);
+      g_wsPool[client.index] = null;
+    });     
+    client.on('message', data => {
+        setTimeout(ProcessMessage, 1, data);
+    });
+
+    function heartbeat() {
+      clearTimeout(this.pingTimeout);
+        
+      // Use `WebSocket#terminate()` and not `WebSocket#close()`. Delay should be
+      // equal to the interval at which your server sends out pings plus a
+      // conservative assumption of the latency.
+      this.pingTimeout = setTimeout(() => {
+        this.terminate();
+        g_wsPool[this.index] = null;
+      }, 30000 + 1000);
+    }
     
-    g_ws.on('message', data => {
+    function ProcessMessage(data)
+    {
         DeleteTimeouts();
         if (!data) return;
         try {
             const message = JSON.parse(data);
-
+    
             if (!message.id) return;
             if (!g_mapIdToCallback[message.id] || !g_mapIdToCallback[message.id].callback) return;
-                
+                    
             const callback = g_mapIdToCallback[message.id].callback;
-
+    
             setTimeout(callback, 1, message.err, message.rows || []);
-
+    
             delete g_mapIdToCallback[message.id];
         }
         catch(e) {
             console.log(e.message);
         }
-    });
-    
+    }
     function DeleteTimeouts()
     {
         let keys = [];
         for (let key in g_mapIdToCallback)
         {
-            if (g_mapIdToCallback[key].time && Date.now()-g_mapIdToCallback[key].time > 3000)
+            if (g_mapIdToCallback[key].time && Date.now()-g_mapIdToCallback[key].time > 30000)
             {
                 const callback = g_mapIdToCallback[key].callback;
                 const cancel = g_mapIdToCallback[key].cancel;
@@ -56,11 +91,25 @@ function WaitingSocket()
             delete g_mapIdToCallback[keys[i]];
     }
 }
+    
+function GetSocketFromPool(callback)
+{
+    const index = getRandomInt();
+    const socket = g_wsPool[index];
+    
+    if (socket && (socket.readyState === WebSocket.OPEN))
+        return callback(socket);
+        
+    if (!socket)
+        NewSocket(index)
+
+    setTimeout(GetSocketFromPool, 100, callback);
+}
+
 function remoteInit()
 {
-    WaitingSocket();
-    setInterval(WaitingSocket, 5000);
-    
+    InitSocketPool();
+
     return new Promise((ok, cancel) => {
         const id = Math.random();
         const strJSON = JSON.stringify({id: id, q: JSON.stringify(
@@ -70,11 +119,16 @@ function remoteInit()
                 dbStructure: {dbTables: g_constants.dbTables, dbIndexes: g_constants.dbIndexes}
             }
         )});
+        
+        GetSocketFromPool(socket => {
+            socket.send(strJSON);
+            return ok();
+        });
 
-        g_ws.on('open', () => {
+        /*g_ws.on('open', () => {
           g_ws.send(strJSON);
           return ok();
-        });
+        });*/
 
     });
 }
@@ -92,7 +146,10 @@ function remoteRun(SQL, callback)
         }
     )});
         
-    if (g_ws.readyState === WebSocket.OPEN) g_ws.send(strJSON);
+    GetSocketFromPool(socket => {
+        socket.send(strJSON);
+    });
+    //if (g_ws.readyState === WebSocket.OPEN) g_ws.send(strJSON);
 }
 
 
