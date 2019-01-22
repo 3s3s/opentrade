@@ -143,7 +143,7 @@ Dogecoin DCJRhs9Pjr2FBrrUbKvFeWcYC6ZaF2GTAx
 
 Litecoin LTbDdTijroJEyXt27apQSnuMY4RoXyjdq2
 
-#License
+# License
 
 OpenTrade is released under the terms of the MIT license. See LICENSE for more information or see https://opensource.org/licenses/MIT.
 
