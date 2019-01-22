@@ -136,9 +136,16 @@ After that, you coins should appear on the main page.
 If you find this script is useful then consider donate please
 
 Bitcoin 36WA1WESULub6Q434bQcnmpnk62oLD7vuQ
+
 Marycoin M9dKNcBYgrbbE2f4tz3ud32KLKj1i9FrmN
+
 Dogecoin DCJRhs9Pjr2FBrrUbKvFeWcYC6ZaF2GTAx
+
 Litecoin LTbDdTijroJEyXt27apQSnuMY4RoXyjdq2
+
+#License
+
+OpenTrade is released under the terms of the MIT license. See LICENSE for more information or see https://opensource.org/licenses/MIT.
 
 
 
