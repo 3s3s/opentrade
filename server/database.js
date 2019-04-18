@@ -22,7 +22,7 @@ function InitSocketPool()
 
 function NewSocket(index)
 {
-    const client = new WebSocket('wss://'+g_constants.DOMAIN+':'+g_constants.PORT_DB);
+    const client = new WebSocket('ws://'+g_constants.DOMAIN+':'+g_constants.PORT_DB);
     client['index'] = index;
     
     g_wsPool[index] = client;

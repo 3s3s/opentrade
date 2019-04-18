@@ -9,12 +9,11 @@ exports.handle = function(app, wss)
     app.post('/query', OnQuery);
     
     wss.on('connection', onWebSocketConnection);
-    
-    //setInterval(QueryTimer, 1000);
 };
 
 function ProcessQuery(q, callback)
 {
+    console.log('query...');
     try {
         const json = JSON.parse(q);
         
@@ -62,18 +61,6 @@ function OnQuery(req, res)
         utils.renderJSON(req, res, ret);
     })
 }
-
-/*let g_retArray = [];
-function QueryTimer()
-{
-    for (let i=0; i<g_retArray.length; i++)
-    {
-        const ws = g_retArray[i].ws;
-        if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(g_retArray[i].ret));
-    }
-
-    g_retArray = [];
-}*/
 
 function heartbeat() {
   this.isAlive = true;

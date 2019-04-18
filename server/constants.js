@@ -247,7 +247,7 @@ exports.DOMAIN = PRIVATE.DOMAIN || DOMAIN;
 exports.share["my_portSSL"] = PRIVATE.SSL_PORT || 443;
 exports.my_port = PRIVATE.PORT || 80;
 
-exports.PORT_DB = PRIVATE.SSL_PORTDB || 40543;
+exports.PORT_DB = PRIVATE.SSL_PORTDB || 40545;
 
 exports.FIAT_ID = PRIVATE.FIAT_ID || [];
 

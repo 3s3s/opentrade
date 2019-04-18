@@ -19,7 +19,7 @@ bash install_nvm.sh
 
 nvm install 8.0.0
 
-git clone https://github.com/3s3s/opentrade.git
+git clone --recurse-submodules https://github.com/3s3s/opentrade.git
 cd opentrade
 
 [sudo] npm install 
@@ -46,6 +46,8 @@ exports.walletspassphrase = {
 
 ```
 cd ~/opentrade/databaseServer
+[sudo] forever start main.js
+cd ~/opentrade/accountsserver
 [sudo] forever start main.js
 cd  ~/opentrade/server
 [sudo] forever start main.js
