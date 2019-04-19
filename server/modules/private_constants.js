@@ -7,7 +7,7 @@ exports.SSL_CERT = '../ssl_certificates/fullchain.pem'; //change to your ssl cer
 
 process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 
-//if (exports.password_private_suffix == 'LONG_RANDOM_STRING1') throw new Error('You MUST change default value exports.password_private_suffix !')
+if (exports.password_private_suffix == 'LONG_RANDOM_STRING1') throw new Error('You MUST change default value exports.password_private_suffix !')
 
 exports.walletspassphrase = {
     'MC' : 'LONG_RANDOM_STRING2',
