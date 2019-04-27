@@ -60,7 +60,7 @@ The first registered user will be exchange administrator.
 
 # Add trade pairs
 
-For each coin you should create ~/.coin/coin.conf file
+For each coin you should create "~/.coin/coin.conf" file
 This is common example for "~/.marycoin/marycoin.conf"
 
 ```
@@ -87,7 +87,7 @@ Also, you must encrypt your cryptocurrency wallet with this command.
 ./marycoin-cli encryptwallet random_long_string_SAME_AS_IN_FILE_private_constants.js
 
 ```
-*If coin have no "coin-cli" file then try something like "coind" instead
+*If coin have no "coin-cli" file then try something like "coind" instead*
 *If coin is not supported by encryption (like ZerroCash and it forks) the coin can not be added to OpenTrade.*
 
 
