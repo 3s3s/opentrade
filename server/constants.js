@@ -8,6 +8,9 @@ const MAILER_NAME = 'OpenTrade Mailer';
 const START_MESSAGE = 'OpenTrade started!';
 const OPENTRADE = "OpenTrade";
 
+exports.ACCOUNTS_SERVER = "127.0.0.1";
+exports.ACCOUNTS_PORT = 40745;
+
 exports.ALLOW_EMAIL_CHANGING = true;
 
 exports.DEBUG_LOG = true;
