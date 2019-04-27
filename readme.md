@@ -42,6 +42,8 @@ exports.walletspassphrase = {
 };
 ```
 
+**You MUST change default value exports.password_private_suffix !**
+
 **After, you can run exchange**
 
 ```
