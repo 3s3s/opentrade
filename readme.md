@@ -50,6 +50,7 @@ exports.walletspassphrase = {
 cd ~/opentrade/databaseServer
 [sudo] forever start main.js
 cd ~/opentrade/accountsserver
+git checkout master
 [sudo] forever start main.js
 cd  ~/opentrade/server
 [sudo] forever start main.js
