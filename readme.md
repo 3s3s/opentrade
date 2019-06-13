@@ -96,7 +96,7 @@ Also, you must encrypt your cryptocurrency wallet with this command.
 *If coin is not supported by encryption (like ZerroCash and it forks) the coin can not be added to OpenTrade.*
 
 
-Add you coin details to OpenTrade
+Add your coin details to OpenTrade
 
 1. Register on exchange. The first registered user will be exchange administrator.
 2. Go to "Admin Area" -> "Coins" -> "Add coin"
