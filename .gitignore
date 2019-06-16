@@ -15,7 +15,7 @@ node_modules/
 *.py
 *.out
 
-accountsserver
+accountsserver/*
 
 server/modules/private_constants.js
 server/constants.js
