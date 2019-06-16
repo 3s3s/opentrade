@@ -26,6 +26,13 @@ cd opentrade
 [sudo] npm install -g forever
 ```
 
+## Copy and rename sample configuration files
+```
+cp ./server/modules/private_constants_example.js ./server/modules/private_constants.js
+cp ./server/constants_example.js ./server/constants.js
+cp ./databaseServer/constants_example.js ./databaseServer/constants.js
+```
+
 ## Here is an example of the file ~/opentrade/server/modules/private_constants.js Edit with your configs.
 ```
 'use strict';
