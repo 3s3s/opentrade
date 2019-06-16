@@ -14,3 +14,9 @@ node_modules/
 *.log
 *.py
 *.out
+
+accountsserver
+
+server/modules/private_constants.js
+server/constants.js
+databaseServer/constants.js
