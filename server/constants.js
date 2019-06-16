@@ -8,6 +8,12 @@ const MAILER_NAME = 'OpenTrade Mailer';
 const START_MESSAGE = 'OpenTrade started!';
 const OPENTRADE = "OpenTrade";
 
+exports.MAILER = {
+	service: 'gmail',
+	user: '',
+	pass: '',
+};
+
 exports.ACCOUNTS_SERVER = "127.0.0.1";
 exports.ACCOUNTS_PORT = 40745;
 
@@ -37,7 +43,7 @@ const MAX_IP_CONNECTIONS = 100;
 
 const MAX_USER_WITHDRAW = 100; //Percentage from trade deposit
 
-const DATABASE_PATH = '/root/opentrade/server/database/sqlite.db';
+const DATABASE_PATH = './sqlite.db';
 const PRIVATE_CONSTANTS_PATH = "./modules/private_constants";
 
 exports.dbTables = [
