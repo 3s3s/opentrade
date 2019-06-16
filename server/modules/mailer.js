@@ -2,10 +2,6 @@
 
 const g_constants = require("../constants.js");
 
-console.log('option '+ (g_constants.MAILER.service));
-console.log('option '+ (g_constants.MAILER.user));
-console.log('option '+ (g_constants.MAILER.pass));
-
 var nodemailer = require('nodemailer');
 
 async function sendEmail(options,callback)
