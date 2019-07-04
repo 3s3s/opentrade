@@ -17,7 +17,7 @@ curl -sL https://raw.githubusercontent.com/creationix/nvm/v0.31.0/install.sh -o 
 bash install_nvm.sh
 [sudo] reboot
 
-nvm install 8.0.0
+nvm install 12.6.0
 
 git clone --recurse-submodules https://github.com/3s3s/opentrade.git
 cd opentrade
