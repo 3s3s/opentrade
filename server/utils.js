@@ -648,8 +648,14 @@ exports.CheckCoin = function(coin, callback)
 
 exports.GetCoinFromTicker = function(ticker, callback)
 {
-    g_constants.dbTables['coins'].selectAll('ROWID AS id, *', 'ticker="'+escape(ticker)+'"', '', (err, rows) => {
-        if (err || !rows || !rows.length) return callback({});
-        callback(rows[0]);
-    })
+    return new Promise(async (ok, cancel) => {
+        try {
+            const rows = await g_constants.dbTables['coins'].Select('ROWID AS id, *', 'ticker="'+escape(ticker)+'"', '');
+            if (!rows || !rows.length || !rows[0].name) throw new Error('Coin ticker ('+escape(ticker)+') not found!');
+            return ok(rows[0]);
+        }
+        catch(e) {
+            return cancel(e);
+        }
+    });
 }
