@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
     
-    <% include ../../partials/head %>
+    <%- include ('../../partials/head') %>
   <body>
 
-    <% include ../../partials/header %>
+    <%- include ('../../partials/header') %>
 
-    <% include ../../partials/alerts %>
+    <%- include ('../../partials/alerts') %>
     
     <ul class="nav nav-tabs" id="adminTabs" role="tablist">
       <li class="nav-item">
@@ -50,7 +50,7 @@
       </div>    
     </div>
     
-    <% include ../../partials/footer %>
+    <%- include ('../../partials/footer') %>
     <script src='/private_js/chatadmin.js'></script>
   </body>
 </html>

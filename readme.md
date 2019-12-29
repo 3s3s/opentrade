@@ -20,7 +20,9 @@ bash install_nvm.sh
 nvm install 12.6.0
 
 git clone --recurse-submodules https://github.com/3s3s/opentrade.git
-cd opentrade
+cd opentrade/accountsserver
+git checkout master
+cd ..
 
 [sudo] npm install 
 [sudo] npm install -g forever

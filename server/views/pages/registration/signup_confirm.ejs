@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
     
-    <% include ../../partials/head %>
+    <%- include ('../../partials/head') %>
   <body>
 
-    <% include ../../partials/header %>
+    <%- include ('../../partials/header') %>
+
+    <%- include ('../../partials/alerts') %>
 
     <div class="container">
-      <% include ../../partials/alerts %>
       <div class="row" <% var success = ''; if (error) success = 'style="display:none;"'%> <%- success %>>
         <div class="offset2 col-md-6">
             <h2>Registration confirmed!</h2>
@@ -22,6 +23,6 @@
       </div>
     </div> <!-- /container -->
 
-    <% include ../../partials/footer %>
+    <%- include ('../../partials/footer') %>
   </body>
 </html>

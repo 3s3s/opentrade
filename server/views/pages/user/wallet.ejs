@@ -1,10 +1,12 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html lang="en">
     
-    <% include ../../partials/head %>
+    <%- include ('../../partials/head') %>
   <body>
 
-    <% include ../../partials/header %>
+    <%- include ('../../partials/header') %>
+
+    <%- include ('../../partials/alerts') %>
 
     <% var messageSuccess = ""; var messageFail = ""; var coupon = "";%>
     <% try{ %>
@@ -18,7 +20,6 @@
     <input id='id_coupon' type='hidden' value="<%= coupon %>">
 
     <div class="container pt-2">
-        <% include ../../partials/alerts %>
         <h2>Wallet</h2>
         <div class='container'>
             <div class='row'>
@@ -63,7 +64,7 @@
     </div> <!-- /container -->
 
 
-    <% include ../../partials/footer %>
+    <%- include ('../../partials/footer') %>
     <script src='/js/wallet.js'></script>
   </body>
 </html>
