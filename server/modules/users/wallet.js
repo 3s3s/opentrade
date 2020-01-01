@@ -884,7 +884,11 @@ function MoveBalance(userID_from, userID_to, coin, amount, callback)
                 }
 
                 console.log('MoveBalance return with message="amount<=0" userID='+userID+' coin='+coin.name+" amount="+(amount*1).toFixed(7)*1);
-                callback({result: true, balance: rows[0].balance, balanceupdated: false});
+                
+                //BUG! Should return result: false because no actual moving done! 
+                //callback({result: true, balance: rows[0].balance, balanceupdated: false});
+                
+                callback({result: false, balance: rows[0].balance, balanceupdated: false});
             });
             return;
         }
