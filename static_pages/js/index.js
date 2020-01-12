@@ -470,7 +470,7 @@ function AddChatMessage(message, noscroll, method)
   delButton.on('click', e => {
     e.preventDefault();
     
-    modals.OKCancel("Confirmation", $('<p>'+"Delete message: '"+oldMessage.message.text+"'"+'</p>'), ret => {
+    modals.OKCancel("Confirmation", $('<p>'+"Delete message: '"+encodeURI(oldMessage.message.text)+"'"+'</p>'), ret => {
       if (ret != 'ok')
         return;
         
