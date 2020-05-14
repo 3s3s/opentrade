@@ -824,9 +824,12 @@ function ProcessWithdraw(userID, address, amount, coinName, callback)
     
                         const err = ret ? ret.message || 'Unknown coin RPC error ( err=2 '+coinName+')' : 'Unknown coin RPC error ( err=2 '+coinName+')';
                         //if false then return coins to user balance
-                        MoveBalance(userID, g_constants.ExchangeBalanceAccountID, coin, amount, ret =>{
-                            require("./orderupdate").UnlockUser(userID);
-                        });
+                        
+                        //I have disabled this because it seems that we can return coins when withdraw was succeeded. 
+                        //If here will be real error then admin can fix it from admin panel
+                        //MoveBalance(userID, g_constants.ExchangeBalanceAccountID, coin, amount, ret =>{
+                        //    require("./orderupdate").UnlockUser(userID);
+                        //});
                         return callback({result: false, message: '<b>Withdraw error (3):</b> '+ err});
                     });
                 });
