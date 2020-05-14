@@ -783,14 +783,19 @@ function ProcessWithdraw(userID, address, amount, coinName, callback)
                     
             console.log('RPC call from ProcessWithdraw1');
             RPC.send3(userID, coinID, commands.walletpassphrase, [walletPassphrase, 60], ret => {
-                if (walletPassphrase.length && (!ret || !ret.result || ret.result != 'success') && ret.data && ret.data.length)
+                if (!ret || !ret.result || ret.result != 'success')
                 {
-                    const err = ret.data;
+                    const err = (ret.data && ret.data.length) ? ret.data : "RPC walletpassphrase returned bad answer";
                     //if false then return coins to user balance
-                    MoveBalance(userID, g_constants.ExchangeBalanceAccountID, coin, amount, ret =>{
+                    if (walletPassphrase.length)
+                    {
+                        MoveBalance(userID, g_constants.ExchangeBalanceAccountID, coin, amount, ret =>{
+                            require("./orderupdate").UnlockUser(userID);
+                        }); 
+                    }
+                    else
                         require("./orderupdate").UnlockUser(userID);
-                    });
-                        
+                    
                     return callback({result: false, message: '<b>Withdraw error (2):</b> '+ err});
                 }    
                         
