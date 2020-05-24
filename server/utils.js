@@ -94,6 +94,28 @@ exports.Decrypt = function(str)
 let validTokens = {};
 let validSessions = {};
 
+const g_tokenSecret = Math.random();
+exports.CreateToken = function(password)
+{
+    const tokenPublic = Math.random();
+    const ret = tokenPublic+"-"+exports.Hash(g_tokenSecret+""+tokenPublic+"").substr(0, 7)+"-"+exports.Hash(g_tokenSecret+""+tokenPublic+""+password+"").substr(0, 7);
+    
+    return ret;
+}
+
+exports.IsValidToken = function(token)
+{
+    const parts = token.split('-');
+    if (parts.length != 3)
+        return false;
+    
+    if (parts[1] != exports.Hash(g_tokenSecret+""+parts[0]+"").substr(0, 7))
+        return false;
+        
+    return true;
+}
+
+
 exports.UpdateSession = function(userid, token, callback)
 {
     if (!userid) 
@@ -280,7 +302,10 @@ exports.GetSessionStatus = function(req, callback)
     
     if (validSessions[token] && validSessions[token]['data'] && Date.now() - validSessions[token] < 60000)
         return setTimeout(callback, 10, validSessions[token]['data']);
-        
+
+    if (!exports.IsValidToken(token))
+        return setTimeout(callback, 10, {active: false, message: "invalid token"});
+	
     g_constants.dbTables['sessions'].selectAll('*', 'token="'+token+'"', '', (err, rows) => {
         if (err || !rows || !rows.length)
             return setTimeout(callback, 10, {active: false, message: errMessage});
