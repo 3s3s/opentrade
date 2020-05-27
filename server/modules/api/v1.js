@@ -277,7 +277,7 @@ exports.onGetMarketHistory = function(req, res)
         return  onError(req, res, 'Bad request. Parameter "market" is invalid');
 
 
-    g_constants.dbTables['coins'].selectAll('name, ticker, info', 'ticker="'+data[1]+'"', '', (err, rows) => {
+    g_constants.dbTables['coins'].selectAll('name, ticker, info', 'ticker="'+escape(data[1])+'"', '', (err, rows) => {
         try
         {
             if (err || !rows) throw new Error(err && err.message ? err.message : 'unknown database error');
