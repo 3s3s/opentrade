@@ -394,7 +394,7 @@ exports.onMarketCancel = function(req, res)
                 if (ret.success == false) throw new Error(ret.message);
                 if (ret.key.write == 0) throw new Error('apikey disabled for write');
                 
-                g_constants.dbTables['orders'].selectAll('ROWID AS id', 'uuid="'+queryStr.uuid+'"', '', (err, rows) => {
+                g_constants.dbTables['orders'].selectAll('ROWID AS id', 'uuid="'+escape(queryStr.uuid)+'"', '', (err, rows) => {
                     if (err || !rows || !rows.length) 
                         return onError(req, res, 'Order with this uuid not found');
 
@@ -659,7 +659,7 @@ exports.onAccountGetOrder = function(req, res)
                 if (ret.success == false) throw new Error(ret.message);
                 if (ret.key.read == 0) throw new Error('apikey disabled for read');
                 
-                g_constants.dbTables['orders'].selectAll('ROWID AS id, *', 'uuid="'+queryStr.uuid+'"', '', (err, rows) => {
+                g_constants.dbTables['orders'].selectAll('ROWID AS id, *', 'uuid="'+escape(queryStr.uuid)+'"', '', (err, rows) => {
                     if (err || !rows || !rows.length) 
                         return onError(req, res, 'Order with this uuid not found');
                     
