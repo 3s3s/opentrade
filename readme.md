@@ -2,6 +2,7 @@
 
 Live version: https://trade.multicoins.org/
 
+Alternative User Interface: dogebithelp@gmail.com
 
 Step-by-step install instructions:
 
