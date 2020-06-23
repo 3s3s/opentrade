@@ -13,20 +13,33 @@ function send(userID, coin, command, params, callback)
     const strJSON = '{"jsonrpc": "1.0", "id":"curltest", "method": "'+command+'", "params": '+p+' }';
     
     const user = utils.Decrypt(coin.rpc_user);
-    const password = utils.Decrypt(coin.rpc_password);
-    const headers = {
-        'Content-Type': 'text/plain', 
-        'Authorization': 'Basic ' + new Buffer(user + ':' + password).toString('base64')
+    const address = utils.Decrypt(coin.address);
+    
+    let rpc_password = "";
+    try {
+        const password = JSON.parse(utils.Decrypt(coin.rpc_password));
+        rpc_password = password.rpc_password;
+    }
+    catch(e){
+        rpc_password = utils.Decrypt(coin.rpc_password);
     }
 
-    const address = utils.Decrypt(coin.address);
 
     const parsed = url.parse(address, true);
     if (!parsed || parsed.port == null)
         return callback({result: false, message: 'Invalid address'});
+
+    const headers = {
+        'Content-Type': 'text/plain', 
+        'Coin-Info': new Buffer(JSON.stringify({name: coin.name, ticker: coin.ticker, hostname: parsed.hostname, port: parsed.port})).toString('base64'),
+        'Authorization': 'Basic ' + new Buffer(user + ':' + rpc_password).toString('base64')
+    }
     
+    const host = g_constants.ACCOUNTS_SERVER; //(command == 'getinfo') ? g_constants.ACCOUNTS_SERVER : parsed.hostname;
+    const port = g_constants.ACCOUNTS_PORT; //(command == 'getinfo') ? g_constants.ACCOUNTS_PORT : parsed.port;
+
     console.log('rpcPostJSON ' + strJSON, userID);
-    utils.postString(parsed.hostname, {'nPort' : parsed.port, 'name' : parsed.protocol}, "/", headers, strJSON, result =>
+    utils.postString(host, {'nPort' : port, 'name' : 'https'}, "/", headers, strJSON, result =>
     {
         if (result.data) {
             try {

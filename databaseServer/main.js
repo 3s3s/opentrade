@@ -2,12 +2,10 @@
 
 const g_constants = require('./constants');
 
-const https = require('https');
 const util = require('util');
 const express = require('express');
 const bodyParser = require('body-parser');
 const WebSocketServer = require('ws').Server;
-//const compression = require('compression');
 
 const log_file = require("fs").createWriteStream(__dirname + '/debug.log', {flags : 'w'});
 const log_stdout = process.stdout;
@@ -32,38 +30,46 @@ app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
 
 //app.use(cookieParser());
 
-var httpsServer = https.createServer(g_constants.SSL_options, app);
+var httpServer = require("http").createServer(app);
 
-var httpsListener = httpsServer.listen(g_constants.share.my_portSSL, function(){
-    console.log("SSL Proxy listening on port "+g_constants.share.my_portSSL);
+var httpListener = httpServer.listen(g_constants.share.my_port, () => {
+    console.log("Proxy listening on port "+g_constants.share.my_port);
 });
 
 var lastSocketKey = 0;
-var socketMap = {http: {}, https: {}};
+var socketMap = {http: {}};
 
-httpsListener.on('connection', socket => {
+httpListener.on('connection', socket => {
     /* generate a new, unique socket-key */
+    console.log('connection...');
+    
     const socketKey = ++lastSocketKey;
     /* add socket when it is connected */
-    socketMap.https[socketKey] = socket;
-    socket.on('close', function() {
+    socketMap.http[socketKey] = socket;
+    socket.on('close', () => {
         /* remove socket when it is closed */
-        delete socketMap.https[socketKey];
+        console.log('close socket');
+        delete socketMap.http[socketKey];
     });
     
     if (!g_constants.IsAllowedAddress(socket.remoteAddress))
     {
         console.log('ERROR: not allowed '+socket.remoteAddress)
-        socket.end();
+        return socket.end();
     }
+    console.log('Allowed socket');
 });
 
-g_constants.WEB_SOCKETS = new WebSocketServer({ server: httpsServer, clientTracking: true });
+g_constants.WEB_SOCKETS = new WebSocketServer({ server: httpServer, clientTracking: true });
 function noop() {}
  
 setInterval(function ping() {
-  g_constants.WEB_SOCKETS.clients.forEach(function each(ws) {
-    if (ws.isAlive === false) return ws.terminate();
+  g_constants.WEB_SOCKETS.clients.forEach(ws => {
+    if (ws.isAlive === false) 
+    {
+        console.log('terminate socket');
+        return ws.terminate();
+    }
  
     ws.isAlive = false;
     ws.ping(noop);

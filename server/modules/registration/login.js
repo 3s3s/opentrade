@@ -90,10 +90,10 @@ function validateForm(request)
 
 function Login(req, res, info)
 {
-    const strToken = utils.Hash(Date.now() + Math.random() + info.password);
+    const strToken = utils.CreateToken(info.password);
     res.append('Set-Cookie', 'token='+strToken);
     utils.UpdateSession(info.id, strToken, err => {
-        LoginSuccess(req, res, {token: strToken});
+        LoginSuccess(req, res, {token: ""});
     });
 }
 

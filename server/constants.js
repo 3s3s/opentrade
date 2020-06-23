@@ -8,6 +8,9 @@ const MAILER_NAME = 'OpenTrade Mailer';
 const START_MESSAGE = 'OpenTrade started!';
 const OPENTRADE = "OpenTrade";
 
+exports.ACCOUNTS_SERVER = "127.0.0.1";
+exports.ACCOUNTS_PORT = 40745;
+
 exports.ALLOW_EMAIL_CHANGING = true;
 
 exports.DEBUG_LOG = true;
@@ -247,7 +250,7 @@ exports.DOMAIN = PRIVATE.DOMAIN || DOMAIN;
 exports.share["my_portSSL"] = PRIVATE.SSL_PORT || 443;
 exports.my_port = PRIVATE.PORT || 80;
 
-exports.PORT_DB = PRIVATE.SSL_PORTDB || 40543;
+exports.PORT_DB = PRIVATE.SSL_PORTDB || 40545;
 
 exports.FIAT_ID = PRIVATE.FIAT_ID || [];
 

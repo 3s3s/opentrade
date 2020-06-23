@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
     
-    <% include ../partials/head %>
+    <%- include ('../partials/head') %>
   <body>
 
-    <% include ../partials/header %>
+    <%- include ('../partials/header') %>
 
 
     <div class="container pt-2">
-      <% include ../partials/alerts %>
+      <%- include ('../partials/alerts') %>
       <input id='id_token' type='hidden' <% var value = ''; try{if (status.token) value = "value='"+status.token+"'"}catch(e){} %> <%- value %>>
       <div class='row'>
         <div class="col-md-2 p-0">
@@ -375,7 +375,7 @@
     </div> <!-- /container -->
 
 
-    <% include ../partials/footer %>
+    <%- include ('../partials/footer') %>
     <script src='/js/index.js'></script>
   </body>
 </html>

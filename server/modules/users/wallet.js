@@ -783,14 +783,19 @@ function ProcessWithdraw(userID, address, amount, coinName, callback)
                     
             console.log('RPC call from ProcessWithdraw1');
             RPC.send3(userID, coinID, commands.walletpassphrase, [walletPassphrase, 60], ret => {
-                if (walletPassphrase.length && (!ret || !ret.result || ret.result != 'success') && ret.data && ret.data.length)
+                if (!ret || !ret.result || ret.result != 'success')
                 {
-                    const err = ret.data;
+                    const err = (ret.data && ret.data.length) ? ret.data : "RPC walletpassphrase returned bad answer";
                     //if false then return coins to user balance
-                    MoveBalance(userID, g_constants.ExchangeBalanceAccountID, coin, amount, ret =>{
+                    if (walletPassphrase.length)
+                    {
+                        MoveBalance(userID, g_constants.ExchangeBalanceAccountID, coin, amount, ret =>{
+                            require("./orderupdate").UnlockUser(userID);
+                        }); 
+                    }
+                    else
                         require("./orderupdate").UnlockUser(userID);
-                    });
-                        
+                    
                     return callback({result: false, message: '<b>Withdraw error (2):</b> '+ err});
                 }    
                         
@@ -819,9 +824,12 @@ function ProcessWithdraw(userID, address, amount, coinName, callback)
     
                         const err = ret ? ret.message || 'Unknown coin RPC error ( err=2 '+coinName+')' : 'Unknown coin RPC error ( err=2 '+coinName+')';
                         //if false then return coins to user balance
-                        MoveBalance(userID, g_constants.ExchangeBalanceAccountID, coin, amount, ret =>{
-                            require("./orderupdate").UnlockUser(userID);
-                        });
+                        
+                        //I have disabled this because it seems that we can return coins when withdraw was succeeded. 
+                        //If here will be real error then admin can fix it from admin panel
+                        //MoveBalance(userID, g_constants.ExchangeBalanceAccountID, coin, amount, ret =>{
+                        //    require("./orderupdate").UnlockUser(userID);
+                        //});
                         return callback({result: false, message: '<b>Withdraw error (3):</b> '+ err});
                     });
                 });
@@ -884,7 +892,11 @@ function MoveBalance(userID_from, userID_to, coin, amount, callback)
                 }
 
                 console.log('MoveBalance return with message="amount<=0" userID='+userID+' coin='+coin.name+" amount="+(amount*1).toFixed(7)*1);
-                callback({result: true, balance: rows[0].balance, balanceupdated: false});
+                
+                //BUG! Should return result: false because no actual moving done! 
+                //callback({result: true, balance: rows[0].balance, balanceupdated: false});
+                
+                callback({result: false, balance: rows[0].balance, balanceupdated: false});
             });
             return;
         }
