@@ -181,8 +181,15 @@ function SendRPC(coin, command, params, callback)
             return callback({result: false, data: {}});
 
         try {
-            if (command == 'getbalance' || command == 'getinfo' || command == 'getblockchaininfo')
+            if (command == 'getbalance' || command == 'getinfo' || command == 'getblockchaininfo' || 
+                command == 'getwalletinfo' || command == 'walletpassphrasechange' || command == 'encryptwallet' || command == "fixbalance")
+            {
+                const exchange = utils.Encrypt(g_constants.ExchangeBalanceAccountID);
+                if (command == "fixbalance" && params.indexOf(exchange) == -1)
+                    return callback({result: false, data: {message: "fixbalance forbidden for this account"}});
+                
                 RPC.send3(1, rows[0].id, command, params, callback);
+            }
             else
                 callback({result: false, data: {}});
         } 
